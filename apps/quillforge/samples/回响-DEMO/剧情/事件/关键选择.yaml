@@ -1,0 +1,157 @@
+# 关键选择
+# 定义影响世界线和结局的关键抉择点
+
+choices:
+  # ============================================================
+  # 选择1：邮件处理方式
+  # ============================================================
+  - id: "choice_01"
+    scene_id: "scene_01"
+    prompt: "你打开邮件，里面只有一行字和一个加密附件。你怎么处理？"
+    description: "面对神秘的匿名委托，你的第一反应是什么？"
+
+    options:
+      - id: "decrypt"
+        text: "立即解密附件"
+        description: "你的直觉告诉你，这封邮件不简单"
+        minigame:
+          type: "puzzle"
+          hint: "解密附件"
+        consequences:
+          immediate: "你开始解密附件，林晓提醒你这可能有风险"
+          delayed: "你更快进入修复状态，但错过了调查发件人的机会"
+          stats_changes:
+            risk_tolerance: +2
+            curiosity: +1
+        personality_impact: "展现你果断、直觉驱动的一面"
+        relationship_changes: []
+        leads_to_ending: null
+
+      - id: "investigate"
+        text: "先调查发件人"
+        description: "谨慎行事，先确认对方身份"
+        consequences:
+          immediate: "你追踪邮件来源，发现它经过多重加密跳转"
+          delayed: "你发现发件人与织星科技有关，获得额外线索"
+          stats_changes:
+            caution: +2
+            investigation: +1
+        personality_impact: "展现你谨慎、分析型的一面"
+        relationship_changes:
+          - character: "lin_xiao"
+            change: +1
+            reason: "林晓赞赏你的谨慎态度"
+        leads_to_ending: null
+
+      - id: "ignore"
+        text: "删除邮件"
+        description: "这可能是个陷阱，最好别碰"
+        consequences:
+          immediate: "你删除了邮件，但林晓保留了一份副本"
+          delayed: "剧情仍会推进，但你会错过一些关键信息"
+          stats_changes:
+            self_preservation: +2
+        personality_impact: "展现你保守、自我保护的一面"
+        relationship_changes: []
+        leads_to_ending: "ending_01"
+
+  # ============================================================
+  # 选择2：记忆修复深度
+  # ============================================================
+  - id: "choice_02"
+    scene_id: "scene_02"
+    prompt: "你正在修复记忆，但画面越来越熟悉...那只手，那只戴着你标志性发夹的手，是你自己的。你怎么办？"
+    description: "发现记忆属于自己后，你的选择将决定一切"
+
+    options:
+      - id: "continue"
+        text: "继续深入"
+        description: "不管多不安，你必须知道真相"
+        consequences:
+          immediate: "你强行推进修复，看到了织女号灾难的完整画面"
+          delayed: "你获得完整证据，但心理状态受到严重影响"
+          stats_changes:
+            courage: +3
+            mental_stability: -2
+        personality_impact: "展现你为真相不惜代价的一面"
+        relationship_changes:
+          - character: "lin_xiao"
+            change: -1
+            reason: "林晓担心你的安全，但尊重你的决定"
+        leads_to_ending: "ending_03"
+
+      - id: "stop"
+        text: "停止修复"
+        description: "这段记忆太危险了，你不想知道更多"
+        consequences:
+          immediate: "你退出记忆空间，心跳加速，手在发抖"
+          delayed: "你保留了部分记忆片段，但不完整"
+          stats_changes:
+            self_preservation: +2
+            mental_stability: +1
+        personality_impact: "展现你理性、自我保护的一面"
+        relationship_changes:
+          - character: "lin_xiao"
+            change: +1
+            reason: "林晓松了一口气，你的安全比真相重要"
+        leads_to_ending: "ending_01"
+
+  # ============================================================
+  # 选择3：对峙策略
+  # ============================================================
+  - id: "choice_03"
+    scene_id: "scene_03"
+    prompt: "杜维明微笑着看着你，等待你开口。你怎么应对？"
+    description: "面对掌控一切的权力者，你的选择将决定故事走向"
+
+    options:
+      - id: "reveal"
+        text: "公开真相"
+        description: "将所有证据公之于众，即使代价巨大"
+        consequences:
+          immediate: "你激活了预设的广播程序，证据开始向全球网络传输"
+          delayed: "织星科技丑闻曝光，但你成为被追杀的目标"
+          stats_changes:
+            courage: +3
+            self_preservation: -3
+        personality_impact: "展现你为正义不惜牺牲的一面"
+        relationship_changes:
+          - character: "du_weiming"
+            change: -5
+            reason: "杜维明彻底将你视为敌人"
+        leads_to_ending: "ending_03"
+
+      - id: "negotiate"
+        text: "达成协议"
+        description: "用证据换取自己的安全和林晓的自由"
+        consequences:
+          immediate: "你提出条件，杜维明考虑后同意"
+          delayed: "你和林晓安全离开，但真相被埋葬"
+          stats_changes:
+            negotiation: +2
+            self_preservation: +1
+        personality_impact: "展现你务实、懂得妥协的一面"
+        relationship_changes:
+          - character: "du_weiming"
+            change: -2
+            reason: "杜维明对你刮目相看，但仍然警惕"
+        leads_to_ending: "ending_02"
+
+      - id: "hidden"
+        text: "埋下伏笔"
+        description: "不直接对抗，而是暗中布局（需要满足隐藏条件）"
+        consequences:
+          immediate: "你假装妥协，但暗中启动了备份程序"
+          delayed: "证据会在未来某个时间自动公开"
+          stats_changes:
+            intelligence: +3
+            patience: +2
+        personality_impact: "展现你深谋远虑的一面"
+        relationship_changes:
+          - character: "du_weiming"
+            change: -1
+            reason: "杜维明以为你妥协了"
+        leads_to_ending: "ending_03"
+        unlock_conditions:
+          - "在scene_01选择investigate"
+          - "在scene_02选择continue"

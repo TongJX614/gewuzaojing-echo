@@ -1,0 +1,212 @@
+# 场景清单
+# 定义剧本中所有场景的详细设定
+
+scenes:
+  # ============================================================
+  # 场景1：信号
+  # ============================================================
+  - id: "scene_01"
+    name: "信号"
+    location: "苏然的记忆工坊"
+    time: "2087年11月14日，深夜"
+    atmosphere: "压抑、不安、霓虹灯光与仪器微光交织"
+
+    description: |
+      苏然的记忆工坊位于新深圳旧城区的一栋改造公寓楼顶层。
+      十几平米的空间塞满了记忆修复设备：主操作台、神经接口阵列、
+      数据存储单元，以及一面贴满便签的白墙。
+      窗外是新深圳的霓虹天际线，织星塔的蓝色光柱直插云霄。
+      深夜两点，苏然接到一封匿名委托邮件，要求修复一段从织女号
+      空间站回收的损坏记忆数据。报酬异常丰厚，条件只有一个：
+      不得向任何人透露此次委托。
+
+    trigger_conditions:
+      - type: "game_start"
+        value: "初始场景"
+
+    characters_present:
+      - "su_ran"
+      - "lin_xiao"
+
+    interactions:
+      - id: "check_email"
+        type: "阅读"
+        description: "查看匿名委托邮件"
+        prompt: "你打开了邮件，里面只有一行字和一个加密附件。"
+        options:
+          - id: "decrypt"
+            text: "立即解密附件"
+            description: "你的直觉告诉你，这封邮件不简单"
+            minigame:
+              type: "puzzle"
+              hint: "解密附件"
+          - id: "investigate"
+            text: "先调查发件人"
+            description: "谨慎行事，先确认对方身份"
+          - id: "ignore"
+            text: "删除邮件"
+            description: "这可能是个陷阱，最好别碰"
+
+    assets_needed:
+      - "记忆工坊背景"
+      - "苏然操作台特写"
+      - "邮件界面UI"
+      - "织星塔远景"
+
+    branching_point: true
+    critical_choice: "choice_01"
+
+    narrative_notes: |
+      本场景是玩家的第一个决策点。通过苏然的内心独白建立悬疑氛围。
+      林晓的对话应展现她活泼好奇的一面，与紧张气氛形成对比。
+      无论玩家选择什么，剧情都会推进——但选择会影响后续信息获取。
+
+  # ============================================================
+  # 场景2：碎片
+  # ============================================================
+  - id: "scene_02"
+    name: "碎片"
+    location: "记忆空间（虚拟）"
+    time: "苏然的记忆工坊内（现实时间：2087年11月15日凌晨）"
+    atmosphere: "超现实、碎片化、压抑与诡异交织"
+
+    description: |
+      苏然通过神经接口进入记忆空间，开始修复那段损坏的数据。
+      记忆空间呈现为破碎的走廊、扭曲的实验室、闪烁的警示灯。
+      随着修复深入，苏然发现这些记忆碎片的视角是第一人称——
+      而且，记忆中出现的那只手，那只戴着她标志性发夹的手，
+      是她自己的。
+
+    trigger_conditions:
+      - type: "scene_completed"
+        value: "scene_01"
+
+    characters_present:
+      - "su_ran"
+      - "lin_xiao"
+
+    interactions:
+      - id: "explore_memory"
+        type: "探索"
+        description: "在记忆空间中探索和修复"
+        prompt: "你正在修复一段记忆，但画面越来越熟悉..."
+        options:
+          - id: "continue"
+            text: "继续深入"
+            description: "不管多不安，你必须知道真相"
+          - id: "stop"
+            text: "停止修复"
+            description: "这段记忆太危险了，你不想知道更多"
+
+    assets_needed:
+      - "记忆空间碎片化走廊"
+      - "扭曲实验室"
+      - "警示灯闪烁效果"
+      - "记忆修复UI"
+
+    branching_point: true
+    critical_choice: "choice_02"
+
+    narrative_notes: |
+      本场景是故事的核心转折点。玩家通过苏然的视角体验记忆空间的诡异，
+      同时发现被删除的真相。林晓的反应应体现她的担忧和分析能力。
+      选择"继续深入"将触发分支线A，选择"停止修复"将触发分支线B。
+
+  # ============================================================
+  # 场景3：对峙
+  # ============================================================
+  - id: "scene_03"
+    name: "对峙"
+    location: "织星科技总部·68层会议室"
+    time: "2087年11月15日，下午"
+    atmosphere: "高压、对峙、权力与真相的博弈"
+
+    description: |
+      苏然带着从记忆中获取的证据，前往织星科技总部与杜维明对峙。
+      68层的会议室落地窗外是新深圳的全景，杜维明坐在长桌尽头，
+      脸上挂着惯常的温和微笑。
+      真相、谎言、选择——在这个房间里，一切都会揭晓。
+
+    trigger_conditions:
+      - type: "scene_completed"
+        value: "scene_02"
+      - type: "choice_made"
+        value: "continue"
+
+    characters_present:
+      - "su_ran"
+      - "du_weiming"
+      - "lin_xiao"
+
+    interactions:
+      - id: "confront"
+        type: "对峙"
+        description: "与杜维明正面对质"
+        prompt: "杜维明微笑着看着你，等待你开口。"
+        options:
+          - id: "reveal"
+            text: "公开真相"
+            description: "将所有证据公之于众，即使代价巨大"
+          - id: "negotiate"
+            text: "达成协议"
+            description: "用证据换取自己的安全和林晓的自由"
+          - id: "hidden"
+            text: "埋下伏笔"
+            description: "不直接对抗，而是暗中布局（需要满足隐藏条件）"
+
+    assets_needed:
+      - "织星科技会议室"
+      - "杜维明特写"
+      - "窗外新深圳全景"
+      - "证据投影UI"
+
+    branching_point: true
+    critical_choice: "choice_03"
+
+    narrative_notes: |
+      本场景是情感高潮。杜维明的每一句话都经过精心设计，
+      既是威胁也是试探。苏然的冷静外表下是剧烈的内心波动。
+      林晓在这个场景中面临自身存在的终极拷问。
+      选择"埋下伏笔"需要在之前场景中收集到足够线索。
+
+  # ============================================================
+  # 场景4：回响
+  # ============================================================
+  - id: "scene_04"
+    name: "回响"
+    location: "多个结局场景"
+    time: "2087年11月15日之后"
+    atmosphere: "根据结局不同而变化"
+
+    description: |
+      故事的终章。根据苏然在前几个场景中的选择，
+      命运将走向不同的终点。
+      每一个选择都有其代价，每一个结局都是苏然自己的选择。
+
+    trigger_conditions:
+      - type: "scene_completed"
+        value: "scene_03"
+
+    characters_present:
+      - "su_ran"
+      - "lin_xiao"
+
+    interactions:
+      - id: "ending"
+        type: "结局"
+        description: "根据选择进入不同结局"
+        prompt: "一切尘埃落定，你做出了你的选择。"
+
+    assets_needed:
+      - "结局场景A：苏然删除记忆"
+      - "结局场景B：苏然签署协议"
+      - "结局场景C：真相广播"
+      - "结局旁白UI"
+
+    branching_point: false
+    critical_choice: null
+
+    narrative_notes: |
+      本场景根据玩家之前的选择，进入三个不同结局之一。
+      每个结局都应该给玩家留下深刻印象，引发思考。
+      林晓在每个结局中的反应都不同，体现她的成长弧线。

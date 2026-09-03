@@ -1,0 +1,17 @@
+# QuillForge - 统一依赖清单
+# 安装: pip install -r requirements.txt
+
+pytest>=8.0.0
+fastapi>=0.136.0
+uvicorn>=0.46.0
+python-multipart>=0.0.9
+openai>=2.45.0
+pydantic>=2.13.0
+pydantic-settings>=2.14.0
+python-dotenv>=1.0.0
+pyyaml>=6.0
+httpx>=0.28.0
+slowapi>=0.1.9
+cachetools>=7.1.0
+Pillow>=10.0.0
+rembg[cpu]>=2.0.50

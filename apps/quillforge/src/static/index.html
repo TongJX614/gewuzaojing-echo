@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.cn">
+<link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin>
+<link href="https://fonts.googleapis.cn/css2?family=ZCOOL+QingKe+HuangYou&family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>QuillForge — 叙事创作平台</title>
+<style>
+:root{--bg:#101826;--card:#182234;--card-hover:#1e2b44;--border:#2e3d55;--border-hover:#3c5170;--accent:#e4572e;--accent-soft:rgba(228,87,46,.10);--accent2:#f0764f;--action:#6fa8a0;--action2:#8fc2ba;--action-soft:rgba(111,168,160,.13);--text:#c5cfdd;--text-strong:#f2ead9;--muted:#7e8ca3;--danger:#e0654f;--success:#7cb98a;--warn:#d9a441;--font-sans:'Noto Sans SC','Microsoft YaHei','PingFang SC',system-ui,sans-serif;--font-serif:'ZCOOL QingKe HuangYou','Noto Sans SC','Microsoft YaHei',sans-serif;--font-mono:'JetBrains Mono','Consolas',monospace}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font-sans);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background-image:radial-gradient(ellipse 120% 60% at 50% -10%,rgba(111,168,160,.06),transparent 60%),radial-gradient(ellipse 80% 50% at 90% 110%,rgba(228,87,46,.05),transparent 60%),linear-gradient(rgba(125,140,165,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(125,140,165,.035) 1px,transparent 1px);background-size:auto,auto,36px 36px,36px 36px}
+/* 档案室氛围层：暗角 + 纸纹噪点 */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 90% 70% at 50% 45%,transparent 55%,rgba(6,10,18,.5) 100%)}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+/* 取景器四角框线 */
+.corner-frame{position:fixed;width:26px;height:26px;border:1px solid rgba(228,87,46,.4);pointer-events:none;z-index:60}
+.corner-frame.tl{top:12px;left:12px;border-right:none;border-bottom:none}
+.corner-frame.tr{top:12px;right:12px;border-left:none;border-bottom:none}
+.corner-frame.bl{bottom:12px;left:12px;border-right:none;border-top:none}
+.corner-frame.br{bottom:12px;right:12px;border-left:none;border-top:none}
+/* 右侧竖排档案编号 */
+.side-mark{position:fixed;right:26px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-family:var(--font-mono);font-size:10px;letter-spacing:4px;color:var(--muted);opacity:.35;pointer-events:none;z-index:60}
+.header{padding:14px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:relative;background:rgba(13,20,33,.65)}
+.header::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:1px;background:linear-gradient(90deg,transparent,var(--accent) 18%,transparent 42%);opacity:.5}
+.header h1{font-size:21px;font-weight:400;color:var(--text-strong);letter-spacing:4px;font-family:var(--font-serif)}
+.header h1::before{content:'◆';color:var(--accent);font-size:11px;margin-right:9px;vertical-align:2px}
+.header .meta{font-size:12px;color:var(--muted);letter-spacing:.3px;font-family:var(--font-mono);display:flex;align-items:center;gap:10px}
+.header .meta::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(124,185,138,.6);animation:pulseDot 2.4s ease-in-out infinite}
+@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.35}}
+.container{max-width:860px;margin:0 auto;padding:36px 24px;position:relative;z-index:1}
+
+/* Upload Section */
+.upload-section{margin-bottom:48px}
+/* 案卷封头：标题 + 印章 + 条码 */
+.case-head{position:relative;text-align:center;padding:52px 0 34px}
+.case-head .case-no{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:3px;opacity:.75;margin-bottom:14px}
+.case-head .case-no em{font-style:normal;color:var(--accent);opacity:.9}
+.case-head h2.hero{font-size:clamp(30px,5vw,40px);margin-bottom:10px;color:var(--text-strong);letter-spacing:6px;font-weight:400;font-family:var(--font-serif)}
+.case-head .hero-sub{color:var(--muted);font-size:13px;letter-spacing:2px}
+.case-head .hero-sub::before,.case-head .hero-sub::after{content:'──';color:var(--border-hover);margin:0 10px;letter-spacing:0}
+.case-head .barcode{display:inline-block;width:130px;height:22px;margin-top:18px;opacity:.35;background:repeating-linear-gradient(90deg,var(--text) 0 2px,transparent 2px 4px,var(--text) 4px 5px,transparent 5px 9px,var(--text) 9px 10px,transparent 10px 12px)}
+.case-head .corner-screw{position:absolute;width:7px;height:7px;border-radius:50%;border:1px solid var(--border-hover);opacity:.8}
+.case-head .corner-screw::after{content:'';position:absolute;left:50%;top:50%;width:5px;height:1px;background:var(--border-hover);transform:translate(-50%,-50%) rotate(45deg)}
+.case-head .cs-tl{top:16px;left:8px}.case-head .cs-tr{top:16px;right:8px}.case-head .cs-bl{bottom:6px;left:8px}.case-head .cs-br{bottom:6px;right:8px}
+.case-head .case-meta{margin-top:12px;font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px;opacity:.55}
+.stamp{position:absolute;font-family:var(--font-serif);font-size:17px;line-height:1.3;color:var(--accent);border:2px solid var(--accent);border-radius:6px;padding:7px 12px;letter-spacing:5px;transform:rotate(9deg);opacity:.75;text-shadow:0 0 1px rgba(228,87,46,.4);box-shadow:inset 0 0 0 1px rgba(228,87,46,.25);mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .85 .15'/%3E%3C/filter%3E%3Crect width='90' height='90' fill='white' filter='url(%23r)'/%3E%3C/svg%3E");-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .85 .15'/%3E%3C/filter%3E%3Crect width='90' height='90' fill='white' filter='url(%23r)'/%3E%3C/svg%3E")}
+.stamp.small{font-size:13px;padding:5px 9px;letter-spacing:3px}
+.upload-zone{border:1px dashed var(--border-hover);border-radius:14px;padding:36px;text-align:center;cursor:pointer;transition:all .25s;margin-bottom:20px;position:relative;background:rgba(24,34,52,.35)}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--action);background:var(--action-soft)}
+.upload-zone .zone-tag{position:absolute;top:10px;left:14px;font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px;opacity:.6}
+.upload-zone .zone-stamp{position:absolute;right:14px;bottom:10px;font-family:var(--font-serif);font-size:12px;color:var(--action);border:1.5px solid var(--action);border-radius:4px;padding:2px 7px;letter-spacing:2px;transform:rotate(-6deg);opacity:.55}
+.upload-zone .icon{font-size:28px;margin-bottom:12px;opacity:.4}
+.upload-zone p{color:var(--muted);font-size:14px}
+.upload-zone .hint{font-size:12px;color:var(--muted);margin-top:8px;opacity:.5}
+.file-input{display:none}
+
+/* Sample Cards — 证物袋风格 */
+.samples{display:flex;flex-direction:column;gap:14px;margin-top:20px}
+.sample-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.sample-card::before{content:attr(data-evidence);position:absolute;top:10px;right:12px;font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:2px;opacity:.75}
+.sample-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),transparent);opacity:.6}
+.sample-card:hover{border-color:var(--border-hover);background:var(--card-hover);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.sample-card:hover::after{opacity:1}
+.sample-card.selected{border-color:var(--success);background:rgba(107,158,122,.06)}
+.sample-card .title{font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text-strong);padding-right:90px}
+.sample-card .info{font-size:12px;color:var(--muted);margin-bottom:10px}
+.sample-card .tags{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scrollbar-color:rgba(111,168,160,.4) transparent}
+.sample-card .tags::-webkit-scrollbar{height:5px}
+.sample-card .tags::-webkit-scrollbar-track{background:transparent}
+.sample-card .tags::-webkit-scrollbar-thumb{background:rgba(111,168,160,.35);border-radius:3px}
+.sample-card .tags::-webkit-scrollbar-thumb:hover{background:rgba(111,168,160,.55)}
+.sample-card .tag{font-size:11px;padding:3px 10px;border-radius:6px;background:var(--action-soft);color:var(--action);white-space:nowrap;flex-shrink:0}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--action);color:#0e1822}
+.btn-primary:hover{background:var(--action2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(111,168,160,.25)}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-sm{padding:8px 16px;font-size:13px}
+
+/* Script Preview */
+.preview{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+.preview h3{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--text-strong)}
+.preview .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 24px}
+.preview .item{font-size:14px}
+.preview .item .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.preview .item .val{margin-top:4px;color:var(--text);line-height:1.7}
+.char-chips{display:flex;flex-wrap:wrap;gap:6px}
+.char-chip{font-size:12px;padding:4px 10px;border-radius:6px;background:var(--action-soft);color:var(--action)}
+
+/* 剧本详情弹窗 */
+.script-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;animation:modalOverlayIn .25s ease-out forwards}
+.script-modal-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;width:min(640px,92vw);max-height:88vh}
+.script-modal{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px 40px;width:100%;max-height:calc(88vh - 80px);overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.4);transform:translateY(-20px);opacity:0;animation:modalSlideIn .35s ease-out .05s forwards;scrollbar-width:thin;scrollbar-color:rgba(111,168,160,.4) transparent}
+.script-modal::-webkit-scrollbar{width:6px}
+.script-modal::-webkit-scrollbar-track{background:transparent}
+.script-modal::-webkit-scrollbar-thumb{background:rgba(111,168,160,.35);border-radius:3px}
+.script-modal::-webkit-scrollbar-thumb:hover{background:rgba(111,168,160,.55)}
+@keyframes modalOverlayIn{to{opacity:1}}
+@keyframes modalSlideIn{to{opacity:1;transform:translateY(0)}}
+.script-modal .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;position:relative;padding-bottom:18px;border-bottom:1px dashed var(--border)}
+.script-modal .modal-kicker{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2.5px;margin-bottom:8px;opacity:.8}
+.script-modal .modal-kicker em{font-style:normal;color:var(--accent)}
+.script-modal .modal-title{font-size:22px;font-weight:600;color:var(--text-strong);display:flex;align-items:center;gap:8px;font-family:var(--font-serif);letter-spacing:2px}
+.script-modal .modal-seal{position:absolute;right:44px;top:-4px;font-family:var(--font-serif);font-size:13px;color:var(--accent);border:1.5px solid var(--accent);border-radius:4px;padding:3px 8px;letter-spacing:3px;transform:rotate(8deg);opacity:.6}
+.script-modal .modal-close{font-size:20px;color:var(--muted);cursor:pointer;background:none;border:none;padding:4px 8px;line-height:1;transition:color .2s}
+.script-modal .modal-close:hover{color:var(--danger)}
+.script-modal .worldline-flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;line-height:2}
+.script-modal .worldline-flow .wl-node{font-size:12px;padding:3px 11px;border-radius:6px;background:rgba(111,168,160,.10);color:var(--action);border:1px solid rgba(111,168,160,.25)}
+.script-modal .worldline-flow .wl-arrow{color:var(--muted);font-size:11px;opacity:.6}
+.script-modal .modal-body{margin-bottom:28px}
+.script-modal .grid .item{position:relative;padding:12px 14px;background:rgba(24,34,52,.5);border:1px solid var(--border);border-radius:10px}
+.script-modal .grid .item .label{display:flex;align-items:center;gap:6px}
+.script-modal .grid .item .label::before{content:'';width:5px;height:5px;background:var(--action);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);opacity:.8}
+.script-modal .modal-foot{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px;opacity:.55;padding-top:16px;border-top:1px solid var(--border)}
+.script-modal .modal-foot .foot-barcode{width:86px;height:14px;background:repeating-linear-gradient(90deg,var(--text) 0 2px,transparent 2px 4px,var(--text) 4px 5px,transparent 5px 9px,var(--text) 9px 10px,transparent 10px 12px);opacity:.6}
+.modal-actions-outer{display:flex;gap:12px;justify-content:center;opacity:0;animation:modalSlideIn .35s ease-out .12s forwards}
+
+/* 粒子加载页 */
+.vn-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1000;overflow:hidden}
+.vn-bg{position:absolute;inset:0;background-color:#0c0d11;background-size:cover;background-position:center;background-repeat:no-repeat;transition:background-color .5s}
+.particles-container{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2}
+.particle{position:absolute;bottom:-10px;border-radius:50%;background:rgba(111,168,160,.32);box-shadow:0 0 8px rgba(111,168,160,.18);animation:floatUp linear infinite}
+@keyframes floatUp{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:var(--p-op,.5)}90%{opacity:var(--p-op,.5)}100%{transform:translateY(-105vh) translateX(var(--p-x,30px));opacity:0}}
+.asset-title-area{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);text-align:center;z-index:5;width:100%}
+.asset-script-name{font-size:clamp(26px,4.5vw,46px);font-weight:600;color:#ededee;letter-spacing:3px;text-shadow:0 0 40px rgba(111,168,160,.14);animation:titleReveal 1.2s ease-out both}
+.asset-script-subtitle{font-size:13px;color:rgba(255,255,255,.45);letter-spacing:4px;margin-top:14px;text-transform:uppercase;animation:fadeIn 1.5s ease-out .3s both}
+@keyframes titleReveal{0%{opacity:0;transform:scale(.94);filter:blur(6px)}60%{opacity:1;filter:blur(0)}100%{opacity:1;transform:scale(1)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.asset-progress-area{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);width:min(360px,72vw);z-index:5}
+.asset-progress-bar{height:3px;background:rgba(255,255,255,.10);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.asset-progress-fill{height:100%;width:0%;background:var(--action);border-radius:2px;transition:width .4s ease;position:relative;box-shadow:0 0 6px rgba(111,168,160,.3)}
+.asset-progress-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 2s ease-in-out infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.asset-progress-msg{font-size:12px;color:rgba(255,255,255,.55);text-align:center;letter-spacing:1px}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;gap:12px;color:var(--muted)}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--action);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.section-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;font-family:var(--font-mono);display:flex;align-items:center;gap:10px}
+.section-label::before{content:'';width:8px;height:8px;background:var(--action);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);opacity:.85}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+/* 页脚档案条 */
+.footer-strip{margin-top:56px;padding:18px 0 6px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px;opacity:.6}
+.footer-strip .dots{display:flex;gap:6px}
+.footer-strip .dots i{width:5px;height:5px;border-radius:50%;background:var(--border-hover)}
+.footer-strip .dots i:first-child{background:var(--accent)}
+.project-two-shell{max-width:760px;margin:26px auto;padding:30px;border:1px solid var(--border);border-radius:16px;background:rgba(24,34,52,.72);box-shadow:0 18px 50px rgba(0,0,0,.2)}
+.project-two-kicker{font-family:var(--font-mono);font-size:10px;letter-spacing:2.5px;color:var(--accent);margin-bottom:10px}
+.project-two-title{font-family:var(--font-serif);font-size:28px;font-weight:400;letter-spacing:3px;color:var(--text-strong);margin-bottom:8px}
+.project-two-lead{font-size:13px;color:var(--muted);margin-bottom:24px}
+.project-two-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.project-two-field{padding:14px;border:1px solid var(--border);border-radius:10px;background:rgba(16,24,38,.55)}
+.project-two-field.wide{grid-column:1/-1}
+.project-two-field .label{font-family:var(--font-mono);font-size:10px;letter-spacing:1.4px;color:var(--muted);margin-bottom:6px}
+.project-two-field .value{color:var(--text-strong);white-space:pre-wrap;overflow-wrap:anywhere}
+.project-two-review{margin:20px 0;padding:20px;border-left:3px solid var(--action);border-radius:8px;background:rgba(111,168,160,.08)}
+.project-two-review h3{font-size:18px;color:var(--text-strong);margin-bottom:12px}
+.project-two-review pre{font:inherit;line-height:1.85;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
+.project-two-note{font-size:12px;color:var(--muted);margin-top:12px}
+.project-two-status{display:flex;align-items:center;gap:10px;padding:16px;margin:16px 0;border:1px dashed var(--border-hover);border-radius:10px;color:var(--text)}
+.project-two-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.project-two-secondary{background:transparent;border:1px solid var(--border-hover);color:var(--text)}
+.project-two-secondary:hover{border-color:var(--action);color:var(--action)}
+.project-two-error{color:var(--danger)}
+@media(max-width:640px){.side-mark{display:none}.case-head .stamp{right:4px!important}}
+</style>
+<script src="/static/echo-embed-bridge.js"></script>
+</head>
+<body>
+
+<div class="corner-frame tl"></div>
+<div class="corner-frame tr"></div>
+<div class="corner-frame bl"></div>
+<div class="corner-frame br"></div>
+<div class="side-mark">QUILLFORGE ARCHIVE · CASE ROOM 01</div>
+
+<div class="header">
+  <h1>QuillForge</h1>
+  <div class="meta" id="headerMeta">QuillForge · v3.0</div>
+</div>
+
+<div class="container" id="app"></div>
+
+<script src="/static/echo-project-two-entry.js"></script>
+<script>
+const API = '';
+let currentScript = null;  // {script_id, summary}
+const app = document.getElementById('app');
+let entryController = null;
+let projectTwoStartInFlight = false;
+let projectTwoStartFailed = false;
+const PROJECT_TWO_THEME_LABELS = {
+  'observation-reality': '观测与真实',
+  'memory-identity': '记忆与身份',
+  'energy-civilization': '能量与文明',
+};
+const PROJECT_TWO_ROLE_LABELS = {
+  witness: '旁证者',
+  calibrator: '校准员',
+  participant: '当事人',
+};
+
+// ─── 首页 ─────────────────────────────────────
+
+async function showHomeScreen() {
+  app.innerHTML = '<div class="loading"><div class="spinner"></div>加载内置剧本...</div>';
+  let samples = [];
+  try {
+    const res = await api('/api/samples');
+    samples = res.samples || [];
+  } catch(e) {
+    app.innerHTML = `
+      <div class="start-screen" style="text-align:center;padding:80px 24px">
+        <h2 style="font-size:24px;margin-bottom:12px">服务器未启动</h2>
+        <p style="color:var(--muted);margin-bottom:24px">请先双击 start_server.bat 启动服务，然后再刷新此页面。</p>
+        <p style="color:var(--muted);font-size:13px">服务地址: http://127.0.0.1:8050</p>
+      </div>`;
+    return;
+  }
+
+  const sampleCards = samples.map((s, idx) => `
+    <div class="sample-card" data-idx="${idx}" data-path="${s.path}" data-evidence="EVID-${String(idx + 1).padStart(2, '0')}">
+      <div class="title">${escapeHtml(s.title || s.filename)}</div>
+      <div class="info">${escapeHtml(s.worldline || '')} · ${s.total_scenes || 0} 个场景</div>
+      <div class="tags">${(s.characters||[]).map(c=>`<span class="tag">${escapeHtml(c)}</span>`).join('')}</div>
+    </div>
+  `).join('');
+
+  app.innerHTML = `
+    <div class="upload-section">
+      <!-- 案卷封头 -->
+      <div class="case-head">
+        <span class="corner-screw cs-tl"></span><span class="corner-screw cs-tr"></span><span class="corner-screw cs-bl"></span><span class="corner-screw cs-br"></span>
+        <div class="case-no">CASE FILE // <em>NO.${new Date().getFullYear()}-QF-001</em> · 调阅许可已签发</div>
+        <h2 class="hero">AI 生成剧本</h2>
+        <p class="hero-sub">输入故事描述 · 一键生成完整剧本包</p>
+        <span class="barcode"></span>
+        <div class="case-meta">立案 ${new Date().getFullYear()}.${String(new Date().getMonth()+1).padStart(2,'0')}.${String(new Date().getDate()).padStart(2,'0')} · 建档 QUILLFORGE 档案室 · 共收录 ${samples.length} 卷剧本</div>
+        <div class="stamp" style="right:6%;top:26px">立案<br>受理</div>
+      </div>
+      <div style="max-width:680px;margin:0 auto 8px">
+        <div style="position:relative">
+          <textarea id="aiPromptInput" rows="4" maxlength="150"
+              style="width:100%;padding:18px 20px;background:var(--card);border:1px solid var(--border-hover);border-radius:12px;color:var(--text);font-size:15px;line-height:1.7;outline:none;transition:border-color .2s;resize:none;font-family:inherit;position:relative;z-index:1"
+              onfocus="this.style.borderColor='var(--accent2)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+            <div id="aiPlaceholder" style="position:absolute;top:0;left:0;right:0;padding:18px 20px;color:var(--muted);font-size:16px;line-height:1.7;pointer-events:none;z-index:2;white-space:pre-wrap;overflow:hidden;min-height:calc(1.7em * 4 + 36px)"></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+            <span id="charCount" style="font-size:12px;color:var(--muted)">0 / 150</span>
+            <button class="btn btn-primary" id="aiGenerateBtn" style="padding:14px 40px;font-size:15px">开始创作</button>
+          </div>
+      </div>
+
+      <!-- 分隔线（档案骑缝线） -->
+      <div style="display:flex;align-items:center;gap:16px;margin:36px 0 28px">
+        <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))"></div>
+        <span style="font-size:11px;color:var(--muted);white-space:nowrap;font-family:var(--font-mono);letter-spacing:3px">◈ 或选择已有剧本 ◈</span>
+        <div style="flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)"></div>
+      </div>
+
+      <!-- 文件夹上传 -->
+      <div style="margin-bottom:24px">
+        <div class="upload-zone" id="dropFolderZone" style="padding:26px 20px">
+          <span class="zone-tag">EVIDENCE INTAKE // 文件夹受理窗口</span>
+          <span class="zone-stamp">证据收件</span>
+          <div class="icon">⬡</div>
+          <p>点击选择文件夹上传</p>
+          <p class="hint">保留子目录结构</p>
+        </div>
+      </div>
+      <input type="file" id="folderInput" class="file-input" webkitdirectory multiple>
+    </div>
+
+    <div class="section-label">已保存剧本 · Saved Cases</div>
+    <div class="samples" id="samplesList">${sampleCards || '<p style="color:var(--muted)">暂无剧本</p>'}</div>
+    <div class="footer-strip">
+      <span>QUILLFORGE · NARRATIVE ENGINE v3.0</span>
+      <div class="dots"><i></i><i></i><i></i></div>
+      <span>ARCHIVE ROOM // 机密等级·内部</span>
+    </div>
+    <div id="scriptModalContainer"></div>
+  `;
+
+  // AI Generate
+  document.getElementById('aiGenerateBtn').addEventListener('click', () => startAiGenerate());
+  const promptInput = document.getElementById('aiPromptInput');
+  const charCount = document.getElementById('charCount');
+  const placeholderEl = document.getElementById('aiPlaceholder');
+
+  // ─── 打字机轮播 placeholder ───
+  const typewriterPrompts = [
+    '在哈利波特世界里学习魔法，最终面对伏地魔的抉择……',
+    '一个退休老刑警在春节前接到一桩陈年旧案的线索……',
+    '深夜的末班公交车上，乘客们一个接一个消失……',
+    '穿越到古代成为一名小宫女，卷入后宫暗斗……',
+    '末日废土中，两个幸存者护送一个免疫的孩子前往避难所……',
+    '在一艘星际飞船上醒来，发现船员全部失踪，只剩AI相伴……',
+    '大学宿舍里收到一封十年后的自己寄来的信……',
+    '一个小镇书店老板发现书架上的小说正在预言现实……',
+    '雨夜，独居女孩发现门外脚印每晚会离门更近一步……',
+    '穿越成三国时代的一名小卒，意外救下了一位名将……',
+    '在一座与世隔绝的小岛上，灯塔守护人发现了漂流瓶里的求救信……',
+    '一个失忆的人在口袋里找到一张写着今晚日期的演唱会门票……',
+  ];
+  let twIdx = 0, twPos = 0, twDeleting = false, twTimer = null;
+  function twStep() {
+    const full = typewriterPrompts[twIdx];
+    if (twDeleting) {
+      twPos--;
+      if (twPos <= 0) {
+        twDeleting = false;
+        twIdx = (twIdx + 1) % typewriterPrompts.length;
+        twTimer = setTimeout(twStep, 400); // 打完后停顿再切下一条
+        placeholderEl.textContent = '\u200b'; // 零宽空格占位，保持高度
+        return;
+      }
+      twTimer = setTimeout(twStep, 30); // 退格速度
+    } else {
+      twPos++;
+      if (twPos >= full.length) {
+        // 打完整条，停留后开始退格
+        twTimer = setTimeout(() => { twDeleting = true; twStep(); }, 2200);
+        placeholderEl.textContent = full;
+        return;
+      }
+      twTimer = setTimeout(twStep, 65); // 打字速度
+    }
+    placeholderEl.textContent = full.slice(0, twPos) + (twDeleting ? '' : '▌');
+  }
+  function twStart() {
+    if (twTimer) return;
+    twTimer = setTimeout(twStep, 500);
+  }
+  function twStop() {
+    if (twTimer) { clearTimeout(twTimer); twTimer = null; }
+  }
+  function twHide() {
+    twStop();
+    placeholderEl.style.display = 'none';
+  }
+  function twShow() {
+    if (promptInput.value.trim()) return; // 有内容时不显示
+    placeholderEl.style.display = '';
+    twDeleting = false;
+    twPos = 0;
+    twIdx = (twIdx + 1) % typewriterPrompts.length; // 切到下一条
+    twStart();
+  }
+  // 初始启动
+  placeholderEl.textContent = '\u200b';
+  twStart();
+  promptInput.addEventListener('focus', twHide);
+  promptInput.addEventListener('blur', twShow);
+  promptInput.addEventListener('input', () => {
+    charCount.textContent = `${promptInput.value.length} / 150`;
+    if (promptInput.value.trim()) twHide(); else twShow();
+  });
+  // Ctrl+Enter 提交（普通 Enter 换行）
+  promptInput.addEventListener('keydown', e => { if(e.key==='Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); startAiGenerate(); } });
+
+  // Folder upload
+  const dfz = document.getElementById('dropFolderZone');
+  const folderIn = document.getElementById('folderInput');
+  dfz.addEventListener('click', () => folderIn.click());
+  folderIn.addEventListener('change', e => { if(e.target.files.length > 0) uploadFolder(e.target.files); });
+
+  // Sample card clicks — use event delegation
+  document.getElementById('samplesList').addEventListener('click', e => {
+    const card = e.target.closest('.sample-card');
+    if (!card) return;
+    document.querySelectorAll('.sample-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    fetchSample(card.dataset.path);
+  });
+}
+
+async function fetchSample(path) {
+  try {
+    const res = await fetch('/api/upload-sample-path?path=' + encodeURIComponent(path), {method:'POST'});
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'HTTP ' + res.status);
+    }
+    const data = await res.json();
+    if (data.detail) throw new Error(data.detail);
+    data.path = path;
+    currentScript = data;
+    showPreview(data);
+  } catch(e) {
+    alert('加载失败: ' + e.message);
+  }
+}
+
+function generationErrorCode(error) {
+  if (error && error.name === 'AbortError') return 'GENERATION_TIMEOUT';
+  if (error && /^HTTP \d+$/.test(error.message || '')) return 'GENERATION_HTTP_ERROR';
+  return 'GENERATION_FAILED';
+}
+
+// 统一生成传输：普通创作页和 Echo 项目二共享 SSE 管线，但 prompt 只能由各自调用方传入。
+async function generateScriptTransport(prompt, handlers) {
+  const callbacks = handlers || {};
+  const abortCtrl = new AbortController();
+  let noDataTimer = setTimeout(() => abortCtrl.abort(), 180000);
+  try {
+    const res = await fetch('/api/generate-script', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt}),
+      signal: abortCtrl.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'HTTP ' + res.status);
+    }
+    if (!res.body) throw new Error('生成响应缺少数据流');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let doneEvt = null;
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      clearTimeout(noDataTimer);
+      noDataTimer = setTimeout(() => abortCtrl.abort(), 180000);
+      buffer += decoder.decode(value, {stream: true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        let event;
+        try {
+          event = JSON.parse(line.slice(6));
+        } catch (_error) {
+          continue;
+        }
+        if (event.type === 'progress') {
+          if (typeof callbacks.onProgress === 'function') callbacks.onProgress(event);
+        } else if (event.type === 'done') {
+          doneEvt = event;
+        } else if (event.type === 'error') {
+          throw new Error(event.message || '生成失败');
+        }
+      }
+      if (doneEvt) break;
+    }
+    if (!doneEvt || !doneEvt.script_id) throw new Error('剧本生成失败');
+    if (typeof callbacks.onDone === 'function') callbacks.onDone(doneEvt);
+    return {ok: true, event: doneEvt};
+  } catch (error) {
+    if (typeof callbacks.onError === 'function') {
+      callbacks.onError(generationErrorCode(error));
+    }
+    return {ok: false, error};
+  } finally {
+    clearTimeout(noDataTimer);
+  }
+}
+
+function renderProjectTwoView(view) {
+  if (!view || view.kind === 'ordinary') return;
+  document.getElementById('headerMeta').textContent = '项目二 · 世界编织';
+
+  if (view.kind === 'error') {
+    app.innerHTML = `
+      <section class="project-two-shell" aria-live="polite">
+        <div class="project-two-kicker">ECHO HANDOFF // LOCAL GATE</div>
+        <h2 class="project-two-title">入口未能建立</h2>
+        <p class="project-two-lead">为避免错误简报触发生成，本次请求已在本地停止；没有调用生成或启动接口。</p>
+        <div class="project-two-status project-two-error" id="projectTwoLocalError"></div>
+      </section>`;
+    document.getElementById('projectTwoLocalError').textContent =
+      '错误代码：' + (view.errorCode || 'LOCAL_STATE_ERROR');
+    return;
+  }
+
+  const record = view.record;
+  if (!record) return;
+  app.innerHTML = `
+    <section class="project-two-shell" aria-live="polite">
+      <div class="project-two-kicker">ECHO PROJECT 02 // WORLD WEAVING</div>
+      <h2 class="project-two-title">项目二 · 世界编织</h2>
+      <p class="project-two-lead">这是一项生成式体验。请先核对科学母题、身份与真实世界书节选，再决定是否进入故事。</p>
+      <div class="project-two-grid">
+        <div class="project-two-field"><div class="label">科学母题</div><div class="value" id="projectTwoTheme"></div></div>
+        <div class="project-two-field"><div class="label">进入身份</div><div class="value" id="projectTwoRole"></div></div>
+        <div class="project-two-field wide"><div class="label">研究员提交的固定简报</div><div class="value" id="projectTwoBrief"></div></div>
+      </div>
+      <div class="project-two-status" id="projectTwoStatus"></div>
+      <div class="project-two-review" id="projectTwoReview" hidden>
+        <div class="project-two-kicker">WORLD BOOK // DISK SNAPSHOT</div>
+        <h3 id="projectTwoReviewTitle"></h3>
+        <pre id="projectTwoWorldbookExcerpt"></pre>
+        <p class="project-two-note" id="projectTwoTruncation" hidden>节选已到达 280 字符上限；完整世界书仍以服务端归档为准。</p>
+        <p class="project-two-note">游戏尚未开始。确认前请检查生成结果是否守住所选问题与身份。</p>
+      </div>
+      <div class="project-two-actions" id="projectTwoActions"></div>
+    </section>`;
+
+  document.getElementById('projectTwoTheme').textContent =
+    PROJECT_TWO_THEME_LABELS[record.themeId] || record.themeId;
+  document.getElementById('projectTwoRole').textContent =
+    PROJECT_TWO_ROLE_LABELS[record.roleId] || record.roleId;
+  document.getElementById('projectTwoBrief').textContent = record.canonicalBrief;
+
+  const status = document.getElementById('projectTwoStatus');
+  const actions = document.getElementById('projectTwoActions');
+  if (record.status === 'claimed' || record.status === 'generating') {
+    projectTwoStartFailed = false;
+    const progressMessage = view.progress && view.progress.message;
+    status.textContent = progressMessage ||
+      `正在按固定简报生成世界书与互动剧本（第 ${record.attempts} 次尝试）…`;
+    status.insertAdjacentHTML('afterbegin', '<span class="spinner" aria-hidden="true"></span>');
+    return;
+  }
+
+  if (record.status === 'error') {
+    projectTwoStartFailed = false;
+    status.classList.add('project-two-error');
+    status.textContent = record.errorCode === 'GENERATION_INTERRUPTED'
+      ? '上一次生成因页面刷新或关闭而中断。系统不会自动重试。'
+      : '生成未完成。可按原简报显式重试，不会读取或修改简报。';
+    actions.innerHTML = '<button class="btn btn-primary" id="projectTwoRetryBtn">按同一简报重试</button>';
+    document.getElementById('projectTwoRetryBtn').addEventListener('click', () => {
+      entryController.retryGeneration();
+    });
+    return;
+  }
+
+  if (record.status === 'review') {
+    status.textContent = projectTwoStartFailed
+      ? '进入游戏失败；世界书审阅快照仍然有效，可使用同一启动凭据重试。'
+      : '世界书与剧本已经归档，等待你的明确审阅确认。';
+    if (projectTwoStartFailed) status.classList.add('project-two-error');
+    document.getElementById('projectTwoReview').hidden = false;
+    const projectTwoReviewTitle = document.getElementById('projectTwoReviewTitle');
+    const projectTwoWorldbookExcerpt = document.getElementById('projectTwoWorldbookExcerpt');
+    projectTwoReviewTitle.textContent = record.reviewSnapshot.title;
+    projectTwoWorldbookExcerpt.textContent = record.reviewSnapshot.worldbookExcerpt;
+    document.getElementById('projectTwoTruncation').hidden =
+      !record.reviewSnapshot.worldbookTruncated;
+    actions.innerHTML = `
+      <button class="btn btn-primary" id="projectTwoStartBtn">${projectTwoStartFailed ? '重试进入项目二' : '确认世界书，进入项目二'}</button>
+      <button class="btn project-two-secondary" id="projectTwoRegenerateBtn">按同一简报重新生成世界书</button>`;
+    const projectTwoStartBtn = document.getElementById('projectTwoStartBtn');
+    projectTwoStartBtn.addEventListener('click', startReviewedProjectTwo);
+    document.getElementById('projectTwoRegenerateBtn').addEventListener('click', () => {
+      projectTwoStartFailed = false;
+      entryController.regenerateWorldbook();
+    });
+    return;
+  }
+
+  if (record.status === 'started') {
+    projectTwoStartFailed = false;
+    status.textContent = '项目二会话已经建立；请在游戏页面继续体验。';
+  }
+}
+
+async function startReviewedProjectTwo() {
+  if (projectTwoStartInFlight || !entryController) return;
+  const record = entryController.getActiveRecord();
+  if (!record || record.status !== 'review') return;
+
+  const projectTwoStartBtn = document.getElementById('projectTwoStartBtn');
+  projectTwoStartInFlight = true;
+  if (projectTwoStartBtn) {
+    projectTwoStartBtn.disabled = true;
+    projectTwoStartBtn.textContent = '正在进入项目二…';
+  }
+
+  try {
+    const request = entryController.beginReviewedStart();
+    const response = await fetch(
+      `/api/start?script_id=${encodeURIComponent(request.scriptId)}`,
+      {
+        method: 'POST',
+        headers: {
+          'Idempotency-Key': request.idempotencyKey,
+        },
+      },
+    );
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'HTTP ' + response.status);
+    }
+    const result = await response.json();
+    if (!result.session_id) throw new Error('启动响应缺少会话 ID');
+    const started = entryController.acceptReviewedStart(request.scriptId, request.idempotencyKey);
+    currentScript = {
+      script_id: request.scriptId,
+      title: started.reviewSnapshot.title,
+      has_worldbook: true,
+      worldbook_excerpt: started.reviewSnapshot.worldbookExcerpt,
+    };
+    sessionStorage.setItem('game_ctx', JSON.stringify({script: currentScript}));
+    location.href = `/game?sid=${encodeURIComponent(result.session_id)}&mode=script`;
+  } catch (_error) {
+    projectTwoStartInFlight = false;
+    projectTwoStartFailed = true;
+    const current = entryController.getActiveRecord();
+    if (current && current.status === 'review') {
+      renderProjectTwoView({kind: 'project-two', record: current});
+    }
+  }
+}
+
+// ─── AI 生成剧本：一句话 → 整本剧本包，完成后与上传剧本同走统一游玩管线 ───
+async function startAiGenerate() {
+  const input = document.getElementById('aiPromptInput');
+  const btn = document.getElementById('aiGenerateBtn');
+  const prompt = input.value.trim();
+
+  if (!prompt) { input.focus(); return; }
+  if (prompt.length > 150) { alert('描述不能超过150字'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '创作中...';
+  input.disabled = true;
+
+  // 粒子加载页
+  let particlesHTML = '';
+  for (let i = 0; i < 25; i++) {
+    const size = 2 + Math.random() * 3;
+    const left = Math.random() * 100;
+    const dur = 8 + Math.random() * 14;
+    const delay = Math.random() * 20;
+    const op = 0.2 + Math.random() * 0.5;
+    const xDrift = (Math.random() - 0.5) * 80;
+    particlesHTML += `<span class="particle" style="left:${left}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:-${delay}s;--p-op:${op};--p-x:${xDrift}px"></span>`;
+  }
+  app.innerHTML = `
+    <div class="vn-stage">
+      <div class="vn-bg" style="background:radial-gradient(ellipse at 50% 30%,#1c2b47 0%,#141f35 50%,#0d1422 100%)"></div>
+      <div class="particles-container">${particlesHTML}</div>
+      <div class="asset-title-area">
+        <div class="asset-script-name" style="font-size:clamp(22px,3.5vw,36px);font-family:var(--font-serif)">正在生成剧本</div>
+        <div class="asset-script-subtitle">${escapeHtml(prompt)}</div>
+      </div>
+      <div class="asset-progress-area" style="display:block">
+        <div class="asset-progress-bar"><div class="asset-progress-fill" id="aiProgressFill" style="width:0%"></div></div>
+        <div class="asset-progress-msg" id="aiProgressMsg">正在构思故事设定...</div>
+      </div>
+    </div>`;
+  const fillEl = () => document.getElementById('aiProgressFill');
+  const msgEl = () => document.getElementById('aiProgressMsg');
+
+  // 整本生成含 5 次 LLM 调用（部分并行），按阶段推进进度条
+  const STEP_PCT = {foundation: 18, structure: 48, choices: 70, validate: 80, link: 86, saving: 94};
+
+  try {
+    const generated = await generateScriptTransport(prompt, {
+      onProgress(event) {
+        if (msgEl()) msgEl().textContent = event.message || '生成中...';
+        const pct = STEP_PCT[event.step];
+        if (pct && fillEl()) fillEl().style.width = pct + '%';
+      },
+    });
+    if (!generated.ok) throw generated.error;
+    const doneEvt = generated.event;
+    if (fillEl()) fillEl().style.width = '100%';
+    if (msgEl()) msgEl().textContent = '剧本创作完成，正在归档...';
+
+    // 生成剧本与上传剧本合流：同一份摘要、同一个预览模态框、同一条 /api/start 管线
+    currentScript = Object.assign({}, doneEvt.summary || {}, {
+      script_id: doneEvt.script_id,
+      path: doneEvt.path || '',
+    });
+    await showHomeScreen();
+    showPreview(currentScript);
+
+  } catch(e) {
+    const msg = (e.name === 'AbortError') ? '请求超时，请重试' : e.message;
+    alert('剧本生成失败: ' + msg);
+    showHomeScreen();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '开始创作';
+    input.disabled = false;
+  }
+}
+
+async function uploadFolder(files) {
+  try {
+    const fd = new FormData();
+    for (const f of files) fd.append('files', f);
+    const res = await fetch('/api/upload-directory', { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'HTTP ' + res.status);
+    }
+    const data = await res.json();
+    if (data.detail) throw new Error(data.detail);
+    currentScript = data;
+    showPreview(data);
+  } catch(e) {
+    alert('上传失败: ' + e.message);
+  }
+}
+
+function showPreview(data) {
+  const container = document.getElementById('scriptModalContainer');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="script-modal-overlay" id="scriptModalOverlay">
+      <div class="script-modal-wrap">
+        <div class="script-modal" id="scriptModal">
+          <div class="modal-header">
+            <div>
+              <div class="modal-kicker">CASE DOSSIER // <em>NO.${(data.script_id || '------').slice(0, 8).toUpperCase()}</em> · 允许调阅</div>
+              <div class="modal-title">${escapeHtml(data.title || '剧本')}</div>
+            </div>
+            <span class="modal-seal">待<br>调阅</span>
+            <button class="modal-close" id="scriptModalClose">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="preview" style="margin-bottom:0;border:none;padding:0;background:none">
+              <div class="grid">
+                <div class="item">
+                  <div class="label">涉案角色</div>
+                  <div class="val"><div class="char-chips">${(data.characters||[]).map(c=>`<span class="char-chip">${escapeHtml(c)}</span>`).join('')}</div></div>
+                </div>
+                <div class="item">
+                  <div class="label">世界线路径</div>
+                  <div class="val">${renderWorldline(data.worldline)}</div>
+                </div>
+                <div class="item">
+                  <div class="label">场景数</div>
+                  <div class="val" style="font-family:var(--font-mono)">${data.total_scenes || 0} <span style="font-size:11px;color:var(--muted)">SCENES</span></div>
+                </div>
+                <div class="item">
+                  <div class="label">世界书</div>
+                  <div class="val">${data.has_worldbook ? '✓ 已归档' : '✗ 未归档'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <span>QUILLFORGE 档案室 · 内部资料</span>
+            <span class="foot-barcode"></span>
+          </div>
+        </div>
+        <div class="modal-actions-outer">
+          <button class="btn btn-primary" id="startBtn">进入剧本</button>
+          <button class="btn" id="minigameBtn" style="background:var(--card);border:1px solid var(--action);color:var(--action)">小游戏</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('headerMeta').textContent = data.title || '';
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('minigameBtn').addEventListener('click', enterMinigame);
+  const overlay = document.getElementById('scriptModalOverlay');
+  overlay.addEventListener('click', e => { if (e.target === overlay) container.innerHTML = ''; });
+  document.getElementById('scriptModalClose').addEventListener('click', () => { container.innerHTML = ''; });
+}
+
+// ─── 剧本管线：创建会话后跳转到游戏页 ───
+async function startGame() {
+  if (!currentScript) { alert('请先选择或上传剧本'); return; }
+
+  const startBtn = document.getElementById('startBtn');
+  if (startBtn) { startBtn.disabled = true; startBtn.textContent = '启动中...'; }
+
+  try {
+    const res = await api(`/api/start?script_id=${currentScript.script_id}`, {method:'POST'});
+    const sid = res.session_id;
+    // 存储剧本元数据供游戏页使用
+    sessionStorage.setItem('game_ctx', JSON.stringify({script: currentScript}));
+    // 跳转到游戏页
+    location.href = `/game?sid=${sid}&mode=script`;
+  } catch(e) {
+    alert('启动失败: ' + e.message);
+    if (startBtn) { startBtn.disabled = false; startBtn.textContent = '进入剧本'; }
+  }
+}
+
+// ─── 小游戏：写入一次性入场凭证后跳转小游戏页（言弹辩驳入口已并入该页）───
+function enterMinigame() {
+  if (!currentScript) { alert('请先选择或上传剧本'); return; }
+  sessionStorage.setItem('minigame_ctx', JSON.stringify({script_id: currentScript.script_id}));
+  location.href = '/minigame';
+}
+
+function renderWorldline(wl) {
+  const raw = String(wl || '').trim();
+  if (!raw) return '<span style="color:var(--muted)">—</span>';
+  const nodes = raw.split(/[→>›,，]/).map(s => s.trim()).filter(Boolean);
+  if (nodes.length < 2) return escapeHtml(raw);
+  return '<div class="worldline-flow">' + nodes.map((n, i) =>
+    `<span class="wl-node">${escapeHtml(n)}</span>` + (i < nodes.length - 1 ? '<span class="wl-arrow">▶</span>' : '')
+  ).join('') + '</div>';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function api(path, opts={}) {
+  const res = await fetch(API+path, {headers:{'Content-Type':'application/json'},...opts});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.detail||`HTTP ${res.status}`);}
+  return res.json();
+}
+
+entryController = EchoProjectTwo.createEntryController({
+  storage: sessionStorage,
+  history: window.history,
+  location: window.location,
+  uuid: () => crypto.randomUUID(),
+  transport: { generate: generateScriptTransport },
+  renderer: { render: renderProjectTwoView },
+});
+const entryOutcome = entryController.bootstrap();
+if (entryOutcome.kind === 'ordinary') {
+  showHomeScreen();
+}
+</script>
+</body>
+</html>

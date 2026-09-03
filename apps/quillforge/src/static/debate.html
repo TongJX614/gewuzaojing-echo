@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QuillForge · 言弹辩驳</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+
+        :root {
+            --ronpa-pink: #ff007f;
+            --ronpa-blue: #00ccff;
+            --ronpa-orange: #ffaa00;
+            --ronpa-red: #ff3333;
+            --bg-dark: #1a1a24;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: crosshair; /* 默认使用十字准星 */
+            /* 关键：body 必须有完整尺寸。震屏动画给 body 加 transform 后，
+               body 会成为绝对定位元素的定位基准，高度≈0 会导致轮盘等 UI 飞到屏幕外 */
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 放射状速度线背景（放大到 200vmax 并用负 margin 居中，
+           旋转时不会露出矩形边缘） */
+        .speedlines {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200vmax;
+            height: 200vmax;
+            margin-top: -100vmax;
+            margin-left: -100vmax;
+            background: repeating-conic-gradient(
+                from 0deg at 50% 50%,
+                rgba(255, 255, 255, 0.05) 0deg,
+                rgba(255, 255, 255, 0.05) 2deg,
+                transparent 2deg,
+                transparent 5deg
+            );
+            animation: spin 60s linear infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 网点纸风格遮罩 (漫画感) */
+        .halftone {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: radial-gradient(rgba(0,0,0,0.3) 1px, transparent 1px);
+            background-size: 4px 4px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .debate-text {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 
+                -3px -3px 0 #000, 3px -3px 0 #000, 
+                -3px 3px 0 #000, 3px 3px 0 #000,
+                5px 5px 0px rgba(0,0,0,0.6);
+            z-index: 10;
+            transform-origin: center;
+            opacity: 0;
+            pointer-events: none;
+            letter-spacing: 2px;
+        }
+
+        .weak-point {
+            cursor: crosshair;
+            pointer-events: auto;
+            display: inline-block;
+            transition: transform 0.1s;
+            padding: 0 5px;
+        }
+
+        .weak-point:hover {
+            transform: scale(1.15) rotate(-2deg);
+        }
+
+        .weak-point.refute {
+            color: var(--ronpa-red);
+            text-shadow: 
+                -2px -2px 0 #fff, 2px -2px 0 #fff, 
+                -2px 2px 0 #fff, 2px 2px 0 #fff,
+                0px 0px 20px var(--ronpa-red);
+        }
+
+        .weak-point.agree {
+            color: var(--ronpa-blue);
+            text-shadow: 
+                -2px -2px 0 #fff, 2px -2px 0 #fff, 
+                -2px 2px 0 #fff, 2px 2px 0 #fff,
+                0px 0px 20px var(--ronpa-blue);
+        }
+
+        @keyframes flyAcross {
+            0% { transform: translateX(100vw) rotate(var(--angle)) scale(0.8); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateX(-100vw) rotate(var(--angle)) scale(1.2); opacity: 0; }
+        }
+
+        #cylinder-container {
+            position: absolute;
+            bottom: 24px;
+            left: 20px;
+            width: 210px;
+            height: 210px;
+            z-index: 20;
+            transform-origin: center;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .cylinder {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, #2a2a35 0%, #111 80%);
+            border: 8px solid #444;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.9);
+            position: relative;
+        }
+
+        .chamber {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #000;
+            top: 50%; left: 50%;
+            margin-top: -25px; margin-left: -25px;
+            border: 3px solid #333;
+            box-shadow: inset 0 0 10px rgba(0,0,0,1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.2);
+            font-size: 0.6rem;
+            text-align: center;
+            font-weight: bold;
+            flex-direction: column;
+        }
+
+        .chamber.loaded {
+            background: radial-gradient(circle at 30% 30%, #ffcc00, #b38600);
+            border-color: #ffd700;
+            color: #000;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+        }
+
+        .chamber.loaded:hover {
+            filter: brightness(1.2);
+        }
+
+        .bullet-icon {
+            width: 14px;
+            height: 20px;
+            background: linear-gradient(to right, #e6c200, #ffea80, #e6c200);
+            border-radius: 50% 50% 10% 10% / 80% 80% 10% 10%;
+            margin-bottom: 2px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+
+        #active-bullet-info {
+            position: absolute;
+            bottom: 40px;
+            left: 250px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--ronpa-orange);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 20;
+            transform: skewX(-10deg);
+            box-shadow: 4px 4px 0 rgba(255, 170, 0, 0.5);
+            pointer-events: none;
+        }
+
+        #bullet-name-display {
+            font-size: 1.8rem;
+            display: block;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        #bullet-desc-display {
+            font-size: 1rem;
+            color: #ddd;
+            font-family: 'Microsoft YaHei', sans-serif;
+            line-height: 1.4;
+        }
+
+        #shatter-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        #flash-overlay {
+            position: absolute;
+            inset: 0;
+            background: white;
+            opacity: 0;
+            z-index: 40;
+            pointer-events: none;
+            transition: opacity 0.1s;
+        }
+
+        /* 屏幕分裂的切线特效 (斩击) */
+        #split-line {
+            position: fixed;
+            top: 50%; left: 50%;
+            width: 200vmax; height: 2px;
+            background: white;
+            z-index: 55;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -50%) rotate(25deg) scaleX(0);
+            box-shadow: 0 0 20px #fff, 0 0 40px currentColor;
+        }
+
+        @keyframes splitCut {
+            0% { transform: translate(-50%, -50%) rotate(25deg) scaleX(0); opacity: 1; height: 2px; }
+            20% { transform: translate(-50%, -50%) rotate(25deg) scaleX(1); opacity: 1; height: 4px; }
+            50% { transform: translate(-50%, -50%) rotate(25deg) scaleX(1); opacity: 1; height: 100vh; }
+            100% { transform: translate(-50%, -50%) rotate(25deg) scaleX(1); opacity: 0; height: 100vh; }
+        }
+
+        #hit-graphic {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 10rem;
+            font-weight: 900;
+            white-space: nowrap;
+            z-index: 60;
+            pointer-events: none;
+            opacity: 0;
+            text-transform: uppercase;
+        }
+
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-20deg); opacity: 0; filter: blur(10px); }
+            50% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; filter: blur(0px); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; filter: blur(0px); }
+        }
+
+        .shake {
+            animation: screenShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        @keyframes screenShake {
+            10%, 90% { transform: translate3d(-5px, 0, 0); }
+            20%, 80% { transform: translate3d(5px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-15px, -10px, 0); }
+            40%, 60% { transform: translate3d(15px, 10px, 0); }
+        }
+
+        #speaker-box {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: white;
+            color: black;
+            border: 6px solid black;
+            padding: 15px 40px;
+            font-size: 2.5rem;
+            font-weight: 900;
+            transform: skewX(-15deg);
+            box-shadow: -8px 8px 0 var(--ronpa-pink);
+            z-index: 5;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            letter-spacing: 2px;
+        }
+        
+        #game-over-panel {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            border: 4px solid var(--ronpa-blue);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 0 50px var(--ronpa-blue);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 背景层 -->
+    <div class="speedlines"></div>
+    <div class="halftone"></div>
+
+    <!-- UI 层 -->
+    <div id="speaker-box">系统提示</div>
+
+    <div id="active-bullet-info">
+        <span class="text-gray-400 text-sm">当前言弹</span>
+        <span id="bullet-name-display" class="text-yellow-400">选择言弹</span>
+        <div id="bullet-desc-display">滚动鼠标滚轮或右键切换。</div>
+    </div>
+
+    <!-- 弹巢 UI -->
+    <div id="cylinder-container">
+        <div class="cylinder" id="cylinder">
+            <!-- Chamber elements injected via JS -->
+        </div>
+    </div>
+
+    <!-- 弹幕文本层 -->
+    <div id="debate-container" class="absolute inset-0 overflow-hidden pointer-events-none z-10">
+        <!-- Text injected via JS -->
+    </div>
+
+    <!-- 特效层 -->
+    <div id="flash-overlay"></div>
+    <div id="split-line"></div>
+    <canvas id="shatter-canvas"></canvas>
+    
+    <!-- 打击文字特效 -->
+    <div id="hit-graphic">论破!</div>
+
+    <div id="game-over-panel">
+        <h1 class="text-6xl mb-6 text-blue-400">辩论结束</h1>
+        <p class="text-2xl mb-8" id="victory-text">你赢得了这场辩论！</p>
+        <div style="display:flex; gap:20px; justify-content:center;">
+            <button onclick="playAgain()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded text-xl">再来一遍</button>
+            <button onclick="backToMinigames()" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded text-xl">返回小游戏</button>
+        </div>
+    </div>
+
+    <script>
+        // 言弹仓库与辩论剧本由后端 /api/debate/generate 返回，页面加载时注入
+        let truthBullets = [];
+        let debatePhases = [];
+
+        // 辩论剧本阶段
+        let currentPhase = 0;
+
+        const cylinder = document.getElementById('cylinder');
+        const cylinderContainer = document.getElementById('cylinder-container');
+        const bulletNameDisplay = document.getElementById('bullet-name-display');
+        const bulletDescDisplay = document.getElementById('bullet-desc-display');
+        
+        let currentRotation = 0;
+        let selectedBulletIndex = 0;
+        const totalChambers = 6;
+        let chambers = [];
+
+        function initCylinder() {
+            for (let i = 0; i < totalChambers; i++) {
+                const angle = (360 / totalChambers) * i;
+                const rad = angle * (Math.PI / 180);
+                const radius = 72; 
+                
+                const x = radius * Math.sin(rad);
+                const y = -radius * Math.cos(rad);
+
+                const chamber = document.createElement('div');
+                chamber.className = 'chamber';
+                chamber.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
+
+                if (i < truthBullets.length) {
+                    chamber.classList.add('loaded');
+                    const icon = document.createElement('div');
+                    icon.className = 'bullet-icon';
+                    chamber.appendChild(icon);
+                    
+                    const textNode = document.createTextNode(truthBullets[i].short);
+                    chamber.appendChild(textNode);
+                    
+                    chamber.dataset.bulletId = truthBullets[i].id;
+                    
+                    chamber.onclick = (e) => {
+                        e.stopPropagation();
+                        rotateToBullet(i);
+                    };
+                }
+
+                cylinder.appendChild(chamber);
+                chambers.push(chamber);
+            }
+            updateBulletDisplay();
+        }
+
+        function rotateToBullet(index) {
+            if(index >= truthBullets.length) return; 
+            const anglePerChamber = 360 / totalChambers;
+            currentRotation = -(index * anglePerChamber);
+            cylinderContainer.style.transform = `rotate(${currentRotation}deg)`;
+            selectedBulletIndex = index;
+            updateBulletDisplay();
+        }
+
+        function updateBulletDisplay() {
+            if (selectedBulletIndex < truthBullets.length) {
+                bulletNameDisplay.innerText = truthBullets[selectedBulletIndex].name;
+                bulletNameDisplay.className = 'text-yellow-400';
+                bulletDescDisplay.innerText = truthBullets[selectedBulletIndex].desc;
+            }
+        }
+
+        window.addEventListener('wheel', (e) => {
+            if (isDebatePaused) return;
+            if (e.deltaY > 0) {
+                let next = (selectedBulletIndex + 1) % truthBullets.length;
+                rotateToBullet(next);
+            } else {
+                let prev = (selectedBulletIndex - 1 + truthBullets.length) % truthBullets.length;
+                rotateToBullet(prev);
+            }
+        });
+
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (isDebatePaused) return;
+            let next = (selectedBulletIndex + 1) % truthBullets.length;
+            rotateToBullet(next);
+        });
+
+        const debateContainer = document.getElementById('debate-container');
+        const speakerBox = document.getElementById('speaker-box');
+        let debateTimeouts = [];
+        let isDebatePaused = false;
+
+        function startDebatePhase() {
+            if(currentPhase >= debatePhases.length) {
+                showGameOver();
+                return;
+            }
+
+            debateContainer.innerHTML = '';
+            debateTimeouts.forEach(t => clearTimeout(t));
+            debateTimeouts = [];
+            isDebatePaused = false;
+            document.body.classList.remove('shake');
+            
+            const script = debatePhases[currentPhase];
+            let maxDelay = 0;
+
+            script.forEach(line => {
+                let t = setTimeout(() => {
+                    if (isDebatePaused) return;
+                    spawnDebateText(line);
+                }, line.delay);
+                debateTimeouts.push(t);
+                if (line.delay + line.duration > maxDelay) {
+                    maxDelay = line.delay + line.duration;
+                }
+            });
+
+            let loop = setTimeout(() => {
+                if (!isDebatePaused) {
+                    showSystemMsg("【未击破破绽，讨论重置】");
+                    setTimeout(startDebatePhase, 2000);
+                }
+            }, maxDelay + 1000);
+            debateTimeouts.push(loop);
+        }
+
+        function showSystemMsg(msg) {
+            speakerBox.innerText = msg;
+            speakerBox.style.opacity = 1;
+            speakerBox.style.boxShadow = `-8px 8px 0 #555`;
+            speakerBox.style.color = '#555';
+            speakerBox.style.borderColor = '#555';
+        }
+
+        function spawnDebateText(lineConfig) {
+            speakerBox.innerText = lineConfig.speaker;
+            speakerBox.style.opacity = 1;
+            speakerBox.style.color = 'black';
+            speakerBox.style.borderColor = 'black';
+            speakerBox.style.boxShadow = `-8px 8px 0 ${lineConfig.color}`;
+
+            const el = document.createElement('div');
+            el.className = 'debate-text pointer-events-auto'; 
+            el.innerHTML = lineConfig.text;
+            
+            el.style.setProperty('--angle', `${lineConfig.angle}deg`);
+            el.style.top = `${lineConfig.yPos}%`;
+            
+            el.style.animation = `flyAcross ${lineConfig.duration}ms linear forwards`;
+
+            debateContainer.appendChild(el);
+
+            setTimeout(() => {
+                if (el.parentNode) el.parentNode.removeChild(el);
+            }, lineConfig.duration);
+        }
+
+        const shatterCanvas = document.getElementById('shatter-canvas');
+        const ctx = shatterCanvas.getContext('2d');
+        const flashOverlay = document.getElementById('flash-overlay');
+        const hitGraphic = document.getElementById('hit-graphic');
+
+        function resizeCanvas() {
+            shatterCanvas.width = window.innerWidth;
+            shatterCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let shards = [];
+        let animationFrameId;
+
+        document.addEventListener('click', (e) => {
+            if(e.target.closest('#cylinder-container')) return;
+            if(e.target.closest('#active-bullet-info')) return;
+            if(e.target.tagName === 'BUTTON') return; 
+            
+            if(isDebatePaused) return;
+
+            if (e.target.classList.contains('weak-point') && !isDebatePaused) {
+                const targetBullet = e.target.getAttribute('data-target');
+                const isRefute = e.target.classList.contains('refute');
+                const activeBullet = truthBullets[selectedBulletIndex];
+
+                if (activeBullet && activeBullet.id === targetBullet) {
+                    // 打中目标，触发两段式高潮动画
+                    triggerShatter(e.clientX, e.clientY, isRefute ? 'RONPA' : 'AGREE');
+                    e.target.style.opacity = 0; 
+                } else {
+                    // 打错言弹
+                    document.body.classList.remove('shake');
+                    void document.body.offsetWidth; 
+                    document.body.classList.add('shake');
+                    
+                    flashOverlay.style.background = 'red';
+                    flashOverlay.style.opacity = 0.3;
+                    setTimeout(() => { 
+                        flashOverlay.style.opacity = 0; 
+                        setTimeout(()=> flashOverlay.style.background = 'white', 100);
+                    }, 100);
+                }
+            } else if (!isDebatePaused) {
+                drawMuzzleFlash(e.clientX, e.clientY);
+            }
+        });
+
+        function drawMuzzleFlash(x, y) {
+            const flash = document.createElement('div');
+            flash.style.position = 'absolute';
+            flash.style.left = `${x-20}px`;
+            flash.style.top = `${y-20}px`;
+            flash.style.width = '40px';
+            flash.style.height = '40px';
+            flash.style.background = 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,200,0,0.8) 40%, rgba(255,0,0,0) 80%)';
+            flash.style.borderRadius = '50%';
+            flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '30';
+            flash.style.opacity = 1;
+            flash.style.transition = 'opacity 0.1s, transform 0.1s';
+            flash.style.transform = 'scale(0.5)';
+            document.body.appendChild(flash);
+            
+            setTimeout(() => {
+                flash.style.transform = 'scale(2)';
+                flash.style.opacity = 0;
+            }, 10);
+            
+            setTimeout(() => {
+                if(flash.parentNode) document.body.removeChild(flash);
+            }, 150);
+        }
+
+        // ============================
+        // 核心特效：两段式高潮演出
+        // ============================
+        function triggerShatter(x, y, type) {
+            isDebatePaused = true;
+            debateTimeouts.forEach(t => clearTimeout(t)); 
+            
+            document.querySelectorAll('.debate-text').forEach(el => {
+                el.style.animationPlayState = 'paused';
+            });
+
+            // 【第一段】：文字在鼠标点击位置爆炸碎裂
+            document.body.classList.remove('shake');
+            void document.body.offsetWidth;
+            document.body.classList.add('shake');
+
+            shards = [];
+            const numShards = 70;
+            for (let i = 0; i < numShards; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 25 + 10;
+                const size = Math.random() * 60 + 20;
+                
+                const vertices = [];
+                const sides = Math.floor(Math.random() * 3) + 3; 
+                for (let j = 0; j < sides; j++) {
+                    const vAngle = (Math.PI * 2 / sides) * j + (Math.random() * 0.5);
+                    const vRad = size * (0.5 + Math.random() * 0.5);
+                    vertices.push({ x: Math.cos(vAngle) * vRad, y: Math.sin(vAngle) * vRad });
+                }
+
+                shards.push({
+                    x: x, y: y, // 从点击坐标爆发
+                    vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                    rot: 0, rotSpeed: (Math.random() - 0.5) * 0.8,
+                    vertices: vertices,
+                    color: Math.random() > 0.2 ? '#ffffff' : (type === 'RONPA' ? 'var(--ronpa-pink)' : 'var(--ronpa-blue)'),
+                    life: 1.0, decay: Math.random() * 0.015 + 0.005
+                });
+            }
+
+            cancelAnimationFrame(animationFrameId);
+            drawShatter();
+
+            // 稍微等待文字碎裂特效展现后，触发第二段演出
+            setTimeout(() => {
+                playSlashAndPop(type);
+            }, 600); 
+        }
+
+        function playSlashAndPop(type) {
+            // 【第二段-1】：闪白并播放全屏斜向斩击线
+            flashOverlay.style.opacity = 1;
+            setTimeout(() => { flashOverlay.style.opacity = 0; }, 150);
+
+            const splitLine = document.getElementById('split-line');
+            splitLine.style.color = type === 'RONPA' ? 'var(--ronpa-pink)' : 'var(--ronpa-blue)';
+            splitLine.style.animation = 'splitCut 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards';
+
+            // 【第二段-2】：斩击线劈开后，伴随震动弹出“论破/赞同”字样，画面撕裂
+            setTimeout(() => {
+                showHitGraphic(type);
+                // 强烈震动 (撕裂感)
+                document.body.classList.remove('shake');
+                void document.body.offsetWidth;
+                document.body.classList.add('shake');
+            }, 250); // 在斩击线出现一半的时候弹出大字
+
+            // 整个演出结束，清理并进入下一阶段
+            setTimeout(() => {
+                currentPhase++;
+                shards = []; 
+                ctx.clearRect(0, 0, shatterCanvas.width, shatterCanvas.height);
+                hideHitGraphic();
+                splitLine.style.animation = 'none'; // 重置切线
+                startDebatePhase();
+            }, 3000); 
+        }
+
+        function drawShatter() {
+            ctx.clearRect(0, 0, shatterCanvas.width, shatterCanvas.height);
+            let alive = false;
+
+            shards.forEach(shard => {
+                if (shard.life <= 0) return;
+                alive = true;
+
+                shard.x += shard.vx;
+                shard.y += shard.vy;
+                shard.vy += 0.8; 
+                shard.rot += shard.rotSpeed;
+                shard.life -= shard.decay;
+
+                ctx.save();
+                ctx.translate(shard.x, shard.y);
+                ctx.rotate(shard.rot);
+                ctx.globalAlpha = shard.life;
+                
+                ctx.beginPath();
+                ctx.moveTo(shard.vertices[0].x, shard.vertices[0].y);
+                for (let i = 1; i < shard.vertices.length; i++) {
+                    ctx.lineTo(shard.vertices[i].x, shard.vertices[i].y);
+                }
+                ctx.closePath();
+                
+                ctx.fillStyle = shard.color;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                ctx.restore();
+            });
+
+            if (alive) {
+                animationFrameId = requestAnimationFrame(drawShatter);
+            }
+        }
+
+        function showHitGraphic(type) {
+            hitGraphic.style.animation = 'none';
+            void hitGraphic.offsetWidth; 
+            
+            if (type === 'RONPA') {
+                hitGraphic.innerText = '论破!';
+                hitGraphic.style.color = 'var(--ronpa-pink)';
+                hitGraphic.style.textShadow = '-5px -5px 0 #fff, 5px -5px 0 #fff, -5px 5px 0 #fff, 5px 5px 0 #fff, 15px 15px 0px #000';
+            } else {
+                hitGraphic.innerText = '赞同!';
+                hitGraphic.style.color = 'var(--ronpa-blue)';
+                hitGraphic.style.textShadow = '-5px -5px 0 #fff, 5px -5px 0 #fff, -5px 5px 0 #fff, 5px 5px 0 #fff, 15px 15px 0px #000';
+            }
+            
+            hitGraphic.style.opacity = 1;
+            hitGraphic.style.animation = 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+        }
+
+        function hideHitGraphic() {
+            hitGraphic.style.animation = 'none';
+            hitGraphic.style.opacity = 0;
+        }
+
+        function showGameOver() {
+            const vt = document.getElementById('victory-text');
+            if (vt && GAME_DATA.victoryText) vt.innerText = GAME_DATA.victoryText;
+            document.getElementById('game-over-panel').style.display = 'block';
+            isDebatePaused = true;
+        }
+
+        // 后端返回的辩论数据容器（/api/debate/generate）
+        let GAME_DATA = {};
+        let currentScriptId = '';
+
+        function resetGameState() {
+            currentPhase = 0;
+            selectedBulletIndex = 0;
+            currentRotation = 0;
+            chambers = [];
+            cylinder.innerHTML = '';
+            cylinderContainer.style.transform = '';
+            debateContainer.innerHTML = '';
+            debateTimeouts.forEach(t => clearTimeout(t));
+            debateTimeouts = [];
+            isDebatePaused = false;
+            document.getElementById('game-over-panel').style.display = 'none';
+        }
+
+        function initGame(data) {
+            GAME_DATA = data;
+            truthBullets = data.truthBullets;
+            debatePhases = data.phases;
+            if (data.title) document.title = data.title;
+            initCylinder();
+        }
+
+        async function startBootstrap(scriptId) {
+            currentScriptId = scriptId;
+            showSystemMsg("AI 正在根据剧本生成辩论…请稍候");
+            document.getElementById('active-bullet-info').style.opacity = 0;
+
+            let res;
+            try {
+                res = await fetch(`/api/debate/generate?script_id=${encodeURIComponent(scriptId)}`, { method: 'POST' });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `HTTP ${res.status}`);
+                }
+                const body = await res.json();
+                initGame(body.data);
+            } catch (e) {
+                showSystemMsg("辩论生成失败：" + e.message);
+                return;
+            }
+
+            document.getElementById('active-bullet-info').style.opacity = 1;
+            showSystemMsg("按【鼠标滚轮】或【右键】切换言弹");
+
+            setTimeout(() => {
+                showSystemMsg("用正确的言弹击打有色字体！");
+                setTimeout(() => {
+                    startDebatePhase();
+                }, 2000);
+            }, 2500);
+        }
+
+        // 再来一遍：不刷新页面，重置状态后重新请求生成新一场辩论
+        function playAgain() {
+            if (!currentScriptId) { location.href = '/'; return; }
+            resetGameState();
+            startBootstrap(currentScriptId);
+        }
+
+        // 返回小游戏菜单：回写一次性入场凭证后跳转（入口归属在小游戏页）
+        function backToMinigames() {
+            if (!currentScriptId) { location.href = '/'; return; }
+            sessionStorage.setItem('minigame_ctx', JSON.stringify({ script_id: currentScriptId }));
+            location.href = '/minigame';
+        }
+
+        window.onload = () => {
+            // 读取首页写入的一次性入场凭证，读后即删：
+            // 刷新页面或直接访问时凭证不存在，直接返回首页，避免重复消耗生成
+            let ctx = null;
+            try { ctx = JSON.parse(sessionStorage.getItem('debate_ctx') || 'null'); } catch (e) {}
+            sessionStorage.removeItem('debate_ctx');
+            if (!ctx || !ctx.script_id) {
+                location.replace('/');
+                return;
+            }
+            startBootstrap(ctx.script_id);
+        };
+    </script>
+</body>
+</html>

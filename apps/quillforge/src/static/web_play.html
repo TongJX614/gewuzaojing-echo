@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>互动剧情</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0a0f; color:#e0e0e0; font-family:'PingFang SC','Microsoft YaHei',sans-serif; min-height:100vh; }
+.container { max-width:720px; margin:0 auto; padding:20px 16px; }
+
+/* 顶部 */
+.header { text-align:center; padding:30px 0 20px; border-bottom:1px solid #222; margin-bottom:24px; }
+.header h1 { font-size:24px; color:#c8a86e; letter-spacing:2px; }
+.header .subtitle { font-size:13px; color:#666; margin-top:8px; }
+
+/* 加载面板 */
+.load-panel { background:#111; border:1px solid #222; border-radius:12px; padding:24px; margin-bottom:24px; }
+.load-panel label { display:block; font-size:13px; color:#888; margin-bottom:6px; }
+.load-panel input { width:100%; padding:10px 14px; background:#1a1a24; border:1px solid #333; border-radius:8px; color:#ddd; font-size:14px; outline:none; }
+.load-panel input:focus { border-color:#c8a86e; }
+.btn-load { margin-top:12px; width:100%; padding:12px; background:#c8a86e; color:#0a0a0f; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
+.btn-load:hover { background:#d4b87a; }
+.btn-load:disabled { background:#555; cursor:not-allowed; }
+
+/* 角色卡 */
+.characters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.char-card { background:#151520; border:1px solid #2a2a35; border-radius:8px; padding:10px 14px; flex:1; min-width:140px; }
+.char-card .name { font-size:15px; font-weight:600; color:#c8a86e; }
+.char-card .role { font-size:12px; color:#888; margin-top:2px; }
+
+/* 场景 */
+.scene-header { background:#151520; border-left:3px solid #c8a86e; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:16px; }
+.scene-header .scene-name { font-size:18px; font-weight:600; }
+.scene-header .scene-meta { font-size:12px; color:#777; margin-top:4px; }
+
+/* 旁白 */
+.narration { background:linear-gradient(135deg,#12121a,#1a1a28); border:1px solid #252535; border-radius:10px; padding:18px 20px; margin-bottom:20px; font-size:15px; line-height:1.8; color:#bbb; font-style:italic; }
+
+/* 对话 */
+.dialogues { margin-bottom:24px; }
+.dialogue { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid #1a1a25; }
+.dialogue:last-child { border-bottom:none; }
+.dialogue .speaker { min-width:64px; font-size:14px; font-weight:600; color:#c8a86e; padding-top:2px; text-align:right; }
+.dialogue .text { font-size:15px; line-height:1.7; color:#ddd; flex:1; }
+
+/* 选项 */
+.choices-title { font-size:14px; color:#888; margin-bottom:12px; }
+.choices { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.choice-btn { background:#151520; border:1px solid #2a2a35; border-radius:10px; padding:14px 18px; cursor:pointer; text-align:left; transition:all .2s; }
+.choice-btn:hover { border-color:#c8a86e; background:#1a1a28; }
+.choice-btn .choice-text { font-size:15px; color:#e0e0e0; }
+.choice-btn .choice-effect { font-size:12px; color:#777; margin-top:4px; }
+
+/* 状态 */
+.status { text-align:center; padding:40px 20px; }
+.status .spinner { display:inline-block; width:32px; height:32px; border:3px solid #333; border-top-color:#c8a86e; border-radius:50%; animation:spin 1s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.status .msg { margin-top:12px; font-size:14px; color:#888; }
+
+/* 结局 */
+.ending { background:#151520; border:1px solid #c8a86e44; border-radius:12px; padding:24px; text-align:center; margin-top:20px; }
+.ending h2 { color:#c8a86e; margin-bottom:12px; }
+.ending .choices-made { text-align:left; margin:16px 0; }
+.ending .choices-made li { font-size:13px; color:#aaa; margin:4px 0; }
+.btn-restart { padding:10px 24px; background:#c8a86e; color:#0a0a0f; border:none; border-radius:8px; font-size:14px; cursor:pointer; }
+
+/* 历史 */
+.history-block { border-top:1px solid #222; padding-top:16px; margin-top:16px; opacity:.7; }
+.history-block .scene-name { font-size:14px; color:#666; }
+
+.error { background:#2a1515; border:1px solid #6a2222; border-radius:8px; padding:14px; color:#e88; margin-bottom:16px; }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <div class="header">
+    <h1 id="storyTitle">互动剧情引擎</h1>
+    <div class="subtitle" id="storySubtitle">AI 驱动的互动叙事体验</div>
+  </div>
+
+  <!-- 加载面板 -->
+  <div class="load-panel" id="loadPanel">
+    <label>剧本目录路径</label>
+    <input type="text" id="storyPath" placeholder="例：samples/回响-DEMO" />
+    <button class="btn-load" id="btnLoad" onclick="loadStory()">加载剧本</button>
+  </div>
+
+  <!-- 游戏区域 -->
+  <div id="gameArea" style="display:none"></div>
+</div>
+
+<script>
+const DEFAULT_PATH = '__DEFAULT_PATH__';
+let storyData = null;
+let currentScene = 0;
+let allHistory = [];
+let choicesMade = [];
+
+// 初始化
+if (DEFAULT_PATH) {
+  document.getElementById('storyPath').value = DEFAULT_PATH;
+}
+
+async function api(endpoint, body) {
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({detail: resp.statusText}));
+    throw new Error(err.detail || resp.statusText);
+  }
+  return resp.json();
+}
+
+async function loadStory() {
+  const path = document.getElementById('storyPath').value.trim();
+  if (!path) return alert('请输入剧本目录路径');
+  const btn = document.getElementById('btnLoad');
+  btn.disabled = true; btn.textContent = '加载中...';
+  try {
+    storyData = await api('/api/story', {path});
+    document.getElementById('storyTitle').textContent = storyData.title || '互动剧情';
+    document.getElementById('storySubtitle').textContent =
+      `${storyData.characters.length} 个角色 · ${storyData.totalScenes} 个场景`;
+    document.getElementById('loadPanel').style.display = 'none';
+    currentScene = 0; allHistory = []; choicesMade = [];
+    document.getElementById('gameArea').style.display = 'block';
+    playScene(0);
+  } catch(e) {
+    alert('加载失败：' + e.message);
+    btn.disabled = false; btn.textContent = '加载剧本';
+  }
+}
+
+async function playScene(index, choice, history) {
+  const area = document.getElementById('gameArea');
+  area.innerHTML = `<div class="status"><div class="spinner"></div><div class="msg">AI 正在生成剧情...</div></div>`;
+
+  try {
+    const body = { storyPath: document.getElementById('storyPath').value.trim(), sceneIndex: index };
+    if (choice) { body.playerChoice = choice; body.previousDialogues = history || []; }
+    const result = await api('/api/scene', body);
+    renderScene(result, index);
+  } catch(e) {
+    area.innerHTML = `<div class="error">生成失败：${e.message}</div>`;
+  }
+}
+
+function renderScene(data, index) {
+  const area = document.getElementById('gameArea');
+  let html = '';
+
+  // 角色卡（仅第一幕显示）
+  if (index === 0 && storyData.characters.length) {
+    html += '<div class="characters">';
+    storyData.characters.forEach(c => {
+      html += `<div class="char-card"><div class="name">${c.name}</div><div class="role">${c.role}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // 场景头
+  html += `<div class="scene-header">
+    <div class="scene-name">第${index+1}幕：${data._sceneName || ''}</div>
+    <div class="scene-meta">${data._location || ''}${data._time ? ' · ' + data._time : ''}</div>
+  </div>`;
+
+  // 旁白
+  html += `<div class="narration">${data.narration}</div>`;
+
+  // 对话
+  html += '<div class="dialogues">';
+  data.dialogues.forEach(d => {
+    html += `<div class="dialogue"><div class="speaker">${d.speaker}</div><div class="text">${d.text}</div></div>`;
+  });
+  html += '</div>';
+
+  // 选项
+  const choices = data.nextChoices || [];
+  if (choices.length > 0) {
+    html += `<div class="choices-title">${escapeHtml(data._choicePrompt || '请选择你的行动')}</div>`;
+    html += '<div class="choices">';
+    choices.forEach((c, i) => {
+      html += `<div class="choice-btn" data-choice-index="${i}">
+        <div class="choice-text">${i+1}. ${escapeHtml(c.text)}</div>
+        <div class="choice-effect">${escapeHtml(c.effect)}</div>
+      </div>`;
+    });
+    html += '</div>';
+  } else {
+    html += renderEnding();
+  }
+
+  area.innerHTML = html;
+
+  // 绑定选项点击事件（避免内联 onclick 转义问题）
+  area.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.choiceIndex, 10);
+      makeChoice(index, choices[idx].text);
+    });
+  });
+}
+
+function makeChoice(sceneIndex, choiceText) {
+  // 收集当前对话到历史
+  const dialogues = document.querySelectorAll('.dialogue');
+  const currentDialogues = [];
+  dialogues.forEach(d => {
+    currentDialogues.push({
+      speaker: d.querySelector('.speaker').textContent,
+      text: d.querySelector('.text').textContent,
+    });
+  });
+  allHistory = allHistory.concat(currentDialogues);
+  choicesMade.push(choiceText);
+
+  const nextIndex = sceneIndex + 1;
+  if (nextIndex >= storyData.totalScenes) {
+    document.getElementById('gameArea').innerHTML = renderEnding();
+    return;
+  }
+  playScene(nextIndex, choiceText, allHistory);
+}
+
+function renderEnding() {
+  let html = '<div class="ending"><h2>— 剧终 —</h2>';
+  if (choicesMade.length) {
+    html += '<p style="color:#888;margin-bottom:12px">你做出了以下关键选择：</p><ul class="choices-made">';
+    choicesMade.forEach((c,i) => { html += `<li>${i+1}. ${c}</li>`; });
+    html += '</ul>';
+  }
+  html += `<p style="color:#666;margin:12px 0">共 ${choicesMade.length} 个抉择 · ${allHistory.length} 轮对话</p>`;
+  html += `<button class="btn-restart" onclick="location.reload()">重新开始</button></div>`;
+  return html;
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+</body>
+</html>

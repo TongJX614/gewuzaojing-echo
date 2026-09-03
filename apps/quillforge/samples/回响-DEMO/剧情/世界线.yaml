@@ -1,0 +1,121 @@
+# 世界线设定
+# 定义多线叙事的分支逻辑
+
+world_lines:
+  # ============================================================
+  # 主线世界线
+  # ============================================================
+  - id: "main_line"
+    name: "主线"
+    description: "苏然发现真相并前往对峙的基础路线"
+
+    path:
+      - scene_id: "scene_01"
+        sequence: 1
+        description: "苏然收到委托，开始修复"
+      - scene_id: "scene_02"
+        sequence: 2
+        description: "进入记忆空间，发现异常"
+      - scene_id: "scene_03"
+        sequence: 3
+        description: "与杜维明对峙"
+      - scene_id: "scene_04"
+        sequence: 4
+        description: "走向结局"
+
+    key_choices:
+      - "choice_01"
+      - "choice_02"
+      - "choice_03"
+
+    end结局: "ending_02"
+
+  # ============================================================
+  # 分支世界线A：真相线
+  # ============================================================
+  - id: "branch_line_a"
+    name: "真相线"
+    description: "苏然选择深入真相，不惜一切代价"
+
+    origin_scene: "scene_02"
+    conditions:
+      - type: "choice_made"
+        value: "在scene_02选择continue"
+
+    path:
+      - scene_id: "scene_02"
+        sequence: 2
+        description: "苏然选择继续深入修复"
+      - scene_id: "scene_03"
+        sequence: 3
+        description: "苏然携带完整证据对峙"
+      - scene_id: "scene_04"
+        sequence: 4
+        description: "走向结局"
+
+    consequences: "苏然获得完整真相，但面临更大的危险"
+
+    end结局: "ending_03"
+
+  # ============================================================
+  # 分支世界线B：安全线
+  # ============================================================
+  - id: "branch_line_b"
+    name: "安全线"
+    description: "苏然选择停止修复，保护自己"
+
+    origin_scene: "scene_02"
+    conditions:
+      - type: "choice_made"
+        value: "在scene_02选择stop"
+
+    path:
+      - scene_id: "scene_02"
+        sequence: 2
+        description: "苏然选择停止修复"
+      - scene_id: "scene_03"
+        sequence: 3
+        description: "苏然在不完全了解真相的情况下对峙"
+      - scene_id: "scene_04"
+        sequence: 4
+        description: "走向结局"
+
+    consequences: "苏然放弃了了解真相的机会，选择了安全"
+
+    end结局: "ending_01"
+
+  # ============================================================
+  # 汇聚点
+  # ============================================================
+convergence_points:
+    - scene_id: "scene_03"
+      description: "无论选择哪条线，苏然都会前往对峙"
+      required_conditions:
+        - "完成scene_02"
+
+    - scene_id: "scene_04"
+      description: "所有路线最终走向结局"
+      required_conditions:
+        - "完成scene_03"
+
+  # ============================================================
+  # 世界线规则
+  # ============================================================
+rules:
+  - rule_id: "rule_01"
+    name: "分支规则"
+    description: "玩家在scene_02的选择决定进入真相线还是安全线"
+    condition: "在scene_02做出选择"
+    effect: "进入对应的分支世界线"
+
+  - rule_id: "rule_02"
+    name: "汇聚规则"
+    description: "无论哪条线，scene_03和scene_04都会发生"
+    condition: "完成scene_02"
+    effect: "进入scene_03，但可获取的信息量不同"
+
+  - rule_id: "rule_03"
+    name: "隐藏结局规则"
+    description: "要进入隐藏结局，需要在多个场景中做出特定选择"
+    condition: "在scene_02选择continue，且在scene_01选择investigate"
+    effect: "解锁scene_03的隐藏选项'埋下伏笔'"

@@ -1,0 +1,113 @@
+# 角色关系
+# 定义角色之间的关系网络和动态变化规则
+
+# ============================================================
+# 关系定义
+# ============================================================
+relationships:
+  - source: "su_ran"
+    target: "lin_xiao"
+    type: "搭档"
+    description: |
+      苏然将林晓视为最信任的伙伴，两人的关系超越了简单的"使用者-工具"。
+      苏然教林晓什么是人类的情感，林晓则帮苏然维持理智和人情味。
+    initial_level: 8
+    dynamic: true
+    development:
+      - trigger: "发现林晓的后门程序"
+        change: "信任动摇，关系降至5"
+        scene: "scene_02"
+      - trigger: "林晓主动删除后门程序"
+        change: "信任重建并加深，关系升至10"
+        scene: "scene_03"
+
+  - source: "su_ran"
+    target: "du_weiming"
+    type: "前上司"
+    description: |
+      苏然曾将杜维明视为职业导师，离职后仍保持尊敬。
+      随着真相揭露，尊敬逐渐转为愤怒和背叛感。
+    initial_level: 4
+    dynamic: true
+    development:
+      - trigger: "发现辞职记忆被篡改"
+        change: "怀疑加深，关系降至2"
+        scene: "scene_02"
+      - trigger: "杜维明承认删除她的记忆"
+        change: "彻底敌对，关系降至0"
+        scene: "scene_03"
+
+  - source: "lin_xiao"
+    target: "du_weiming"
+    type: "造物"
+    description: |
+      林晓不知道杜维明是她的创造者。
+      当真相揭露时，她会面临"程序设定"与"自我意志"的冲突。
+    initial_level: 0
+    dynamic: true
+    development:
+      - trigger: "得知杜维明是创造者"
+        change: "复杂的情感反应，关系升至3"
+        scene: "scene_03"
+      - trigger: "杜维明试图用后门控制她"
+        change: "反抗并切断联系，关系降至0"
+        scene: "scene_03"
+
+# ============================================================
+# 关系类型定义
+# ============================================================
+relationship_types:
+  - id: "partner"
+    name: "搭档"
+    description: "工作伙伴，互相依赖"
+    min_level: 0
+    max_level: 10
+
+  - id: "mentor"
+    name: "师徒"
+    description: "指导与学习的关系"
+    min_level: 0
+    max_level: 10
+
+  - id: "rival"
+    name: "对手"
+    description: "利益冲突的双方"
+    min_level: 0
+    max_level: 10
+
+  - id: "stranger"
+    name: "陌生人"
+    description: "没有交集的个体"
+    min_level: 0
+    max_level: 10
+
+  - id: "creator"
+    name: "造物"
+    description: "创造者与被创造者"
+    min_level: 0
+    max_level: 10
+
+# ============================================================
+# 关系变化规则
+# ============================================================
+change_rules:
+  - rule_id: "trust_break"
+    description: "发现被欺骗时，信任大幅下降"
+    condition: "发现被欺骗"
+    change: -3
+    max_level: 10
+    min_level: 0
+
+  - rule_id: "trust_rebuild"
+    description: "对方做出牺牲/坦诚时，信任恢复"
+    condition: "对方做出牺牲或坦诚"
+    change: +2
+    max_level: 10
+    min_level: 0
+
+  - rule_id: "shared_risk"
+    description: "共同经历危险后，关系加深"
+    condition: "共同经历危险"
+    change: +1
+    max_level: 10
+    min_level: 0

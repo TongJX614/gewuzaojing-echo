@@ -1,0 +1,57 @@
+# 示例场景：太空陨石流
+# 这是参考输入对应的完整配置示例
+
+scene:
+  currentScene: "太空旅行中，飞船遭遇陨石流"
+
+  characters:
+    - name: "林晗"
+      role: "物理学家"
+      personality: "冷静理性"
+      speakingStyle: "学术腔，喜欢用数据和概率说话，句式精准"
+      background: |
+        天体物理学博士，飞船首席科学家。
+        习惯用数据来评估一切，包括风险。
+
+    - name: "赵远山"
+      role: "指挥官"
+      personality: "果断务实"
+      speakingStyle: "简短有力，命令式语气，重结果"
+      background: |
+        退役军人，有丰富的太空航行经验。
+        在危机中越冷静的人，越信任他的判断。
+
+  worldline: "出发 → 旅行 → 危机 → 到达"
+  playerChoice: "选择左转躲避（非正面硬扛）"
+
+# 预期输出参考
+expected_output:
+  narration: |
+    陨石流在雷达上密密麻麻，像一场无声的暴雨。
+    飞船的警报系统发出刺耳的蜂鸣，红色的警示灯在驾驶舱内闪烁。
+    赵远山的手已经握住了操控杆，而林晗的目光死死盯着数据屏幕上飞速变化的轨迹参数。
+
+  dialogues:
+    - speaker: "赵远山"
+      text: "左转！现在！"
+      emotion: "急切"
+    - speaker: "林晗"
+      text: "左转的话我们会偏离航线至少 3 天。燃料余量够吗？"
+      emotion: "分析"
+    - speaker: "赵远山"
+      text: "先活下来再算账。"
+      emotion: "果断"
+    - speaker: "林晗"
+      text: "……偏转角度 37 度，推进器全开。我已经算好了。"
+      emotion: "沉着"
+
+  nextChoices:
+    - text: "执行左转规避"
+      effect: "安全但延误 3 天"
+      worldlineImpact: "stay_current"
+    - text: "正面穿越陨石流"
+      effect: "高风险高回报"
+      worldlineImpact: "advance_risky"
+    - text: "释放诱饵无人机引开陨石"
+      effect: "消耗资源但获取情报"
+      worldlineImpact: "side_branch"

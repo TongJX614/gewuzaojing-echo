@@ -1,0 +1,2429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.cn">
+<link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin>
+<link href="https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<title>QuillForge — 互动剧场</title>
+<style>
+:root{--bg:#101826;--card:#182234;--card-hover:#1e2b44;--border:#2e3d55;--border-hover:#3c5170;--accent:#e4572e;--accent-soft:rgba(228,87,46,.10);--accent2:#f0764f;--action:#6fa8a0;--action2:#8fc2ba;--action-soft:rgba(111,168,160,.13);--text:#c5cfdd;--text-strong:#f2ead9;--muted:#7e8ca3;--danger:#e0654f;--success:#7cb98a;--warn:#d9a441;--font-sans:'Noto Sans SC','Microsoft YaHei','PingFang SC',system-ui,sans-serif;--font-serif:'ZCOOL QingKe HuangYou','Noto Sans SC','Microsoft YaHei',sans-serif;--font-mono:'JetBrains Mono','Consolas',monospace}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font-sans);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;overflow:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.container{max-width:900px;margin:0 auto;padding:24px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#0a0b0e}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 16px var(--accent-soft)}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-sm{padding:8px 16px;font-size:13px}
+
+/* Galgame VN Stage */
+.vn-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1000;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.vn-bg{position:absolute;inset:0;background-color:#0d1422;background-size:cover;background-position:center;background-repeat:no-repeat;transition:background-color .5s}
+.vn-bg.vn-bg-shift{top:50px}
+.vn-sprites{position:absolute;inset:0;pointer-events:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 1% 70px}
+.vn-sprite{width:400px;height:720px;max-height:80vh;border-radius:16px 16px 0 0;transition:all .4s ease;position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.vn-sprite .sprite-body{width:180px;height:500px;background:#5a6470;border-radius:60px 60px 20px 20px;opacity:.7;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.vn-sprite .sprite-img{width:100%;height:100%;object-fit:contain;object-position:bottom;border-radius:16px 16px 0 0;box-shadow:0 8px 32px rgba(0,0,0,.25);-webkit-mask-image:linear-gradient(to bottom,#000 80%,transparent 100%);mask-image:linear-gradient(to bottom,#000 80%,transparent 100%)}
+/* 素材预生成加载页 */
+.particles-container{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2}
+.particle{position:absolute;bottom:-10px;border-radius:50%;background:rgba(111,168,160,.32);box-shadow:0 0 8px rgba(111,168,160,.18);animation:floatUp linear infinite}
+@keyframes floatUp{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:var(--p-op,.5)}90%{opacity:var(--p-op,.5)}100%{transform:translateY(-105vh) translateX(var(--p-x,30px));opacity:0}}
+.asset-title-area{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);text-align:center;z-index:5;width:100%}
+.asset-script-name{font-size:clamp(44px,8vw,84px);font-weight:400;color:#f2ead9;letter-spacing:clamp(8px,1.6vw,18px);padding-left:clamp(8px,1.6vw,18px);text-shadow:0 2px 24px rgba(0,0,0,.45);animation:titleReveal 1.2s ease-out both;font-family:var(--font-serif)}
+.asset-script-subtitle{font-size:13px;color:rgba(255,255,255,.45);letter-spacing:4px;margin-top:14px;text-transform:uppercase;animation:fadeIn 1.5s ease-out .3s both}
+/* 标题界面档案化装饰 */
+.asset-case-no{font-family:var(--font-mono);font-size:11px;color:rgba(255,255,255,.42);letter-spacing:3px;margin-bottom:16px;animation:fadeIn 1.2s ease-out .1s both}
+.asset-case-no em{font-style:normal;color:rgba(228,87,46,.85)}
+.asset-barcode{display:inline-block;width:120px;height:18px;margin-top:20px;opacity:.28;background:repeating-linear-gradient(90deg,#f2ead9 0 2px,transparent 2px 4px,#f2ead9 4px 5px,transparent 5px 9px,#f2ead9 9px 10px,transparent 10px 12px);animation:fadeIn 1.5s ease-out .4s both}
+.asset-stamp{position:absolute;font-family:var(--font-serif);color:#e4572e;border:2px solid #e4572e;border-radius:6px;padding:6px 11px;font-size:15px;letter-spacing:4px;line-height:1.35;transform:rotate(9deg);opacity:.6;z-index:5;animation:fadeIn 1.6s ease-out .5s both;text-shadow:0 0 1px rgba(228,87,46,.4)}
+.stage-corner{position:absolute;width:24px;height:24px;border:1px solid rgba(228,87,46,.35);z-index:6;pointer-events:none}
+@keyframes titleReveal{0%{opacity:0;transform:scale(.96)}100%{opacity:1;transform:scale(1)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.asset-progress-area{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);width:min(360px,72vw);z-index:5}
+.asset-progress-bar{height:3px;background:rgba(255,255,255,.10);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.asset-progress-fill{height:100%;width:0%;background:var(--action);border-radius:2px;transition:width .4s ease;position:relative;box-shadow:0 0 6px rgba(111,168,160,.3)}
+.asset-progress-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 2s ease-in-out infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.asset-progress-msg{font-size:12px;color:rgba(255,255,255,.55);text-align:center;letter-spacing:1px}
+.asset-enter-hint{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);z-index:5;font-size:13px;color:rgba(255,255,255,.5);letter-spacing:3px;cursor:pointer;animation:enterPulse 2.5s ease-in-out infinite}
+.asset-enter-hint::before{content:'◇';margin-right:8px;font-size:10px;opacity:.6}
+.asset-enter-hint::after{content:'◇';margin-left:8px;font-size:10px;opacity:.6}
+@keyframes enterPulse{0%,100%{opacity:.35}50%{opacity:.85}}
+.asset-click-overlay{position:absolute;inset:0;z-index:6;cursor:pointer;display:none}
+.asset-click-overlay.active{display:block}
+.vn-sprite .sprite-label{position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);font-size:13px;color:#fff;background:rgba(0,0,0,.5);padding:3px 14px;border-radius:10px;white-space:nowrap}
+.vn-sprite.pos-left{order:1;margin-right:auto}
+.vn-sprite.pos-right{order:3;margin-left:auto}
+.vn-sprite.active{filter:brightness(1);transform:scale(1.03)}
+.vn-sprite.dimmed{filter:brightness(.45) saturate(.5);transform:scale(.97)}
+.vn-sprite.hidden{opacity:0;pointer-events:none}
+.vn-dialogue-box{position:relative;z-index:10;margin:0 auto 24px;width:min(92%,860px);background:rgba(13,19,31,.85);border:none;border-radius:0;padding:17px 34px 15px;cursor:pointer;backdrop-filter:blur(14px);box-shadow:0 -4px 40px rgba(0,0,0,.3),inset 0 1px 0 rgba(228,87,46,.12);min-height:120px;max-height:46vh;display:flex;flex-direction:column;justify-content:center;clip-path:polygon(14px 0,calc(100% - 14px) 0,calc(100% - 14px) 100%,14px 100%);filter:drop-shadow(0 0 1px rgba(255,255,255,.15)) drop-shadow(0 0 10px rgba(228,87,46,.08));transition:clip-path .3s ease,opacity .3s}
+/* 默认四角金框：gradient 定位到 clip-path 可见边缘(14px)外侧 */
+.vn-dialogue-box::before{content:'';position:absolute;top:0;left:0;right:0;height:40px;pointer-events:none;opacity:.6;background:linear-gradient(var(--accent),var(--accent)) 14px 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) right 14px top 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) 0 14px/2px 24px no-repeat,linear-gradient(var(--accent),var(--accent)) right 0 top 14px/2px 24px no-repeat}
+.vn-dialogue-box::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40px;pointer-events:none;opacity:.6;background:linear-gradient(var(--accent),var(--accent)) left 14px bottom 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) right 14px bottom 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) left 0 bottom 14px/2px 24px no-repeat,linear-gradient(var(--accent),var(--accent)) right 0 bottom 14px/2px 24px no-repeat}
+/* speaker-left：左角色说话，上边左高右低，底边水平 */
+.vn-dialogue-box.speaker-left{clip-path:polygon(0 0,100% 16px,100% 100%,0 100%)}
+.vn-dialogue-box.speaker-left::before{content:'';position:absolute;top:0;left:0;right:0;height:40px;pointer-events:none;opacity:.6;background:linear-gradient(var(--accent),var(--accent)) 0 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) 0 0/2px 24px no-repeat}
+.vn-dialogue-box.speaker-left::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40px;pointer-events:none;opacity:.6;background:linear-gradient(var(--accent),var(--accent)) 0 bottom 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) 0 bottom 0/2px 24px no-repeat,linear-gradient(var(--accent),var(--accent)) right 0 bottom 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) right 0 bottom 0/2px 24px no-repeat}
+/* speaker-right：右角色说话，上边右高左低，底边水平 */
+.vn-dialogue-box.speaker-right{clip-path:polygon(0 16px,100% 0,100% 100%,0 100%)}
+.vn-dialogue-box.speaker-right::before{content:'';position:absolute;top:0;left:0;right:0;height:40px;pointer-events:none;opacity:.6;background:linear-gradient(var(--accent),var(--accent)) right 0 top 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) right 0 top 0/2px 24px no-repeat}
+.vn-dialogue-box.speaker-right::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40px;pointer-events:none;opacity:.6;background:linear-gradient(var(--accent),var(--accent)) 0 bottom 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) 0 bottom 0/2px 24px no-repeat,linear-gradient(var(--accent),var(--accent)) right 0 bottom 0/24px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) right 0 bottom 0/2px 24px no-repeat}
+.vn-dialogue-box.speaker-left #vnSpeaker{text-align:left}
+.vn-dialogue-box.speaker-right #vnSpeaker{text-align:right}
+@media(max-width:480px){.vn-dialogue-box{clip-path:polygon(8px 0,calc(100% - 8px) 0,calc(100% - 8px) 100%,8px 100%)}.vn-dialogue-box.speaker-left{clip-path:polygon(0 0,100% 10px,100% 100%,0 100%)}.vn-dialogue-box.speaker-right{clip-path:polygon(0 10px,100% 0,100% 100%,0 100%)}}
+.vn-speaker-name{display:inline-block;font-size:15px;font-weight:600;color:var(--accent);background:rgba(228,87,46,.12);border:1px solid rgba(228,87,46,.30);padding:3px 16px;border-radius:0;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);margin-bottom:10px;letter-spacing:.5px;flex-shrink:0;font-family:var(--font-serif)}
+.vn-speaker-name.narrator{background:rgba(110,115,120,.25);color:var(--muted);font-style:italic}
+.vn-speaker-name.action{background:rgba(228,87,46,.18);color:var(--accent)}
+.vn-text.vn-action-text{font-style:italic;color:rgba(203,213,225,.85)}
+.vn-text{font-size:16px;line-height:1.9;color:#e8e8ec;white-space:pre-wrap;min-height:48px;max-height:26vh;overflow-y:auto;padding-right:8px;scrollbar-width:thin;scrollbar-color:rgba(228,87,46,.4) transparent}
+.vn-text::-webkit-scrollbar{width:6px}
+.vn-text::-webkit-scrollbar-track{background:transparent}
+.vn-text::-webkit-scrollbar-thumb{background:rgba(228,87,46,.4);border-radius:3px}
+.vn-text::-webkit-scrollbar-thumb:hover{background:rgba(228,87,46,.6)}
+.vn-emotion{font-size:12px;color:var(--muted);margin-top:8px;font-style:italic}
+.vn-advance-hint{position:absolute;bottom:16px;right:36px;font-size:12px;color:rgba(255,255,255,.40);animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:.4}50%{opacity:1}}
+.vn-advance-hint.waiting{color:var(--warn);opacity:.7;animation:none}
+/* 章节开头旁白居中卡片弹窗 */
+.vn-narration-popup{position:absolute;inset:0;z-index:50;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px)}
+.vn-narration-card{max-width:min(760px,86%);max-height:82vh;background:rgba(19,28,46,.90);border:none;border-radius:0;padding:44px 52px 36px;box-shadow:0 20px 64px rgba(0,0,0,.4),inset 0 1px 0 rgba(228,87,46,.10);display:flex;flex-direction:column;clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px),0 16px);filter:drop-shadow(0 0 1px rgba(255,255,255,.12));position:relative}
+.vn-narration-card::before{content:'';position:absolute;top:0;left:0;right:0;height:40px;pointer-events:none;opacity:.6;background:linear-gradient(var(--accent),var(--accent)) 16px 0/40px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) right 16px top 0/40px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) 0 16px/2px 40px no-repeat,linear-gradient(var(--accent),var(--accent)) right 0 top 16px/2px 40px no-repeat}
+.vn-narration-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40px;pointer-events:none;opacity:.6;background:linear-gradient(var(--accent),var(--accent)) left 16px bottom 0/40px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) right 16px bottom 0/40px 2px no-repeat,linear-gradient(var(--accent),var(--accent)) left 0 bottom 16px/2px 40px no-repeat,linear-gradient(var(--accent),var(--accent)) right 0 bottom 16px/2px 40px no-repeat}
+.vn-narration-text{font-size:19px;line-height:2;color:#d8d8dc;white-space:pre-wrap;text-align:center;flex:1;min-height:0;max-height:60vh;overflow-y:auto;padding-right:8px;scrollbar-width:thin;scrollbar-color:rgba(228,87,46,.4) transparent}
+.vn-narration-text::-webkit-scrollbar{width:6px}
+.vn-narration-text::-webkit-scrollbar-track{background:transparent}
+.vn-narration-text::-webkit-scrollbar-thumb{background:rgba(228,87,46,.4);border-radius:3px}
+.vn-narration-hint{margin-top:26px;text-align:center;font-size:13px;color:rgba(255,255,255,.4);animation:blink 1.2s ease-in-out infinite}
+.vn-narration-hint.waiting{color:var(--warn);opacity:.7;animation:none}
+.vn-scene-info{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(13,19,31,.60);padding:6px 20px 6px 16px;border-radius:0;border:1px solid rgba(228,87,46,.22);font-size:13px;color:var(--muted);backdrop-filter:blur(6px);font-family:var(--font-mono);clip-path:polygon(9px 0,100% 0,calc(100% - 9px) 100%,0 100%);display:flex;align-items:center;gap:8px}
+.vn-scene-info::before{content:'◆';color:var(--accent);font-size:8px;opacity:.9}
+.vn-progress{position:absolute;top:0;left:0;height:3px;background:var(--action);z-index:20;transition:width .3s}
+.vn-choices-overlay{position:absolute;inset:0;z-index:30;background:rgba(12,18,30,.68);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;backdrop-filter:blur(5px)}
+.vn-choices-overlay .choices-label{color:var(--warn);font-size:15px;font-weight:600;margin-bottom:12px;letter-spacing:1px}
+.vn-choices-overlay .choice-btn{width:min(80%,500px);text-align:center;font-size:15px;padding:16px 24px}
+.vn-choices-overlay .choice-btn::before{display:none}
+.choice-btn .mg-badge{display:inline-block;margin-left:8px;font-size:11px;color:var(--warn);border:1px solid rgba(228,87,46,.4);border-radius:8px;padding:1px 8px;vertical-align:1px}
+/* 内嵌小游戏浮层：调查桌主题（墨青桌面 + 纸色证物卡 + 朱红印章） */
+.vn-minigame-overlay{--mg-ink:#101826;--mg-panel:#182234;--mg-line:#2e3d55;--mg-paper:#f2ead9;--mg-paper-dim:#e5d9bc;--mg-verm:#e4572e;--mg-sepia:#2b2620;--mg-sepia-mut:#7a6f5d;--mg-signal:#6fa8a0;--mg-display:'ZCOOL QingKe HuangYou','Noto Sans SC','Microsoft YaHei',sans-serif;position:absolute;inset:0;z-index:38;background:rgba(9,13,22,.93);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);font-family:'Noto Sans SC','Microsoft YaHei','PingFang SC',sans-serif}
+.mg-panel{position:relative;width:min(92%,720px);max-height:88vh;overflow-y:auto;background:var(--mg-panel);border:1px solid var(--mg-line);border-radius:4px;padding:34px 28px 26px;scrollbar-width:thin;scrollbar-color:var(--mg-line) transparent;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:100% 28px}
+.mg-folder-tab{position:absolute;top:0;left:24px;background:var(--mg-paper-dim);color:#5c4f33;font-size:11px;font-weight:700;letter-spacing:3px;padding:3px 16px;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.mg-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:3px;color:var(--mg-signal);margin-bottom:6px}
+.mg-title{font-family:var(--mg-display);font-size:26px;color:var(--mg-paper);letter-spacing:3px;margin-bottom:10px;font-weight:400}
+.mg-sub{font-size:13px;color:#93a1b8;line-height:1.8;margin-bottom:14px}
+.mg-banner{background:rgba(242,234,217,.06);border-left:3px solid var(--mg-verm);padding:12px 16px;border-radius:0 4px 4px 0;font-size:15px;line-height:1.7;margin-bottom:16px;color:#e9e2d2}
+.mg-hint{color:var(--mg-signal);font-size:13px;margin:12px 0 0;line-height:1.7}
+.mg-tip{font-size:12px;color:#93a1b8;margin-bottom:12px;line-height:1.7}
+.mg-clue-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.mg-clue{position:relative;background:var(--mg-paper);color:var(--mg-sepia);border-radius:2px;padding:16px 14px 13px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.mg-clue:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.45)}
+.mg-clue.selected{outline:2px solid var(--mg-verm);outline-offset:2px}
+.mg-clue.selected::after{content:'指認';position:absolute;right:8px;top:50%;transform:translateY(-50%) rotate(-14deg);border:2px solid var(--mg-verm);color:var(--mg-verm);padding:2px 8px;font-size:13px;letter-spacing:4px;opacity:.9;pointer-events:none;animation:mgStampIn .22s ease-out}
+.mg-clue .src{font-size:12px;color:var(--mg-sepia-mut);margin-bottom:5px;border-bottom:1px dashed rgba(43,38,32,.25);padding-bottom:5px}
+.mg-clue .txt{font-size:13px;line-height:1.7}
+.mg-clue .mg-tag{position:absolute;top:-9px;left:10px;background:var(--mg-sepia);color:var(--mg-paper);font-family:var(--font-mono);font-size:10px;letter-spacing:1px;padding:2px 8px;border-radius:2px}
+.mg-cipher{font-family:var(--font-mono);font-size:24px;letter-spacing:4px;text-align:center;padding:22px 12px;background:rgba(6,10,18,.5);border:1px dashed var(--mg-signal);border-radius:4px;color:var(--mg-signal);margin:4px 0 14px;word-break:break-all;line-height:1.6}
+.mg-input{width:100%;padding:12px 14px;font-size:16px;letter-spacing:2px;background:rgba(6,10,18,.5);border:1px solid var(--mg-line);border-radius:4px;color:var(--mg-paper);outline:none;margin-bottom:14px}
+.mg-input:focus{border-color:var(--mg-verm)}
+.mg-list{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}
+.mg-item{display:flex;align-items:center;gap:11px;background:var(--mg-paper);color:var(--mg-sepia);border-radius:2px;padding:11px 14px;cursor:grab;transition:transform .15s,outline-color .15s,opacity .15s;user-select:none;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.mg-item:hover{transform:translateX(3px)}
+.mg-item.dragging{opacity:.45}
+.mg-item.dragover{outline:2px dashed var(--mg-verm);outline-offset:2px}
+.mg-item.selected{outline:2px solid var(--mg-verm);outline-offset:2px}
+.mg-item .num{min-width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;color:var(--mg-paper);background:var(--mg-sepia);flex-shrink:0;font-family:var(--font-mono)}
+.mg-item .txt{font-size:13px;line-height:1.6}
+/* 连线配对：左右两栏 + 同号徽章表示连线 */
+.mg-match{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:12px 34px;margin-bottom:14px}
+.mg-match-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.mg-match-col{display:flex;flex-direction:column;gap:10px}
+.mg-match-item{position:relative;background:var(--mg-paper);color:var(--mg-sepia);border-radius:2px;padding:10px 14px;font-size:13px;line-height:1.6;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .15s}
+.mg-match-item:hover{transform:translateY(-2px)}
+.mg-match-item.selected{outline:2px solid var(--mg-verm);outline-offset:2px}
+.mg-match-item .pair-no{position:absolute;top:-8px;right:8px;min-width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff8f2;font-family:var(--font-mono)}
+/* 证物归类：待分盘 + 分类箱 */
+.mg-class-tray{display:flex;flex-wrap:wrap;gap:9px;min-height:46px;background:rgba(6,10,18,.35);border:1px dashed var(--mg-line);border-radius:4px;padding:10px;margin-bottom:14px}
+.mg-class-item{background:var(--mg-paper);color:var(--mg-sepia);border-radius:2px;padding:8px 12px;font-size:13px;line-height:1.5;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.3);transition:transform .15s}
+.mg-class-item:hover{transform:translateY(-2px)}
+.mg-class-item.selected{outline:2px solid var(--mg-verm);outline-offset:2px}
+.mg-class-bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px}
+.mg-class-bin{background:rgba(242,234,217,.05);border:1px solid var(--mg-line);border-radius:4px;min-height:92px;padding:10px;cursor:pointer;transition:border-color .15s,background .15s}
+.mg-class-bin:hover{border-color:var(--mg-signal)}
+.mg-class-bin .bin-name{font-size:13px;letter-spacing:2px;color:var(--mg-signal);border-bottom:1px dashed var(--mg-line);padding-bottom:7px;margin-bottom:8px}
+.mg-class-bin .bin-items{display:flex;flex-direction:column;gap:7px}
+/* 逐步解锁：层数进度 + 选项 */
+.mg-unlock-progress{display:flex;gap:6px;justify-content:center;margin-bottom:16px}
+.mg-unlock-progress .seg{width:36px;height:5px;background:var(--mg-line);border-radius:2px}
+.mg-unlock-progress .seg.done{background:var(--mg-verm)}
+.mg-unlock-progress .seg.cur{background:var(--mg-signal)}
+.mg-unlock-prompt{font-size:16px;line-height:1.7;color:#e9e2d2;text-align:center;margin-bottom:16px}
+.mg-unlock-opts{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}
+.mg-unlock-opt{background:var(--mg-paper);color:var(--mg-sepia);border-radius:2px;padding:12px 16px;font-size:14px;cursor:pointer;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .15s}
+.mg-unlock-opt:hover{transform:translateY(-2px);outline:2px solid var(--mg-verm);outline-offset:2px}
+.mg-unlock-opt.ok{outline:2px solid var(--mg-signal);outline-offset:2px;background:#e8ead8}
+.mg-unlock-opt.bad{outline:2px solid var(--mg-verm);outline-offset:2px;opacity:.55;cursor:not-allowed}
+.mg-unlock-opt.busy{pointer-events:none;opacity:.7}
+.mg-unlock-hint{margin:4px 0 12px;padding:8px 12px;border-left:3px solid var(--mg-signal);font-size:13px;line-height:1.6;color:var(--mg-signal)}
+.mg-archive{margin:14px 0;padding:14px 16px;border:1px dashed var(--mg-line);background:rgba(228,87,46,.06);text-align:left}
+.mg-archive-title{font-size:13px;letter-spacing:.14em;color:var(--mg-verm);margin-bottom:8px;font-family:var(--font-mono)}
+.mg-archive-content{font-size:13.5px;line-height:1.9;color:#e9e2d2;white-space:pre-wrap}
+/* 巡航收集：HUD + 画布 */
+.mg-voyage-hud{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:13px;color:var(--mg-signal);margin-bottom:8px}
+.mg-voyage-canvas{width:100%;height:320px;background:linear-gradient(rgba(6,10,18,.6),rgba(12,22,38,.92));border:1px solid var(--mg-line);border-radius:4px;display:block;touch-action:none}
+/* 碎纸复原：调查台拼盘 */
+.mg-shred-doc{text-align:center;font-family:var(--mg-display);font-size:15px;letter-spacing:3px;color:#d9a441;margin-bottom:12px}
+.mg-shred-grid{display:grid;gap:8px;margin-bottom:14px}
+.mg-shred-tile{position:relative;background:var(--mg-paper);color:var(--mg-sepia);border-radius:6px 10px 5px 12px/10px 5px 12px 6px;min-height:70px;padding:9px 11px;font-size:12.5px;line-height:1.6;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .15s,background .15s;display:flex;align-items:center;justify-content:center;text-align:center;user-select:none}
+.mg-shred-tile:hover{transform:translateY(-2px)}
+.mg-shred-tile.selected{background:#fbe3d6;box-shadow:0 0 0 2px var(--mg-verm),0 4px 10px rgba(0,0,0,.35);transform:scale(1.03)}
+/* 频段截听：示波器 + 调频旋钮 */
+.mg-radio-hud{display:flex;justify-content:space-between;gap:10px;font-family:var(--font-mono);font-size:13px;color:var(--mg-signal);margin-bottom:8px;flex-wrap:wrap}
+.mg-radio-scope{width:100%;height:210px;display:block;border:1px solid var(--mg-line);border-radius:4px;background:linear-gradient(rgba(6,10,18,.7),rgba(10,18,30,.92));margin-bottom:10px}
+.mg-radio-freq{text-align:center;font-family:var(--font-mono);font-size:21px;color:var(--mg-paper);letter-spacing:2px;margin-bottom:4px}
+.mg-radio-freq em{color:var(--mg-verm);font-style:normal}
+.mg-radio-dial{width:100%;accent-color:var(--mg-verm);cursor:pointer;margin-bottom:8px}
+.mg-radio-lockbar{height:8px;background:rgba(6,10,18,.5);border:1px solid var(--mg-line);border-radius:4px;overflow:hidden;margin-bottom:4px}
+.mg-radio-lockbar .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--mg-signal),#7cb98a)}
+/* 现场搜证：证物陈列架 */
+.mg-search-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}
+.mg-search-item{position:relative;background:var(--mg-paper);color:var(--mg-sepia);border-radius:2px;padding:11px 9px 9px;cursor:pointer;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .15s;user-select:none}
+.mg-search-item:hover{transform:translateY(-2px)}
+.mg-search-item.picked{outline:2px solid var(--mg-verm);outline-offset:2px}
+.mg-search-item.picked::after{content:'圈选';position:absolute;right:5px;top:5px;border:1px solid var(--mg-verm);color:var(--mg-verm);font-size:10px;padding:1px 5px;letter-spacing:2px;transform:rotate(6deg);background:rgba(255,248,242,.85)}
+.mg-search-item .nm{font-size:13px;font-weight:600;margin-bottom:3px}
+.mg-search-item .ds{font-size:11px;color:var(--mg-sepia-mut);line-height:1.5}
+/* 密码转盘：拨轮 + 试拨记录 */
+.mg-dial-locknote{font-size:12px;color:var(--mg-sepia-mut);font-style:italic;margin:4px 0 10px}
+.mg-dial-slots{display:flex;justify-content:center;gap:12px;margin:14px 0 6px}
+.mg-dial-slot{width:58px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;background:rgba(6,10,18,.55);border:1px solid var(--mg-line);border-radius:5px;padding:4px 0}
+.mg-dial-slot .digit{font-family:monospace;font-size:30px;color:var(--mg-paper);line-height:1.4}
+.mg-dial-slot .spin button{width:40px;height:20px;font-size:11px;line-height:1;cursor:pointer;background:rgba(255,255,255,.06);color:var(--mg-sepia-mut);border:1px solid var(--mg-line);border-radius:3px;margin:1px 0}
+.mg-dial-slot .spin button:hover{color:var(--mg-verm);border-color:var(--mg-verm)}
+.mg-dial-history{margin-top:12px;border-top:1px dashed var(--mg-line);padding-top:8px;max-height:120px;overflow-y:auto}
+.mg-dial-history .dh-title{font-size:11px;color:var(--mg-sepia-mut);margin-bottom:4px}
+.mg-dial-row{display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:13px;padding:3px 8px;border-bottom:1px solid rgba(0,0,0,.06)}
+.mg-dial-row .guess{letter-spacing:6px;color:var(--mg-sepia)}
+.mg-dial-row .fb{color:var(--mg-sepia-mut);font-size:12px}
+.mg-dial-row .fb em{color:var(--mg-verm);font-style:normal}
+.mg-dial-fmterror{color:var(--mg-verm);font-size:12px;text-align:center;min-height:16px;margin-top:4px}
+/* 档案室迷宫：网格 + 方向键 */
+.mg-maze-hud{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mg-sepia-mut);margin-bottom:6px}
+.mg-maze-wrap{position:relative;width:min(80vw,320px);margin:0 auto;aspect-ratio:1}
+.mg-maze-grid{display:grid;width:100%;height:100%;border:1px solid var(--mg-line)}
+.mg-maze-cell{background:rgba(6,10,18,.85)}
+.mg-maze-cell.open{background:rgba(232,224,206,.16)}
+.mg-maze-cell.exit{background:rgba(124,185,138,.3);box-shadow:inset 0 0 0 1px #7cb98a}
+.mg-maze-patrol{position:absolute;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,196,64,.95) 0%,rgba(255,176,32,.55) 55%,rgba(255,176,32,0) 100%);box-shadow:0 0 10px rgba(255,176,32,.8);z-index:2}
+.mg-maze-grid.caught{outline:2px solid var(--mg-verm);outline-offset:-2px}
+.mg-maze-cell.player{background:var(--mg-verm);border-radius:2px}
+.mg-maze-dpad{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,36px);gap:5px;justify-content:center;margin-top:12px}
+.mg-maze-dpad button{font-size:15px;cursor:pointer;background:rgba(255,255,255,.06);color:var(--mg-sepia-mut);border:1px solid var(--mg-line);border-radius:4px}
+.mg-maze-dpad button:hover{color:var(--mg-verm);border-color:var(--mg-verm)}
+.mg-maze-dpad button[data-dir="up"]{grid-column:2}
+.mg-maze-dpad button[data-dir="left"]{grid-column:1;grid-row:2}
+.mg-maze-dpad button[data-dir="down"]{grid-column:2;grid-row:2}
+.mg-maze-dpad button[data-dir="right"]{grid-column:3;grid-row:2}
+.mg-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.mg-btn{padding:10px 22px;border:1px solid var(--mg-verm);background:transparent;color:var(--mg-verm);font-size:14px;cursor:pointer;border-radius:2px;transition:all .18s;letter-spacing:2px}
+.mg-btn:hover:not(:disabled){background:var(--mg-verm);color:#fff8f2}
+.mg-btn:focus-visible{outline:2px solid var(--mg-paper);outline-offset:2px}
+.mg-btn.ghost{border-color:var(--mg-line);color:#93a1b8}
+.mg-btn.ghost:hover:not(:disabled){background:transparent;color:var(--mg-paper);border-color:#93a1b8}
+.mg-btn:disabled{opacity:.4;cursor:not-allowed}
+.mg-stamp{width:max-content;margin:0 auto 16px;border:3px solid currentColor;outline:1px solid currentColor;outline-offset:3px;padding:8px 22px;font-family:var(--mg-display);font-size:28px;letter-spacing:8px;transform:rotate(-7deg);animation:mgStampIn .28s ease-out;text-align:center}
+.mg-stamp.ok{color:#7cb98a}
+.mg-stamp.bad{color:#e0654f}
+.mg-stamp.warn{color:#d9a441}
+@keyframes mgStampIn{from{transform:rotate(-7deg) scale(1.7);opacity:0}to{transform:rotate(-7deg) scale(1);opacity:1}}
+.mg-result-title{font-size:16px;text-align:center;letter-spacing:4px;margin-bottom:12px;color:#93a1b8}
+.mg-result-text{font-size:14px;line-height:1.9;text-align:center;color:#e9e2d2;margin-bottom:8px}
+.mg-correct{font-size:13px;color:var(--mg-signal);text-align:center;margin-bottom:8px;line-height:1.7}
+@media(max-width:640px){.mg-clue-grid{grid-template-columns:1fr}.mg-panel{padding:30px 18px 20px}.mg-title{font-size:20px}.mg-stamp{font-size:21px;letter-spacing:5px}.mg-match{gap:10px 14px}.mg-voyage-canvas{height:260px}.mg-search-grid{grid-template-columns:repeat(2,1fr)}.mg-radio-scope{height:170px}}
+@media(prefers-reduced-motion:reduce){.mg-stamp,.mg-stamp-mark{animation:none}.mg-clue,.mg-item,.mg-btn{transition:none}}
+.vn-top-bar{position:absolute;top:12px;right:16px;z-index:20;display:flex;gap:8px}
+.vn-top-bar button{background:rgba(13,19,31,.50);border:none;border-radius:0;color:var(--muted);padding:5px 16px;font-size:12px;cursor:pointer;backdrop-filter:blur(6px);transition:all .2s;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.vn-top-bar button:hover{color:var(--text-strong);background:rgba(228,87,46,.08)}
+.vn-top-bar button.active{color:var(--accent);background:rgba(228,87,46,.12);box-shadow:inset 0 0 8px rgba(228,87,46,.10)}
+.vn-streaming-hint{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+.vn-streaming-hint .spinner{width:16px;height:16px;border-width:2px}
+/* 结局画面 */
+.vn-ending-overlay{position:absolute;inset:0;z-index:40;background:radial-gradient(ellipse at center,rgba(38,32,22,.82) 0%,rgba(18,16,12,.92) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;cursor:pointer;transition:opacity .5s;backdrop-filter:blur(6px)}
+.ending-type{font-size:14px;font-weight:600;letter-spacing:3px;padding:6px 24px;border:1px solid;border-radius:0;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);animation:endingFadeIn .9s ease both}
+.ending-title{font-size:40px;font-weight:600;color:#ededee;letter-spacing:6px;text-align:center;padding:0 24px;animation:endingFadeIn 1.1s ease .25s both;text-shadow:0 2px 24px rgba(0,0,0,.5);font-family:var(--font-serif)}
+.ending-hint{font-size:13px;color:rgba(255,255,255,.35);margin-top:28px;animation:blink 1.2s ease-in-out infinite}
+@keyframes endingFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.ending-final-card{background:rgba(13,19,31,.80);border:none;border-radius:0;padding:28px 44px;text-align:center;max-width:min(84%,540px);backdrop-filter:blur(8px);animation:endingFadeIn .8s ease both;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);filter:drop-shadow(0 0 1px rgba(255,255,255,.12)) drop-shadow(0 0 12px rgba(228,87,46,.10))}
+.ending-title-sm{font-size:22px;font-weight:600;color:#ededee;margin:12px 0 4px;letter-spacing:2px;font-family:var(--font-serif)}
+.ending-replay{font-size:13px;color:var(--muted);font-style:italic;margin-top:14px;line-height:1.7}
+.vn-ending-scroll{position:absolute;inset:0;z-index:35;overflow-y:auto;padding:12vh 6vw 18vh;cursor:pointer;background:linear-gradient(180deg,rgba(12,18,30,.3) 0%,rgba(12,18,30,.7) 100%);scrollbar-width:thin;scrollbar-color:rgba(228,87,46,.4) transparent}
+.vn-ending-scroll::-webkit-scrollbar{width:6px}
+.vn-ending-scroll::-webkit-scrollbar-track{background:transparent}
+.vn-ending-scroll::-webkit-scrollbar-thumb{background:rgba(228,87,46,.4);border-radius:3px}
+.vn-ending-scroll-text{font-size:20px;line-height:2.1;color:#d8d8dc;white-space:pre-wrap;text-align:center;max-width:min(760px,88%);margin:0 auto}
+.vn-ending-scroll-hint{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);font-size:13px;color:rgba(255,255,255,.4);animation:blink 1.2s ease-in-out infinite;z-index:36}
+/* Choices */
+.choice-btn{display:block;width:100%;text-align:left;padding:14px 18px 14px 24px;margin-bottom:8px;background:rgba(228,87,46,.06);border:1px solid rgba(228,87,46,.25);border-radius:10px;color:var(--text);font-size:14px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.choice-btn::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:50%;background:var(--accent);border-radius:0 2px 2px 0;opacity:.25;transition:opacity .2s,height .2s}
+.choice-btn:hover::before{opacity:.8;height:75%}
+.choice-btn:hover{background:rgba(228,87,46,.12);border-color:var(--accent);transform:translateX(4px)}
+.choice-btn .effect{font-size:12px;color:var(--muted);margin-top:4px}
+.choice-btn.selected{background:rgba(107,158,122,.12);border-color:var(--success)}
+.waiting-msg{text-align:center;padding:20px;color:var(--success);font-size:14px;background:rgba(107,158,122,.06);border:1px dashed var(--success);border-radius:10px;margin-top:16px}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;gap:12px;color:var(--muted)}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* 素材加载等待遮罩 */
+.vn-asset-gate{position:absolute;inset:0;z-index:35;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:radial-gradient(ellipse at 50% 40%,#152238 0%,#0d1422 70%);opacity:1;transition:opacity .6s ease;pointer-events:none}
+.vn-asset-gate.hidden{opacity:0;visibility:hidden}
+.vn-gate-quill{width:48px;height:48px;position:relative;animation:quillFloat 2.4s ease-in-out infinite}
+.vn-gate-quill::before{content:'✦';font-size:40px;color:var(--accent);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-shadow:0 0 20px rgba(228,87,46,.5)}
+.vn-gate-quill::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:32px;height:6px;background:radial-gradient(ellipse,rgba(228,87,46,.25),transparent);border-radius:50%;animation:quillShadow 2.4s ease-in-out infinite}
+@keyframes quillFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes quillShadow{0%,100%{transform:translateX(-50%) scaleX(1);opacity:.6}50%{transform:translateX(-50%) scaleX(.6);opacity:.3}}
+.vn-gate-text{color:var(--muted);font-size:13px;letter-spacing:2px;font-family:var(--font-serif)}
+.vn-gate-bar{width:120px;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.vn-gate-bar::after{content:'';display:block;width:40%;height:100%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:gateSlide 1.5s ease-in-out infinite}
+@keyframes gateSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+/* History */
+.history-panel{position:fixed;top:60px;right:16px;z-index:1100;width:min(420px,86vw);background:rgba(13,19,31,.95);border:1px solid var(--border-hover);border-radius:12px;padding:16px;max-height:400px;overflow-y:auto;display:none;backdrop-filter:blur(10px)}
+.history-panel.show{display:block}
+.history-entry{padding:12px 0;border-bottom:1px solid var(--border)}
+.history-entry:last-child{border-bottom:none}
+.history-scene{font-size:13px;font-weight:600;color:var(--accent)}
+.history-choice{font-size:12px;color:var(--success);margin-top:4px}
+.history-narration{font-size:12px;color:var(--muted);font-style:italic;margin:6px 0 4px;line-height:1.7;white-space:pre-wrap}
+.history-dialogue{font-size:12px;color:var(--text);margin:3px 0;line-height:1.6}
+.history-speaker{color:var(--accent);font-weight:600;margin-right:6px}
+.end-screen{text-align:center;padding:60px 24px}
+.end-screen h2{font-size:26px;margin-bottom:12px;color:var(--text-strong);font-weight:600}
+.end-screen p{color:var(--muted);margin-bottom:24px}
+/* 档案式中断通告卡片 */
+.notice-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background-color:var(--bg);background-image:radial-gradient(ellipse 120% 60% at 50% -10%,rgba(111,168,160,.06),transparent 60%),linear-gradient(rgba(125,140,165,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(125,140,165,.035) 1px,transparent 1px);background-size:auto,36px 36px,36px 36px;z-index:50}
+.notice-card{position:relative;width:min(480px,92vw);background:var(--card);border:1px solid var(--border);border-radius:14px;padding:46px 36px 28px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.45);animation:noticeIn .45s ease-out both}
+.notice-card::before{content:'';position:absolute;inset:9px;border:1px dashed var(--border);border-radius:8px;pointer-events:none;opacity:.55}
+@keyframes noticeIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.notice-kicker{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:3px;margin-bottom:18px}
+.notice-kicker em{font-style:normal;color:var(--accent)}
+.notice-card h2{font-family:var(--font-serif);font-size:32px;letter-spacing:5px;font-weight:400;color:var(--text-strong);margin-bottom:12px}
+.notice-card .notice-desc{color:var(--muted);font-size:13px;line-height:1.9;margin-bottom:24px}
+.notice-seal{position:absolute;right:22px;top:24px;font-family:var(--font-serif);font-size:14px;line-height:1.35;color:var(--accent);border:2px solid var(--accent);border-radius:5px;padding:5px 9px;letter-spacing:3px;transform:rotate(9deg);opacity:.65;z-index:2}
+.notice-corner{position:absolute;width:18px;height:18px;border:1px solid rgba(228,87,46,.4);z-index:2}
+.notice-barcode{display:inline-block;width:110px;height:16px;margin-top:22px;opacity:.25;background:repeating-linear-gradient(90deg,var(--text) 0 2px,transparent 2px 4px,var(--text) 4px 5px,transparent 5px 9px,var(--text) 9px 10px,transparent 10px 12px)}
+.notice-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:2px;opacity:.55}
+.btn-action{background:var(--action);color:#0e1822}
+.btn-action:hover{background:var(--action2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(111,168,160,.25)}
+</style>
+<script src="/static/echo-embed-bridge.js"></script>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+
+<script>
+const API = '';
+let sessionId = null;
+let chosenIndex = -1;
+let currentScript = null;
+const app = document.getElementById('app');
+
+// ─── 页面入口：读取 URL 参数 + sessionStorage ───
+const _params = new URLSearchParams(location.search);
+const _sid = _params.get('sid');
+const _mode = _params.get('mode');
+const _ctx = JSON.parse(sessionStorage.getItem('game_ctx') || '{}');
+
+// ─── VN 引擎状态 ───
+let vnState = { queue: [], idx: 0, charPositions: {}, choices: [], sessionState: '', meta: {}, progress: 0 };
+let typewriterTimer = null;
+let typewriterDone = true;
+let vnTypewriterCharIdx = 0;
+let vnTypewriterLine = null;
+let vnTypewriterText = '';
+let vnStreamDone = true;
+let vnStreamStarted = false;
+let vnNarrationStreaming = false;
+let vnNarrationIdx = -1;
+let vnIsEnding = false;
+let vnEndingData = null;
+let vnEndingScrollActive = false;
+let vnEndingScrollTimer = null;
+let vnEndingScrollDone = false;
+let vnPopupActive = false;
+let vnPopupTypewriterTimer = null;
+let vnPopupTypewriterDone = true;
+let vnWaiting = false;
+let vnWaitingTimer = null; // 等待超时兜底，防止断流后永久卡在“后续内容生成中...”
+let vnErrorMode = false;    // 错误模式：生成失败后禁止推进，点击返回首页
+let vnPopupShownThisScene = false;
+let vnAutoPlay = false;
+let vnAutoPlayTimer = null;
+let vnLineStartTime = 0; // 每行开始显示的时间戳，用于强制1秒最小停留
+
+// TTS
+let vnTtsEnabled = true;
+let vnAudioQueue = [];
+let vnCurrentAudio = null;
+let vnAudioLock = false;
+let vnCurrentAudioLineIdx = -1; // 当前播放音频对应的行索引
+let echoPausedAudio = null;
+
+document.addEventListener('echo:pause', () => {
+  clearTimeout(vnAutoPlayTimer);
+  if (vnCurrentAudio && !vnCurrentAudio.paused) {
+    echoPausedAudio = vnCurrentAudio;
+    echoPausedAudio.pause();
+  }
+});
+
+document.addEventListener('echo:resume', () => {
+  if (echoPausedAudio) {
+    const pausedAudio = echoPausedAudio;
+    echoPausedAudio = null;
+    pausedAudio.play().catch(() => {});
+  }
+  if (vnAutoPlay) vnScheduleAutoAdvance();
+});
+
+// 美术素材
+let vnAssets = { characters: {}, scenes: {}, enabled: false };
+
+// ─── 素材门控：背景/立绘未到位时阻塞剧情推进 ───
+let _bgGateResolve = null;   // 当前等待背景加载的 resolve
+let _charGateResolve = null; // 当前等待立绘加载的 resolve
+let _charGateName = null;    // 正在等待的角色名
+let _vnAssetGateActive = false; // 素材门控进行中，禁止用户推进
+
+function showAssetGate() {
+  _vnAssetGateActive = true;
+  const el = document.getElementById('vnAssetGate');
+  if (el) el.classList.remove('hidden');
+}
+function hideAssetGate() {
+  _vnAssetGateActive = false;
+  const el = document.getElementById('vnAssetGate');
+  if (el) el.classList.add('hidden');
+}
+
+function waitForBackground(meta) {
+  // 如果背景 URL 已存在，直接通过
+  if (!meta || (!meta.scene_id && !meta.scene_name)) return Promise.resolve();
+  const url = vnAssets.scenes[meta.scene_id] || vnAssets.scenes[meta.scene_name];
+  if (url) return Promise.resolve();
+  // 否则阻塞，等 asset_bg_ready 事件解除（超时 20s 自动放行）
+  return new Promise(resolve => {
+    _bgGateResolve = resolve;
+    setTimeout(() => { if (_bgGateResolve === resolve) { _bgGateResolve = null; resolve(); } }, 20000);
+  });
+}
+
+function waitForCharacterSprite(name) {
+  if (!name) return Promise.resolve();
+  const url = vnAssets.characters[name];
+  if (url) return Promise.resolve();
+  // 阻塞，等 asset_char_ready 事件解除（超时 15s 自动放行）
+  return new Promise(resolve => {
+    _charGateResolve = resolve;
+    _charGateName = name;
+    setTimeout(() => { if (_charGateName === name) { _charGateResolve = null; _charGateName = null; resolve(); } }, 15000);
+  });
+}
+
+function releaseBgGate(sceneId, sceneName) {
+  if (_bgGateResolve) { const r = _bgGateResolve; _bgGateResolve = null; r(); }
+}
+
+function releaseCharGate(charName) {
+  if (_charGateResolve && _charGateName === charName) {
+    const r = _charGateResolve; _charGateResolve = null; _charGateName = null; r();
+  }
+}
+
+// 文字生成流缓冲
+let _textEventBuffer = [];
+let _textProcessing = false;
+let _textStreamDone = false;
+let _textStreamError = null;
+
+// 立绘位置
+const VN_POS_POOL = ['left', 'right'];
+let vnCharPos = {};
+let vnSpeakerRecency = [];
+
+// ─── 渲染 VN 舞台（空对话框 + 加载提示）───
+function renderVNStage(progress = 0, sceneInfo = '生成中...') {
+  app.innerHTML = `
+    <div class="vn-stage" id="vnStage">
+      <div class="vn-progress" id="vnProgress" style="width:${progress*100}%"></div>
+      <div class="vn-bg vn-bg-shift" id="vnBg"></div>
+      <div class="vn-asset-gate hidden" id="vnAssetGate">
+        <div class="vn-gate-quill"></div>
+        <div class="vn-gate-text">画面加载中</div>
+        <div class="vn-gate-bar"></div>
+      </div>
+      <div class="vn-scene-info" id="vnSceneInfo">${sceneInfo}</div>
+      <div class="vn-top-bar">
+        <button id="vnVoiceBtn" class="active">声音:开</button>
+        <button id="vnAutoBtn">自动</button>
+        <button id="vnHistBtn">历史</button>
+        <button id="vnHomeBtn">退出</button>
+      </div>
+      <div class="vn-sprites" id="vnSprites"></div>
+      <div class="vn-dialogue-box" id="vnDialogueBox" style="visibility:hidden">
+        <div id="vnSpeaker"></div>
+        <div class="vn-text" id="vnText"><div class="vn-streaming-hint"><div class="spinner"></div><span id="vnStageMsg">正在连接...</span></div></div>
+        <div class="vn-emotion" id="vnEmotion"></div>
+        <div class="vn-advance-hint" id="vnHint" style="display:none">点击继续 ▶</div>
+      </div>
+      <div class="vn-choices-overlay" id="vnChoices" style="display:none"></div>
+      <div class="vn-minigame-overlay" id="vnMinigame" style="display:none"></div>
+      <div class="vn-narration-popup" id="vnNarrationPopup" style="display:none">
+        <div class="vn-narration-card">
+          <div class="vn-narration-text" id="vnNarrationText"></div>
+          <div class="vn-narration-hint" id="vnPopupHint">点击继续 ▶</div>
+        </div>
+      </div>
+    </div>
+    <div class="history-panel" id="historyPanel"></div>`;
+
+  document.getElementById('vnDialogueBox').addEventListener('click', vnAdvance);
+  document.addEventListener('keydown', vnKeyHandler);
+  document.getElementById('vnVoiceBtn').addEventListener('click', vnToggleVoice);
+  vnSyncVoiceBtn();
+  document.getElementById('vnHistBtn').addEventListener('click', toggleHistory);
+  document.getElementById('vnAutoBtn').addEventListener('click', vnToggleAutoPlay);
+  vnSyncAutoBtn();
+  document.getElementById('vnHomeBtn').addEventListener('click', () => {
+    document.removeEventListener('keydown', vnKeyHandler);
+    location.href = '/';
+  });
+}
+
+// ─── 美术素材预生成（剧本管线）───
+async function pregenerateAssets() {
+  vnAssets = { characters: {}, scenes: {}, enabled: false };
+  const scriptTitle = (currentScript && currentScript.title) ? currentScript.title : '剧本';
+  let particlesHTML = '';
+  for (let i = 0; i < 25; i++) {
+    const size = 2 + Math.random() * 3;
+    const left = Math.random() * 100;
+    const dur = 8 + Math.random() * 14;
+    const delay = Math.random() * 20;
+    const op = 0.2 + Math.random() * 0.5;
+    const xDrift = (Math.random() - 0.5) * 80;
+    particlesHTML += `<span class="particle" style="left:${left}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:-${delay}s;--p-op:${op};--p-x:${xDrift}px"></span>`;
+  }
+  app.innerHTML = `
+    <div class="vn-stage" id="assetStage">
+      <div class="vn-bg" style="background:radial-gradient(ellipse at 50% 30%,#1c2b47 0%,#141f35 50%,#0d1422 100%)"></div>
+      <div class="particles-container">${particlesHTML}</div>
+      <div class="stage-corner" style="top:18px;left:18px;border-right:none;border-bottom:none"></div>
+      <div class="stage-corner" style="top:18px;right:18px;border-left:none;border-bottom:none"></div>
+      <div class="stage-corner" style="bottom:18px;left:18px;border-right:none;border-top:none"></div>
+      <div class="stage-corner" style="bottom:18px;right:18px;border-left:none;border-top:none"></div>
+      <div class="asset-stamp" style="right:9%;top:15%">侦查<br>进行中</div>
+      <div class="asset-title-area">
+        <div class="asset-case-no">CASE FILE // <em>调查卷宗</em> · 档案调阅完成</div>
+        <div class="asset-script-name">${escapeHtml(scriptTitle)}</div>
+        <div class="asset-script-subtitle">即将开始</div>
+        <div><span class="asset-barcode"></span></div>
+      </div>
+      <div class="asset-progress-area" id="assetProgressArea" style="display:block">
+        <div class="asset-progress-bar"><div class="asset-progress-fill" id="assetFill"></div></div>
+        <div class="asset-progress-msg" id="assetMsg">正在加载剧本...</div>
+      </div>
+      <div class="asset-enter-hint" id="assetEnterHint" style="display:none">点击任意处进入</div>
+      <div class="asset-click-overlay" id="assetClickOverlay"></div>
+    </div>`;
+  const fillEl = () => document.getElementById('assetFill');
+  const msgEl = () => document.getElementById('assetMsg');
+  const progressAreaEl = () => document.getElementById('assetProgressArea');
+  const enterHintEl = () => document.getElementById('assetEnterHint');
+  const overlayEl = () => document.getElementById('assetClickOverlay');
+  // 固定 3 秒「正在加载剧本」演出：无论是否有素材要生成，进度条都走完，3 秒前不可进入
+  const MIN_STAGE_MS = 3000;
+  const stageStart = Date.now();
+  let assetsReadyFlag = false;
+  let enterShown = false;
+  function revealEnter() {
+    if (enterShown) return;
+    enterShown = true;
+    if (progressAreaEl()) progressAreaEl().style.display = 'none';
+    if (enterHintEl()) enterHintEl().style.display = 'block';
+    if (overlayEl()) overlayEl().classList.add('active');
+  }
+  function showEnterHint() {
+    assetsReadyFlag = true;
+    if (!enterShown) requestAnimationFrame(() => { if (fillEl()) fillEl().style.width = '100%'; });
+    const wait = Math.max(0, MIN_STAGE_MS - (Date.now() - stageStart));
+    setTimeout(revealEnter, wait);
+  }
+  // 3 秒固定进度演出（有真实素材进度时由 SSE 事件接管显示）
+  (function bootProgress() {
+    if (fillEl()) fillEl().style.transition = `width ${MIN_STAGE_MS}ms linear`;
+    requestAnimationFrame(() => { if (fillEl() && !enterShown) fillEl().style.width = '96%'; });
+    setTimeout(() => { if (!_hasProgress && msgEl()) msgEl().textContent = '剧本整理完毕，准备入场...'; }, 2200);
+  })();
+  let _hasProgress = false;
+  let resolveReady;
+  const readyPromise = new Promise(r => { resolveReady = r; });
+  let readyResolved = false;
+  const mySessionId = sessionId;
+  overlayEl()?.addEventListener('click', () => { if (!readyResolved) { readyResolved = true; resolveReady(); } });
+  // 心跳式安全兑底：连续 40 秒收不到任何 SSE 事件（断流/异常）才强制放行入场；
+  // 生图正常进行中（asset_progress 持续到达）时计时器不断重置，不会提前放人进场
+  let safetyTimer = null;
+  const armSafety = () => {
+    clearTimeout(safetyTimer);
+    safetyTimer = setTimeout(() => { if (!readyResolved) showEnterHint(); }, 40000);
+  };
+  armSafety();
+  try {
+    const res = await fetch(`/api/session/${sessionId}/assets-stream`);
+    if (!res.ok) { showEnterHint(); return; }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const readLoop = async () => {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          let evt;
+          try { evt = JSON.parse(line.slice(6)); } catch(e) { continue; }
+          if (evt.event === 'assets_meta') {
+            armSafety();
+            if (evt.enabled && evt.total && evt.total > 0) {
+              _hasProgress = true;
+              if (progressAreaEl()) progressAreaEl().style.display = 'block';
+              if (msgEl()) msgEl().textContent = evt.message || '正在生成美术素材';
+            }
+            // 无素材可生成时不采用后端文案，留给「剧本整理完毕，准备入场...」兜底
+          } else if (evt.event === 'asset_progress') {
+            armSafety();
+            if (!_hasProgress) { _hasProgress = true; if (progressAreaEl()) progressAreaEl().style.display = 'block'; }
+            const pct = evt.total ? Math.round((evt.done / evt.total) * 100) : 0;
+            if (fillEl()) { fillEl().style.transition = 'width .4s ease'; fillEl().style.width = Math.max(pct, 8) + '%'; }
+            if (msgEl()) msgEl().textContent = `正在绘制「${evt.name}」（${evt.done}/${evt.total}）`;
+          } else if (evt.event === 'assets_ready') {
+            vnAssets = { characters: evt.characters || {}, scenes: evt.scenes || {}, enabled: !!evt.enabled };
+            if (fillEl()) fillEl().style.width = '100%';
+            // 素材全部就绪（含缓存秒回）：不再停留在「正在绘制」，切换为就绪文案
+            if (msgEl()) msgEl().textContent = '剧本整理完毕，准备入场...';
+            showEnterHint();
+          } else if (evt.event === 'asset_bg_ready') {
+            if (evt.url && sessionId === mySessionId) {
+              if (evt.scene_id) vnAssets.scenes[evt.scene_id] = evt.url;
+              if (evt.scene_name && evt.scene_name !== evt.scene_id) vnAssets.scenes[evt.scene_name] = evt.url;
+              vnApplyBackground(vnState.meta);
+              releaseBgGate(evt.scene_id, evt.scene_name);
+            }
+          } else if (evt.event === 'asset_char_ready') {
+            if (evt.url && sessionId === mySessionId) {
+              vnAssets.characters[evt.char_name] = evt.url;
+              releaseCharGate(evt.char_name);
+              // 角色已在舞台上（有位置但无 DOM）→ 补建立绘
+              const spritesEl = document.getElementById('vnSprites');
+              if (spritesEl && evt.char_name in vnCharPos && !spritesEl.querySelector(`[data-char="${evt.char_name}"]`)) {
+                const div = document.createElement('div');
+                div.className = `vn-sprite pos-${vnCharPos[evt.char_name]} dimmed`;
+                div.dataset.char = evt.char_name;
+                div.innerHTML = `<img class="sprite-img" src="${evt.url}" alt="${evt.char_name}"><div class="sprite-label">${evt.char_name}</div>`;
+                spritesEl.appendChild(div);
+              }
+            }
+          } else if (evt.event === 'assets_done') {
+            if (sessionId === mySessionId) vnAssets = { characters: evt.characters || {}, scenes: evt.scenes || {}, enabled: !!evt.enabled };
+          }
+        }
+      }
+    };
+    const bgReadPromise = readLoop().then(() => { if (!readyResolved) showEnterHint(); });
+    await readyPromise;
+    clearTimeout(safetyTimer);
+  } catch(e) {
+    vnAssets = { characters: {}, scenes: {}, enabled: false };
+    showEnterHint();
+  }
+}
+
+function vnApplyBackground(meta) {
+  const bgEl = document.getElementById('vnBg');
+  if (!bgEl || !meta || (!meta.scene_id && !meta.scene_name)) return Promise.resolve();
+  const url = vnAssets.scenes[meta.scene_id] || vnAssets.scenes[meta.scene_name];
+  if (!url) return Promise.resolve();
+  // 预加载完成后再设置背景，返回 Promise 等待图片真正加载完成
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => { bgEl.style.backgroundImage = `url(${url})`; resolve(); };
+    img.onerror = () => { resolve(); }; // 加载失败也放行，不能一直卡住
+    img.src = url;
+  });
+}
+
+function vnResetSprites() { vnCharPos = {}; vnSpeakerRecency = []; }
+
+function vnSyncSprites(speaker) {
+  const spritesEl = document.getElementById('vnSprites');
+  if (!spritesEl || !speaker) return;
+  vnSpeakerRecency = vnSpeakerRecency.filter(n => n !== speaker);
+  vnSpeakerRecency.push(speaker);
+  if (!(speaker in vnCharPos)) {
+    let freePos = VN_POS_POOL.find(p => !Object.values(vnCharPos).includes(p));
+    if (!freePos) {
+      const evict = vnSpeakerRecency.filter(n => n !== speaker && (n in vnCharPos))[0];
+      freePos = vnCharPos[evict];
+      delete vnCharPos[evict];
+      const oldEl = spritesEl.querySelector(`[data-char="${evict}"]`);
+      if (oldEl) oldEl.remove();
+    }
+    vnCharPos[speaker] = freePos;
+  }
+  Object.keys(vnCharPos).forEach(name => {
+    if (!spritesEl.querySelector(`[data-char="${name}"]`)) {
+      const imgUrl = vnAssets.characters[name];
+      // 没有图片 URL 时不创建占位体，等 Phase 2 热更新后自动补上
+      if (!imgUrl) return;
+      const div = document.createElement('div');
+      div.className = `vn-sprite pos-${vnCharPos[name]} dimmed hidden`;
+      div.dataset.char = name;
+      div.innerHTML = `<img class="sprite-img" src="${imgUrl}" alt="${name}"><div class="sprite-label">${name}</div>`;
+      spritesEl.appendChild(div);
+      void div.offsetHeight;
+    }
+  });
+  document.querySelectorAll('.vn-sprite').forEach(s => {
+    const name = s.dataset.char;
+    if (name in vnCharPos) {
+      s.classList.remove('hidden');
+      if (name === speaker) { s.classList.add('active'); s.classList.remove('dimmed'); }
+      else { s.classList.add('dimmed'); s.classList.remove('active'); }
+    } else { s.classList.add('hidden'); s.classList.remove('active'); }
+  });
+}
+
+// ─── 剧本管线：文字生成流（后台缓冲 + 实时处理）───
+async function startTextStreamBackground() {
+  try {
+    const res = await fetch(`/api/session/${sessionId}/generate-stream`, { method: 'POST' });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || `HTTP ${res.status}`); }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) { _textStreamDone = true; break; }
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const evt = JSON.parse(line.slice(6));
+            if (_textProcessing) handleStreamEvent(evt);
+            else _textEventBuffer.push(evt);
+          } catch(e) {}
+        }
+      }
+    }
+  } catch(e) { _textStreamError = e; }
+}
+
+// ─── 剧本管线：流式生成入口 ───
+async function generateSceneStream(textStreamPromise) {
+  chosenIndex = -1;
+  vnStreamDone = false;
+  vnStreamStarted = false;
+  vnState = { queue: [], idx: -1, charPositions: {}, choices: [], sessionState: '', meta: {}, progress: 0 };
+  vnNarrationStreaming = false;
+  vnNarrationIdx = -1;
+  vnIsEnding = false;
+  vnEndingData = null;
+  vnPopupActive = false;
+  vnWaiting = false;
+  vnErrorMode = false;
+  clearTimeout(vnWaitingTimer); vnWaitingTimer = null;
+  vnPopupShownThisScene = false;
+  clearInterval(vnPopupTypewriterTimer);
+  vnResetSprites();
+  vnStopAudio();
+  vnAudioQueue = [];
+  renderVNStage(0);
+
+  try {
+    if (textStreamPromise) {
+      if (_textStreamError) throw _textStreamError;
+      _textProcessing = true;
+      while (_textEventBuffer.length > 0) handleStreamEvent(_textEventBuffer.shift());
+      await textStreamPromise;
+      if (_textStreamError) throw _textStreamError;
+    } else {
+      const res = await fetch(`/api/session/${sessionId}/generate-stream`, { method: 'POST' });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || `HTTP ${res.status}`); }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (line.startsWith('data: ')) { try { handleStreamEvent(JSON.parse(line.slice(6))); } catch(e) {} }
+        }
+      }
+    }
+  } catch(e) {
+    vnEnterErrorMode(`生成失败: ${e.message}`);
+  }
+}
+
+function handleStreamEvent(evt) {
+  const type = evt.event;
+  const stageMsgEl = document.getElementById('vnStageMsg');
+  const textEl = document.getElementById('vnText');
+  const hintEl = document.getElementById('vnHint');
+  switch(type) {
+    case 'stage':
+      if (stageMsgEl) stageMsgEl.textContent = evt.message || '生成中...';
+      break;
+    case 'narration_start':
+      vnNarrationStreaming = true;
+      vnNarrationIdx = -1;
+      break;
+    case 'narration_delta':
+      if (vnNarrationIdx < 0) {
+        vnState.queue.push({ type: 'narration', speaker: '', text: '', emotion: '', streaming: true });
+        vnNarrationIdx = vnState.queue.length - 1;
+        if (vnWaiting) vnResumeFromWaiting();
+        else vnTryStartDisplay();
+      }
+      vnState.queue[vnNarrationIdx].text += (evt.delta || '');
+      if (vnPopupActive && vnPopupTypewriterDone && vnNarrationIdx >= 0) {
+        const ptEl = document.getElementById('vnNarrationText');
+        if (ptEl) { ptEl.textContent = vnState.queue[vnNarrationIdx].text; ptEl.scrollTop = ptEl.scrollHeight; }
+      }
+      break;
+    case 'narration':
+      if (vnNarrationStreaming && vnNarrationIdx >= 0 && vnState.queue[vnNarrationIdx]) {
+        const nItem = vnState.queue[vnNarrationIdx];
+        nItem.text = evt.text;
+        nItem.streaming = false;
+        if (vnState.idx === vnNarrationIdx && vnPopupActive) {
+          const ptEl = document.getElementById('vnNarrationText');
+          if (ptEl) { ptEl.textContent = evt.text; ptEl.scrollTop = ptEl.scrollHeight; }
+        }
+        if (vnState.idx === vnNarrationIdx && typewriterDone && !vnPopupActive) {
+          const tEl = document.getElementById('vnText');
+          if (tEl) { tEl.textContent = evt.text; tEl.scrollTop = tEl.scrollHeight; }
+        }
+      } else {
+        vnState.queue.push({ type: 'narration', speaker: '', text: evt.text, emotion: '', streaming: false });
+        if (vnWaiting) vnResumeFromWaiting();
+        else vnTryStartDisplay();
+      }
+      vnNarrationStreaming = false;
+      vnNarrationIdx = -1;
+      vnRefreshHint();
+      break;
+    case 'dialogue':
+      vnState.queue.push({ type: 'dialogue', speaker: evt.speaker, text: evt.text, emotion: evt.emotion || '' });
+      if (vnWaiting) vnResumeFromWaiting();
+      else vnTryStartDisplay();
+      vnRefreshHint();
+      break;
+    case 'action':
+      vnState.queue.push({ type: 'action', speaker: evt.subject || '', text: evt.text, emotion: '' });
+      if (vnWaiting) vnResumeFromWaiting();
+      else vnTryStartDisplay();
+      vnRefreshHint();
+      break;
+    case 'tts':
+      if (evt.url) {
+        // 声音关闭时也先缓存（url 为文件路径，开销极小），重新开启后可立即回放
+        vnAudioQueue.push({ speaker: evt.speaker || '', url: evt.url, lineIdx: evt.lineIdx !== undefined ? evt.lineIdx : vnState.queue.length - 1 });
+        vnTryPlayAudio();
+      }
+      break;
+    case 'choices':
+      vnState.choices = evt.choices || [];
+      break;
+    case 'retry':
+      vnState.queue = []; vnState.idx = -1; vnStreamStarted = false;
+      vnNarrationStreaming = false; vnNarrationIdx = -1; vnWaiting = false; vnPopupShownThisScene = false;
+      clearInterval(typewriterTimer);
+      const _retryPopup = document.getElementById('vnNarrationPopup');
+      if (_retryPopup) _retryPopup.style.display = 'none';
+      const _retryDbox = document.getElementById('vnDialogueBox');
+      if (_retryDbox) _retryDbox.style.visibility = 'visible';
+      vnPopupActive = false; vnPopupTypewriterDone = true;
+      clearInterval(vnPopupTypewriterTimer);
+      vnStopAudio(); vnAudioQueue = [];
+      // 明示重新生成进度，避免用户误以为卡死在「正在验证...」
+      const _retryMsg = evt.max_retries
+        ? `内容重新生成中（${evt.attempt}/${evt.max_retries}）...`
+        : '内容重新生成中...';
+      if (textEl) textEl.innerHTML = `<div class="vn-streaming-hint"><div class="spinner"></div><span id="vnStageMsg">${_retryMsg}</span></div>`;
+      if (hintEl) hintEl.style.display = 'none';
+      break;
+    case 'meta':
+      vnState.meta = evt.scene_meta || {};
+      vnState.sessionState = evt.session_state || '';
+      vnState.progress = evt.progress || 0;
+      if (evt.available_choices && evt.available_choices.length > 0) vnState.choices = evt.available_choices;
+      const infoEl = document.getElementById('vnSceneInfo');
+      const m = vnState.meta;
+      if (infoEl) infoEl.textContent = `${m.scene_name || ''} ${m.location ? '· ' + m.location : ''} （场景 ${m.scene_index||'?'}/${m.total_scenes||'?'}）`;
+      const bar = document.getElementById('vnProgress');
+      if (bar) bar.style.width = `${(vnState.progress || 0) * 100}%`;
+      vnApplyBackground(m);
+      break;
+    case 'done':
+      vnStreamDone = true;
+      vnWaiting = false;
+      vnRefreshHint();
+      break;
+    case 'error':
+      vnStreamDone = true;
+      vnEnterErrorMode(evt.message || '生成失败');
+      break;
+  }
+}
+
+async function vnTryStartDisplay() {
+  if (!vnStreamStarted && vnState.queue.length > 0) {
+    vnStreamStarted = true;
+    const speakerEl = document.getElementById('vnSpeaker');
+    if (speakerEl) speakerEl.innerHTML = '';
+    // 等待背景素材到位后再开始显示（显示加载遮罩）
+    showAssetGate();
+    await waitForBackground(vnState.meta);
+    await vnApplyBackground(vnState.meta);
+    hideAssetGate();
+    vnShowLine(0);
+  }
+}
+
+function vnKeyHandler(e) {
+  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); vnAdvance(); }
+}
+
+// ─── 打字机效果 ───
+async function vnShowLine(idx) {
+  vnLineStartTime = Date.now();
+  const { queue } = vnState;
+  if (idx >= queue.length) {
+    if (vnIsEnding) { vnShowEndingFinal(); return; }
+    if (vnStreamDone) vnShowChoices(); else vnShowWaiting();
+    return;
+  }
+  vnState.idx = idx;
+  const line = queue[idx];
+  // 每个场景的第一行：等待背景素材到位
+  if (idx === 0) {
+    const meta = vnState.meta;
+    const bgReady = meta && (vnAssets.scenes[meta.scene_id] || vnAssets.scenes[meta.scene_name]);
+    if (!bgReady) showAssetGate();
+    await waitForBackground(meta);
+    await vnApplyBackground(meta);
+    hideAssetGate();
+  }
+  // 对话行：等待该角色立绘到位后再显示（不显示全屏遮罩，仅锁定推进）
+  if (line.type === 'dialogue' && line.speaker) {
+    _vnAssetGateActive = true;
+    await waitForCharacterSprite(line.speaker);
+    _vnAssetGateActive = false;
+  }
+  if (idx === 0 && line.type === 'narration' && !vnPopupShownThisScene && document.getElementById('vnNarrationPopup')) {
+    vnShowNarrationPopup(line); return;
+  }
+  // 非旁白弹窗路径：确保对话框可见
+  const _dboxVis = document.getElementById('vnDialogueBox');
+  if (_dboxVis) _dboxVis.style.visibility = 'visible';
+  const speakerEl = document.getElementById('vnSpeaker');
+  const textEl = document.getElementById('vnText');
+  const emotionEl = document.getElementById('vnEmotion');
+  const hintEl = document.getElementById('vnHint');
+  if (line.type === 'narration') {
+    speakerEl.innerHTML = '';
+    document.querySelectorAll('.vn-sprite').forEach(s => { s.classList.add('dimmed'); s.classList.remove('active'); });
+  } else if (line.type === 'action') {
+    speakerEl.innerHTML = '';
+    document.querySelectorAll('.vn-sprite').forEach(s => { s.classList.add('dimmed'); s.classList.remove('active'); });
+  } else {
+    speakerEl.innerHTML = `<span class="vn-speaker-name">${escapeHtml(line.speaker)}</span>`;
+    vnSyncSprites(line.speaker);
+  }
+  const _dbox = document.getElementById('vnDialogueBox');
+  if (_dbox) {
+    _dbox.classList.remove('speaker-left', 'speaker-right');
+    if (line.type === 'dialogue') {
+      const _pos = vnCharPos[line.speaker];
+      if (_pos === 'left') _dbox.classList.add('speaker-left');
+      else if (_pos === 'right') _dbox.classList.add('speaker-right');
+    }
+  }
+  textEl.classList.toggle('vn-action-text', line.type === 'action');
+  emotionEl.textContent = line.emotion ? `〔${line.emotion}〕` : '';
+  if (hintEl) { hintEl.style.display = 'block'; hintEl.textContent = '点击继续 ▶'; hintEl.classList.remove('waiting'); }
+  // 只停止非当前行的音频，避免误杀已正确开始的当前行 TTS
+  if (vnCurrentAudioLineIdx !== idx) vnStopAudio();
+  vnAudioQueue = vnAudioQueue.filter(a => a.lineIdx >= idx);
+  setTimeout(() => vnTryPlayAudio(), 50);
+  const typewriterSpeed = vnTtsEnabled ? 1 : 2;
+  const typewriterInterval = vnTtsEnabled ? 50 : 30;
+  typewriterDone = false;
+  vnTypewriterCharIdx = 0;
+  vnTypewriterLine = line;
+  vnTypewriterText = line.text;
+  let charIdx = 0;
+  textEl.textContent = '';
+  clearInterval(typewriterTimer);
+  function _typewriterTick(speed, interval) {
+    clearInterval(typewriterTimer);
+    typewriterTimer = setInterval(() => {
+      const fullText = vnTypewriterLine.text;
+      charIdx += speed;
+      vnTypewriterCharIdx = charIdx;
+      if (charIdx > fullText.length) charIdx = fullText.length;
+      textEl.textContent = fullText.slice(0, charIdx);
+      textEl.scrollTop = textEl.scrollHeight;
+      if (charIdx >= fullText.length) {
+        if (vnTypewriterLine.streaming) return;
+        clearInterval(typewriterTimer);
+        textEl.textContent = fullText;
+        typewriterDone = true;
+        vnRefreshHint();
+      }
+    }, interval);
+  }
+  _typewriterTick(typewriterSpeed, typewriterInterval);
+}
+
+function vnSyncTypewriterToAudio(duration) {
+  if (typewriterDone || !vnTypewriterLine) return;
+  const fullText = vnTypewriterLine.text;
+  if (!fullText || fullText.length === 0) return;
+  const remaining = fullText.length - vnTypewriterCharIdx;
+  if (remaining <= 0) return;
+  const elapsed = vnTypewriterLine._audioStartTime ? (performance.now() - vnTypewriterLine._audioStartTime) / 1000 : 0;
+  const remainingAudio = Math.max(0.5, duration - elapsed);
+  const newInterval = Math.max(20, Math.min(300, (remainingAudio * 1000 * 0.9) / remaining));
+  _typewriterTickAgain(1, newInterval);
+}
+
+function _typewriterTickAgain(speed, interval) {
+  const textEl = document.getElementById('vnText');
+  if (!textEl) return;
+  clearInterval(typewriterTimer);
+  let charIdx = vnTypewriterCharIdx;
+  typewriterTimer = setInterval(() => {
+    const fullText = vnTypewriterLine ? vnTypewriterLine.text : '';
+    charIdx += speed;
+    vnTypewriterCharIdx = charIdx;
+    if (charIdx > fullText.length) charIdx = fullText.length;
+    textEl.textContent = fullText.slice(0, charIdx);
+    textEl.scrollTop = textEl.scrollHeight;
+    if (charIdx >= fullText.length) {
+      if (vnTypewriterLine && vnTypewriterLine.streaming) return;
+      clearInterval(typewriterTimer);
+      textEl.textContent = fullText;
+      typewriterDone = true;
+      vnRefreshHint();
+    }
+  }, interval);
+}
+
+function vnShowWaiting() {
+  vnWaiting = true;
+  const textEl = document.getElementById('vnText');
+  const hintEl = document.getElementById('vnHint');
+  if (textEl) textEl.innerHTML = `<div class="vn-streaming-hint"><div class="spinner"></div><span>后续内容生成中...</span></div>`;
+  if (hintEl) { hintEl.style.display = 'block'; hintEl.textContent = '后续内容生成中...'; hintEl.classList.add('waiting'); }
+  // 超时兜底：120s 无新内容则判定断流，进入错误模式避免永久卡死
+  clearTimeout(vnWaitingTimer);
+  vnWaitingTimer = setTimeout(() => {
+    if (!vnWaiting) return;
+    vnEnterErrorMode('等待超时：长时间未收到新内容，连接可能已中断');
+  }, 120000);
+}
+
+// ─── 错误模式：生成失败/断流，禁止推进，点击对话框返回首页 ───
+function vnEnterErrorMode(message) {
+  vnErrorMode = true;
+  vnWaiting = false;
+  clearTimeout(vnWaitingTimer); vnWaitingTimer = null;
+  clearInterval(typewriterTimer);
+  const popup = document.getElementById('vnNarrationPopup');
+  if (popup) popup.style.display = 'none';
+  vnPopupActive = false;
+  const dbox = document.getElementById('vnDialogueBox');
+  if (dbox) {
+    // 必须先移除 vnAdvance 监听器，否则 addEventListener 注册的回调
+    // 会先于 onclick 触发，导致点击后推进剧情而非返回首页
+    dbox.removeEventListener('click', vnAdvance);
+    dbox.style.visibility = 'visible';
+    dbox.onclick = () => location.href = '/';
+  }
+  const textEl = document.getElementById('vnText');
+  if (textEl) textEl.innerHTML = `<span style="color:var(--danger)">${message}</span>`;
+  const hintEl = document.getElementById('vnHint');
+  if (hintEl) { hintEl.style.display = 'block'; hintEl.textContent = '点击返回首页'; hintEl.classList.remove('waiting'); }
+}
+
+function vnResumeFromWaiting() {
+  vnWaiting = false;
+  clearTimeout(vnWaitingTimer); vnWaitingTimer = null;
+  const hintEl = document.getElementById('vnHint');
+  if (hintEl) hintEl.classList.remove('waiting');
+  if (vnState.idx < vnState.queue.length - 1) vnShowLine(vnState.idx + 1);
+}
+
+function vnShowNarrationPopup(line) {
+  vnLineStartTime = Date.now();
+  vnPopupActive = true;
+  vnPopupShownThisScene = true;
+  vnPopupTypewriterDone = false;
+  const popup = document.getElementById('vnNarrationPopup');
+  const textEl = document.getElementById('vnNarrationText');
+  if (!popup || !textEl) { vnPopupActive = false; return; }
+  popup.style.display = 'flex';
+  popup.onclick = vnAdvance;
+  const dbox = document.getElementById('vnDialogueBox');
+  if (dbox) dbox.style.visibility = 'hidden';
+  let charIdx = 0;
+  textEl.textContent = '';
+  clearInterval(vnPopupTypewriterTimer);
+  vnPopupTypewriterTimer = setInterval(() => {
+    const fullText = line.text;
+    charIdx += 2;
+    if (charIdx > fullText.length) charIdx = fullText.length;
+    textEl.textContent = fullText.slice(0, charIdx);
+    textEl.scrollTop = textEl.scrollHeight;
+    if (charIdx >= fullText.length) {
+      if (line.streaming) return;
+      clearInterval(vnPopupTypewriterTimer);
+      textEl.textContent = fullText;
+      vnPopupTypewriterDone = true;
+      vnRefreshHint();
+    }
+  }, 30);
+  vnRefreshHint();
+}
+
+function vnRefreshHint() {
+  const twDone = vnPopupActive ? vnPopupTypewriterDone : typewriterDone;
+  const atEnd = twDone && !vnStreamDone && vnState.idx >= vnState.queue.length - 1;
+  const hintId = vnPopupActive ? 'vnPopupHint' : 'vnHint';
+  const h = document.getElementById(hintId);
+  if (h) {
+    if (atEnd) {
+      h.textContent = '后续内容生成中...'; h.classList.add('waiting');
+    } else {
+      h.textContent = '点击继续 ▶'; h.classList.remove('waiting');
+    }
+  }
+  vnScheduleAutoAdvance();
+}
+
+// ─── 自动播放 ───
+function vnSyncAutoBtn() {
+  const btn = document.getElementById('vnAutoBtn');
+  if (btn) { btn.textContent = vnAutoPlay ? '自动:开' : '自动'; btn.classList.toggle('active', vnAutoPlay); }
+}
+function vnToggleAutoPlay() {
+  vnAutoPlay = !vnAutoPlay;
+  vnSyncAutoBtn();
+  if (vnAutoPlay) vnScheduleAutoAdvance(); else clearTimeout(vnAutoPlayTimer);
+}
+function vnScheduleAutoAdvance() {
+  clearTimeout(vnAutoPlayTimer);
+  if (!vnAutoPlay) return;
+  const twDone = vnPopupActive ? vnPopupTypewriterDone : typewriterDone;
+  if (!twDone) return;
+  const { idx, queue } = vnState;
+  if (idx >= queue.length - 1 && !vnStreamDone) return;
+  if (vnTtsEnabled && vnCurrentAudio) return;
+  const len = (queue[idx] && queue[idx].text) ? queue[idx].text.length : 0;
+  const delay = Math.min(6000, 700 + len * 45);
+  const elapsed = Date.now() - vnLineStartTime;
+  const finalDelay = Math.max(delay, 1000 - elapsed);
+  vnAutoPlayTimer = setTimeout(() => vnAdvance(), finalDelay);
+}
+
+// ─── TTS 语音播放 ───
+function vnSyncVoiceBtn() {
+  const btn = document.getElementById('vnVoiceBtn');
+  if (btn) { btn.textContent = vnTtsEnabled ? '声音:开' : '声音:关'; btn.classList.toggle('active', vnTtsEnabled); }
+}
+function vnToggleVoice() {
+  vnTtsEnabled = !vnTtsEnabled;
+  vnSyncVoiceBtn();
+  if (!vnTtsEnabled) {
+    if (vnCurrentAudio) { vnCurrentAudio.pause(); vnCurrentAudio = null; }
+    vnAudioLock = false;
+    vnCurrentAudioLineIdx = -1;
+  } else {
+    // 清理快进期间已翻过的过期音频，只保留当前行及之后
+    vnAudioQueue = vnAudioQueue.filter(a => a.lineIdx >= vnState.idx);
+    vnTryPlayAudio();
+  }
+}
+function vnTryPlayAudio() {
+  if (vnAudioLock || vnCurrentAudio) return;
+  if (!vnTtsEnabled) return;
+  const itemIdx = vnAudioQueue.findIndex(a => a.lineIdx === vnState.idx);
+  if (itemIdx < 0) return;
+  const item = vnAudioQueue[itemIdx];
+  vnAudioQueue.splice(itemIdx, 1);
+  vnAudioLock = true;
+  vnCurrentAudioLineIdx = item.lineIdx;
+  const audio = new Audio(item.url);
+  vnCurrentAudio = audio;
+  audio.addEventListener('loadedmetadata', () => {
+    if (vnTypewriterLine && !typewriterDone) {
+      vnTypewriterLine._audioStartTime = performance.now();
+      vnSyncTypewriterToAudio(audio.duration);
+    }
+  });
+  audio.onended = () => { vnCurrentAudio = null; vnAudioLock = false; vnCurrentAudioLineIdx = -1; vnTryPlayAudio(); if (vnAutoPlay) vnScheduleAutoAdvance(); };
+  audio.onerror = () => { vnCurrentAudio = null; vnAudioLock = false; vnCurrentAudioLineIdx = -1; vnTryPlayAudio(); };
+  audio.play().catch(() => { vnCurrentAudio = null; vnAudioLock = false; vnCurrentAudioLineIdx = -1; });
+}
+function vnStopAudio() {
+  if (vnCurrentAudio) { vnCurrentAudio.pause(); vnCurrentAudio = null; }
+  vnAudioLock = false;
+  vnCurrentAudioLineIdx = -1;
+}
+
+function vnAdvance() {
+  // 错误模式下点击 = 返回首页（键盘 Space/Enter 也走此函数）
+  if (vnErrorMode) { location.href = '/'; return; }
+  clearTimeout(vnAutoPlayTimer);
+  vnStopAudio();
+  // 素材门控进行中，禁止用户推进
+  if (_vnAssetGateActive) return;
+  if (vnWaiting) {
+    return;
+  }
+  if (vnEndingScrollActive) {
+    if (!vnEndingScrollDone) {
+      clearInterval(vnEndingScrollTimer);
+      const textEl = document.getElementById('vnEndingScrollText');
+      const scroll = document.getElementById('vnEndingScroll');
+      if (textEl) textEl.textContent = vnState.queue.map(l => l.text).join('\n\n');
+      if (scroll) scroll.scrollTop = scroll.scrollHeight;
+      vnEndingScrollDone = true;
+      return;
+    }
+    const scroll = document.getElementById('vnEndingScroll');
+    if (scroll) scroll.style.display = 'none';
+    vnEndingScrollActive = false;
+    vnShowEndingFinal();
+    return;
+  }
+  if (vnPopupActive) {
+    const line = vnState.queue[vnState.idx];
+    if (!vnPopupTypewriterDone) {
+      clearInterval(vnPopupTypewriterTimer);
+      const ptEl = document.getElementById('vnNarrationText');
+      if (ptEl && line) { ptEl.textContent = line.text; ptEl.scrollTop = ptEl.scrollHeight; }
+      vnPopupTypewriterDone = true;
+      vnRefreshHint();
+      return;
+    }
+    if (line && line.streaming) return; // 旁白仍在流式接收中，禁止关闭弹窗
+    if (Date.now() - vnLineStartTime < 1000) return; // 强制1秒最小停留
+    if (!vnStreamDone && vnState.idx >= vnState.queue.length - 1) {
+      // 弹窗内显示“后续内容生成中”，点击忽略
+      return;
+    }
+    const popup = document.getElementById('vnNarrationPopup');
+    if (popup) popup.style.display = 'none';
+    const dbox = document.getElementById('vnDialogueBox');
+    if (dbox) dbox.style.visibility = 'visible';
+    vnPopupActive = false;
+    const { idx, queue } = vnState;
+    if (idx < queue.length - 1) vnShowLine(idx + 1);
+    else if (vnStreamDone) vnShowChoices(); else vnShowWaiting();
+    return;
+  }
+  if (!typewriterDone) {
+    clearInterval(typewriterTimer);
+    const textEl = document.getElementById('vnText');
+    const line = vnState.queue[vnState.idx];
+    if (textEl && line) { textEl.textContent = line.text; textEl.scrollTop = textEl.scrollHeight; }
+    if (line) line.streaming = false;
+    typewriterDone = true;
+    return;
+  }
+  if (Date.now() - vnLineStartTime < 1000) return; // 强制1秒最小停留
+  if (!vnStreamDone && vnState.idx >= vnState.queue.length - 1) {
+    // 已读完所有到达内容，流未结束：等待
+    vnShowWaiting();
+    return;
+  }
+  const { idx, queue } = vnState;
+  if (idx < queue.length - 1) vnShowLine(idx + 1);
+  else if (vnStreamDone) { if (vnIsEnding) { vnShowEndingFinal(); return; } vnShowChoices(); }
+}
+
+function vnShowChoices() {
+  const { choices, sessionState } = vnState;
+  const box = document.getElementById('vnDialogueBox');
+  const overlay = document.getElementById('vnChoices');
+  document.removeEventListener('keydown', vnKeyHandler);
+  if (sessionState === 'generated' && choices.length > 0 && chosenIndex < 0) {
+    box.style.opacity = '0'; box.style.pointerEvents = 'none';
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `<div class="choices-label">做出你的选择</div>${choices.map((c, i) => `<button class="choice-btn" data-idx="${i}"><div>${escapeHtml(c.text)}${(c.minigame && c.minigame.type) ? '<span class="mg-badge">🎮 小游戏</span>' : ''}</div><div class="effect">${escapeHtml(c.effect || c.description || c.hint || '')}</div></button>`).join('')}`;
+    overlay.addEventListener('click', e => {
+      const btn = e.target.closest('.choice-btn');
+      if (!btn) return;
+      const idx = parseInt(btn.dataset.idx);
+      const text = choices[idx]?.text || '';
+      overlay.querySelectorAll('.choice-btn').forEach((b, i) => { if (i === idx) b.classList.add('selected'); b.style.pointerEvents = 'none'; });
+      if (choices[idx] && choices[idx].minigame && choices[idx].minigame.type) startMinigameVN(idx);
+      else makeChoice(idx, text);
+    });
+  } else if (chosenIndex >= 0) {
+    box.style.opacity = '0'; box.style.pointerEvents = 'none';
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `<div class="waiting-msg" style="margin-bottom:16px">选择已确认</div><button class="btn btn-primary" id="vnNextBtn">继续下一段 →</button>`;
+    document.getElementById('vnNextBtn').addEventListener('click', () => {
+      document.removeEventListener('keydown', vnKeyHandler);
+      generateSceneStream();
+    });
+  } else {
+    box.style.opacity = '0'; box.style.pointerEvents = 'none';
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `<button class="btn btn-primary" id="vnNextBtn2">继续下一段 →</button>`;
+    document.getElementById('vnNextBtn2').addEventListener('click', () => {
+      document.removeEventListener('keydown', vnKeyHandler);
+      generateSceneStream();
+    });
+  }
+}
+
+async function makeChoice(index, text) {
+  if (chosenIndex >= 0) return;
+  chosenIndex = index;
+  document.querySelectorAll('.choice-btn').forEach((btn,i) => { if(i===index) btn.classList.add('selected'); btn.style.pointerEvents = 'none'; });
+  try {
+    const res = await api(`/api/session/${sessionId}/choose`, { method:'POST', body: JSON.stringify({choice_text:text, choice_index:index}) });
+    if (res.session_state === 'finished') { setTimeout(() => renderEnd(res), 500); }
+    else { chosenIndex = -1; await generateSceneStream(); }
+  } catch(e) { alert('Error: '+e.message); chosenIndex = -1; }
+}
+
+// ═══════════════════════════════════════════════════════
+// 内嵌小游戏：选项声明 minigame 时触发，结算后续接剧情
+// ═══════════════════════════════════════════════════════
+let mgData = null;      // 当前渲染的 GAME_DATA
+let mgCluePick = null;  // 线索玩法选中的线索 id
+let mgSeqPick = -1;     // 排序玩法第一次点选的索引
+let mgRetryHint = '';   // 非终局答错后揭示的线索，重试时保留展示
+
+function startMinigameVN(index) {
+  if (chosenIndex >= 0) return;
+  chosenIndex = index;
+  const overlay = document.getElementById('vnMinigame');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `<div class="mg-panel" style="text-align:center"><div class="mg-title">正在准备挑战…</div><div class="mg-sub">正在结合当前剧情生成小游戏，请稍候（约 10~60 秒）</div></div>`;
+  api(`/api/session/${sessionId}/minigame/start`, { method:'POST', body: JSON.stringify({choice_index:index}) })
+    .then(game => { mgData = game; mgRender(game); })
+    .catch(e => { alert('小游戏启动失败: ' + e.message); mgBackToChoices(); });
+}
+
+function mgBackToChoices() {
+  mgVoyStop(); mgRadioStop(); mgSearchStop(); mgMazeStop();
+  if (mgMatchResizeFn) { window.removeEventListener('resize', mgMatchResizeFn); mgMatchResizeFn = null; }
+  chosenIndex = -1; mgData = null; mgCluePick = null; mgSeqPick = -1; mgRetryHint = '';
+  const overlay = document.getElementById('vnMinigame');
+  overlay.style.display = 'none'; overlay.innerHTML = '';
+  document.querySelectorAll('#vnChoices .choice-btn').forEach(b => { b.classList.remove('selected'); b.style.pointerEvents = ''; });
+}
+
+async function cancelMinigameVN() {
+  try { await api(`/api/session/${sessionId}/minigame/cancel`, { method:'POST' }); } catch(e) {}
+  mgBackToChoices();
+}
+
+function mgRender(g) {
+  mgVoyStop(); mgRadioStop(); mgSearchStop(); mgMazeStop();
+  const overlay = document.getElementById('vnMinigame');
+  let kind;
+  if (g.type === 'clue') kind = 'clue';
+  else if (g.type === 'match') kind = 'match';
+  else if (g.type === 'classify') kind = 'classify';
+  else if (g.type === 'unlock') kind = 'unlock';
+  else if (g.type === 'voyage') kind = 'voyage';
+  else if (g.type === 'shuffle') kind = 'shuffle';
+  else if (g.type === 'radio') kind = 'radio';
+  else if (g.type === 'search') kind = 'search';
+  else if (g.type === 'dial') kind = 'dial';
+  else if (g.type === 'maze') kind = 'maze';
+  else kind = g.mode === 'cipher' ? 'cipher' : 'sequence';
+  const eyebrowMap = {
+    clue: '線索指認 · EVIDENCE',
+    cipher: '密碼解密 · CIPHER',
+    sequence: '時間線排序 · TIMELINE',
+    match: '連線配對 · MATCH',
+    classify: '證物歸類 · CLASSIFY',
+    unlock: '逐步解鎖 · UNLOCK',
+    voyage: '巡航打撈 · VOYAGE',
+    shuffle: '碎紙復原 · SHUFFLE',
+    radio: '頻段截聽 · RADIO',
+    search: '現場搜證 · SEARCH',
+    dial: '密碼轉盤 · DIAL',
+    maze: '檔案室迷宮 · MAZE',
+  };
+  const eyebrow = eyebrowMap[kind];
+  let body = '';
+  if (kind === 'clue') {
+    body = `
+      <div class="mg-banner">${escapeHtml(g.question || '')}</div>
+      <div class="mg-clue-grid">${(g.clues || []).map((c, i) => `<div class="mg-clue" data-id="${escapeHtml(c.id)}"><span class="mg-tag">證-${String(i + 1).padStart(2, '0')}</span><div class="src">${escapeHtml(c.source || '')}</div><div class="txt">${escapeHtml(c.text || '')}</div></div>`).join('')}</div>
+      <div class="mg-actions"><button class="mg-btn" id="mgConfirm" disabled>指认</button><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'cipher') {
+    body = `
+      ${g.story ? `<div class="mg-banner">${escapeHtml(g.story)}</div>` : ''}
+      <div class="mg-cipher">${escapeHtml(g.cipherText || '')}</div>
+      ${g.hint ? `<div class="mg-hint">💡 ${escapeHtml(g.hint)}</div>` : ''}
+      <div class="mg-tip">答案共 ${g.answerLength || '?'} 个字</div>
+      <input class="mg-input" id="mgCipherInput" placeholder="输入解密后的明文" autocomplete="off">
+      <div class="mg-actions"><button class="mg-btn" id="mgConfirm">解密</button><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'sequence') {
+    body = `
+      ${g.story ? `<div class="mg-banner">${escapeHtml(g.story)}</div>` : ''}
+      ${g.question ? `<div class="mg-banner">${escapeHtml(g.question)}</div>` : ''}
+      ${g.hint ? `<div class="mg-hint">💡 ${escapeHtml(g.hint)}</div>` : ''}
+      <div class="mg-tip">拖拽调整顺序，或点选两项交换位置</div>
+      <div class="mg-list" id="mgList">${(g.items || []).map((it, i) => `<div class="mg-item" draggable="true" data-id="${escapeHtml(it.id)}"><div class="num">${i + 1}</div><div class="txt">${escapeHtml(it.text || '')}</div></div>`).join('')}</div>
+      <div class="mg-actions"><button class="mg-btn" id="mgConfirm">确认顺序</button><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'match') {
+    body = `
+      <div class="mg-banner">${escapeHtml(g.question || '')}</div>
+      <div class="mg-tip">先点左栏一项，再点右栏一项完成连线；点已连线的卡片可取消</div>
+      <div class="mg-match">
+        <svg class="mg-match-lines" id="mgMatchSvg"></svg>
+        <div class="mg-match-col" id="mgMatchLeft">${(g.lefts || []).map(l => `<div class="mg-match-item" data-id="${escapeHtml(l.id)}">${escapeHtml(l.text || '')}</div>`).join('')}</div>
+        <div class="mg-match-col" id="mgMatchRight">${(g.rights || []).map(r => `<div class="mg-match-item" data-id="${escapeHtml(r.id)}">${escapeHtml(r.text || '')}</div>`).join('')}</div>
+      </div>
+      <div class="mg-actions"><button class="mg-btn" id="mgConfirm" disabled>确认连线</button><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'classify') {
+    body = `
+      <div class="mg-banner">${escapeHtml(g.question || '')}</div>
+      <div class="mg-tip">先点选一个条目，再点分类箱投入；点箱内条目可取回</div>
+      <div class="mg-class-tray" id="mgClassTray">${(g.items || []).map(it => `<div class="mg-class-item" data-id="${escapeHtml(it.id)}">${escapeHtml(it.text || '')}</div>`).join('')}</div>
+      <div class="mg-class-bins">${(g.categories || []).map(c => `<div class="mg-class-bin" data-cat="${escapeHtml(c.id)}"><div class="bin-name">${escapeHtml(c.name || '')}</div><div class="bin-items"></div></div>`).join('')}</div>
+      <div class="mg-actions"><button class="mg-btn" id="mgConfirm" disabled>确认归类</button><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'unlock') {
+    body = `
+      ${g.story ? `<div class="mg-banner">${escapeHtml(g.story)}</div>` : ''}
+      <div id="mgUnlockBox"></div>
+      <div class="mg-actions"><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'voyage') {
+    body = `
+      ${g.story ? `<div class="mg-banner">${escapeHtml(g.story)}</div>` : ''}
+      <div class="mg-voyage-hud"><span id="mgVoyTime">剩余 ${g.timeLimit || 15} 秒</span><span id="mgVoyScore">得分 0 / ${g.passScore || 150}</span></div>
+      <canvas class="mg-voyage-canvas" id="mgVoyCanvas"></canvas>
+      <div class="mg-tip">方向键 / WASD 或按住拖动驾驶巡逻艇：撞浮标（${escapeHtml((g.targets || []).map(t => (t && t.label) ? t.label : t).join('、') || '目标')}）+10，碰暗礁与游动障碍 -10</div>
+      <div class="mg-actions"><button class="mg-btn" id="mgVoyStart">出航</button><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'shuffle') {
+    body = `
+      ${g.story ? `<div class="mg-banner">${escapeHtml(g.story)}</div>` : ''}
+      <div class="mg-shred-doc">《 ${escapeHtml(g.docTitle || '')} 》</div>
+      <div class="mg-tip">点选两块碎片交换位置，把文件拼回正确的阅读顺序</div>
+      <div class="mg-shred-grid" id="mgShredGrid" style="grid-template-columns:repeat(${g.cols || 3},1fr)">${(g.pieces || []).map(p => `<div class="mg-shred-tile" data-id="${escapeHtml(p.id)}">${escapeHtml(p.text || '')}</div>`).join('')}</div>
+      <div class="mg-actions"><button class="mg-btn" id="mgConfirm">确认复原</button><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'radio') {
+    const startFreq = Math.max(88, Math.min(108, (g.targetFreq || 98) - 4));
+    body = `
+      ${g.story ? `<div class="mg-banner">${escapeHtml(g.story)}</div>` : ''}
+      <div class="mg-radio-hud"><span>目标呼号：${escapeHtml(g.callSign || '')}</span><span id="mgRadioTime">剩余 ${g.timeLimit || 30} 秒</span></div>
+      <canvas class="mg-radio-scope" id="mgRadioScope"></canvas>
+      <div class="mg-radio-freq"><em id="mgRadioFreqVal">${startFreq.toFixed(1)}</em> MHz</div>
+      <input type="range" class="mg-radio-dial" id="mgRadioDial" min="88" max="108" step="0.1" value="${startFreq.toFixed(1)}">
+      <div class="mg-tip">拖动滑条或用 ← → 微调，让青色接收波形与黄色虚线目标波形重合，稳住 ${((g.holdMs || 1500) / 1000).toFixed(1)} 秒完成截获；红色干扰频段会重置稳定进度</div>
+      <div class="mg-radio-lockbar"><div class="fill" id="mgRadioLockFill"></div></div>
+      <div class="mg-actions"><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'search') {
+    body = `
+      ${g.story ? `<div class="mg-banner">${escapeHtml(g.story)}</div>` : ''}
+      <div class="mg-radio-hud"><span>目标：${escapeHtml(g.targetDesc || '')}（${g.targetCount || 1} 件）</span><span id="mgSearchTime">剩余 ${g.timeLimit || 45} 秒</span></div>
+      <div class="mg-tip">点选符合目标的证物，选满 ${g.targetCount || 1} 件后提交；多圈、漏圈都算失败</div>
+      <div class="mg-search-grid" id="mgSearchGrid">${(g.items || []).map(it => `<div class="mg-search-item" data-id="${escapeHtml(it.id)}"><div class="nm">${escapeHtml(it.name || '')}</div><div class="ds">${escapeHtml(it.desc || '')}</div></div>`).join('')}</div>
+      <div class="mg-actions"><button class="mg-btn" id="mgConfirm" disabled>提交圈选（0/${g.targetCount || 1}）</button><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'dial') {
+    const n = g.codeLength || 3;
+    mgDialDigits = Array(n).fill(0);
+    body = `
+      ${g.story ? `<div class="mg-banner">${escapeHtml(g.story)}</div>` : ''}
+      ${g.lockNote ? `<div class="mg-dial-locknote">“${escapeHtml(g.lockNote)}”</div>` : ''}
+      ${g.lockMark ? `<div class="mg-dial-locknote">锁身刻痕：${escapeHtml(g.lockMark)}</div>` : ''}
+      <div class="mg-tip">锁身上的谜面与刻痕暗示了密码的来历；拨错后会揭示更明确的线索</div>
+      <div class="mg-maze-hud"><span>剩余试拨：<b id="mgDialTries">${g.maxAttempts || 5}</b> 次</span><span>A=数字位置均对 · B=数字对但位置不对</span></div>
+      <div class="mg-dial-slots" id="mgDialSlots">${Array.from({length: n}, (_, i) => `<div class="mg-dial-slot" data-idx="${i}"><div class="spin"><button data-spin="1" type="button">▲</button></div><div class="digit" id="mgDialDigit${i}">0</div><div class="spin"><button data-spin="-1" type="button">▼</button></div></div>`).join('')}</div>
+      <div class="mg-dial-fmterror" id="mgDialFmtErr"></div>
+      <div class="mg-dial-history"><div class="dh-title">试拨记录（新在上）</div><div id="mgDialRows"><div class="mg-dial-row" style="opacity:.55"><span class="guess">—</span><span class="fb">暂无试拨记录</span></div></div></div>
+      <div class="mg-actions"><button class="mg-btn" id="mgConfirm">拨动转盘试开</button><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  } else if (kind === 'maze') {
+    body = `
+      ${g.story ? `<div class="mg-banner">${escapeHtml(g.story)}</div>` : ''}
+      <div class="mg-maze-hud"><span>${escapeHtml(g.mapNote || '')}</span><span id="mgMazeTime">剩余 ${g.timeLimit || 20} 秒</span></div>
+      <div class="mg-maze-wrap"><div class="mg-maze-grid" id="mgMazeGrid" style="grid-template-columns:repeat(${g.cols || 11},1fr);grid-template-rows:repeat(${g.rows || 11},1fr);"></div></div>
+      <div class="mg-maze-dpad">
+        <button data-dir="up" type="button">▲</button>
+        <button data-dir="left" type="button">◀</button>
+        <button data-dir="down" type="button">▼</button>
+        <button data-dir="right" type="button">▶</button>
+      </div>
+      <div class="mg-tip">方向键 / WASD 或点方向键移动，赶在限时内抵达绿色出口；躲开三盏游动的巡逻光点，被照到扣 ${g.caughtPenalty || 3} 秒</div>
+      <div class="mg-actions"><button class="mg-btn ghost" id="mgCancel">放弃返回选项</button></div>`;
+  }
+  overlay.innerHTML = `<div class="mg-panel"><div class="mg-folder-tab">調 查 檔 案</div><div class="mg-eyebrow">${eyebrow}</div><div class="mg-title">${escapeHtml(g.title || '小游戏')}</div>${g.maxAttempts ? `<div class="mg-tip">共 ${g.maxAttempts} 次作答机会，答错会揭示一条针对性线索</div>` : ''}${mgRetryHint ? `<div class="mg-correct" style="text-align:left;margin-bottom:10px">線索揭示：${escapeHtml(mgRetryHint)}</div>` : ''}${body}</div>`;
+
+  overlay.querySelector('#mgCancel').addEventListener('click', cancelMinigameVN);
+  const confirmBtn = overlay.querySelector('#mgConfirm');
+
+  if (kind === 'clue') {
+    overlay.querySelectorAll('.mg-clue').forEach(card => card.addEventListener('click', () => {
+      overlay.querySelectorAll('.mg-clue').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      mgCluePick = card.dataset.id;
+      confirmBtn.disabled = false;
+    }));
+    confirmBtn.addEventListener('click', () => mgSubmit(mgCluePick));
+  } else if (kind === 'cipher') {
+    const input = overlay.querySelector('#mgCipherInput');
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') mgSubmit(input.value.trim()); });
+    confirmBtn.addEventListener('click', () => mgSubmit(input.value.trim()));
+    input.focus();
+  } else if (kind === 'sequence') {
+    mgBindSequence(overlay.querySelector('#mgList'));
+    confirmBtn.addEventListener('click', () => {
+      const ids = [...overlay.querySelectorAll('#mgList .mg-item')].map(el => el.dataset.id);
+      mgSubmit(ids);
+    });
+  } else if (kind === 'match') {
+    mgMatchBind(overlay);
+    confirmBtn.addEventListener('click', () => mgSubmit({ ...mgMatchPairs }));
+  } else if (kind === 'classify') {
+    mgClassBind(overlay);
+    confirmBtn.addEventListener('click', () => {
+      const map = {};
+      overlay.querySelectorAll('.mg-class-bin').forEach(bin => {
+        bin.querySelectorAll('.mg-class-item').forEach(it => { map[it.dataset.id] = bin.dataset.cat; });
+      });
+      mgSubmit(map);
+    });
+  } else if (kind === 'unlock') {
+    mgUnlockBind(overlay, g);
+  } else if (kind === 'voyage') {
+    mgVoyageBind(overlay, g);
+  } else if (kind === 'shuffle') {
+    mgShuffleBind(overlay);
+    confirmBtn.addEventListener('click', () => {
+      const ids = [...overlay.querySelectorAll('#mgShredGrid .mg-shred-tile')].map(el => el.dataset.id);
+      mgSubmit(ids);
+    });
+  } else if (kind === 'radio') {
+    mgRadioBind(overlay, g);
+  } else if (kind === 'search') {
+    mgSearchBind(overlay, g);
+    confirmBtn.addEventListener('click', () => mgSearchSubmit());
+  } else if (kind === 'dial') {
+    mgDialBind(overlay, g);
+    confirmBtn.addEventListener('click', () => mgSubmit(mgDialDigits.join('')));
+  } else if (kind === 'maze') {
+    mgMazeBind(overlay, g);
+  }
+}
+
+function mgRenumber(list) {
+  list.querySelectorAll('.mg-item .num').forEach((n, i) => { n.textContent = i + 1; });
+}
+
+function mgBindSequence(list) {
+  if (!list) return;
+  let dragEl = null;
+  list.querySelectorAll('.mg-item').forEach(item => {
+    item.addEventListener('dragstart', () => { dragEl = item; item.classList.add('dragging'); mgSeqPick = -1; list.querySelectorAll('.mg-item').forEach(i => i.classList.remove('selected')); });
+    item.addEventListener('dragend', () => { item.classList.remove('dragging'); list.querySelectorAll('.mg-item').forEach(i => i.classList.remove('dragover')); dragEl = null; mgRenumber(list); });
+    item.addEventListener('dragover', e => { e.preventDefault(); if (item !== dragEl) item.classList.add('dragover'); });
+    item.addEventListener('dragleave', () => item.classList.remove('dragover'));
+    item.addEventListener('drop', e => {
+      e.preventDefault(); item.classList.remove('dragover');
+      if (dragEl && item !== dragEl) list.insertBefore(dragEl, item);
+      mgRenumber(list);
+    });
+    item.addEventListener('click', () => {
+      const items = [...list.children];
+      if (mgSeqPick < 0) { mgSeqPick = items.indexOf(item); item.classList.add('selected'); return; }
+      const i = mgSeqPick;
+      const first = items[i];
+      const j = items.indexOf(item);
+      if (i === j) { item.classList.remove('selected'); mgSeqPick = -1; return; }
+      first.classList.remove('selected'); mgSeqPick = -1;
+      [items[i], items[j]] = [items[j], items[i]];
+      items.forEach(el => list.appendChild(el));
+      mgRenumber(list);
+    });
+  });
+}
+
+// ─── 连线配对 ───
+const MG_PAIR_COLORS = ['#e4572e', '#6fa8a0', '#d9a441', '#7cb98a', '#c89968'];
+let mgMatchSel = null;
+let mgMatchPairs = {};  // leftId -> rightId
+let mgMatchResizeFn = null;  // 窗口缩放时重绘连线
+
+function mgMatchRepaint(overlay) {
+  overlay.querySelectorAll('.mg-match-item').forEach(el => {
+    const old = el.querySelector('.pair-no');
+    if (old) old.remove();
+    el.classList.remove('selected');
+  });
+  // 真实连线：在覆盖层 SVG 上按配对画彩线
+  const svg = overlay.querySelector('#mgMatchSvg');
+  const wrap = overlay.querySelector('.mg-match');
+  let n = 0;
+  let lines = '';
+  if (svg && wrap) {
+    const wr = wrap.getBoundingClientRect();
+    for (const [l, r] of Object.entries(mgMatchPairs)) {
+      const le = overlay.querySelector(`#mgMatchLeft .mg-match-item[data-id="${l}"]`);
+      const re = overlay.querySelector(`#mgMatchRight .mg-match-item[data-id="${r}"]`);
+      if (!le || !re) continue;
+      const color = MG_PAIR_COLORS[n % MG_PAIR_COLORS.length];
+      for (const el of [le, re]) {
+        const b = document.createElement('span');
+        b.className = 'pair-no'; b.textContent = n + 1; b.style.background = color;
+        el.appendChild(b);
+      }
+      const lr = le.getBoundingClientRect(), rr = re.getBoundingClientRect();
+      const x1 = lr.right - wr.left, y1 = lr.top + lr.height / 2 - wr.top;
+      const x2 = rr.left - wr.left, y2 = rr.top + rr.height / 2 - wr.top;
+      lines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2" stroke-opacity=".9"/>`
+        + `<circle cx="${x1}" cy="${y1}" r="3.5" fill="${color}"/><circle cx="${x2}" cy="${y2}" r="3.5" fill="${color}"/>`;
+      n++;
+    }
+    svg.innerHTML = lines;
+  } else {
+    for (const [l, r] of Object.entries(mgMatchPairs)) {
+      const le = overlay.querySelector(`#mgMatchLeft .mg-match-item[data-id="${l}"]`);
+      const re = overlay.querySelector(`#mgMatchRight .mg-match-item[data-id="${r}"]`);
+      if (!le || !re) continue;
+      const color = MG_PAIR_COLORS[n % MG_PAIR_COLORS.length];
+      for (const el of [le, re]) {
+        const b = document.createElement('span');
+        b.className = 'pair-no'; b.textContent = n + 1; b.style.background = color;
+        el.appendChild(b);
+      }
+      n++;
+    }
+  }
+  const total = overlay.querySelectorAll('#mgMatchLeft .mg-match-item').length;
+  const btn = overlay.querySelector('#mgConfirm');
+  if (btn) btn.disabled = n < total;
+}
+
+function mgMatchBind(overlay) {
+  mgMatchSel = null; mgMatchPairs = {};
+  if (mgMatchResizeFn) window.removeEventListener('resize', mgMatchResizeFn);
+  mgMatchResizeFn = () => mgMatchRepaint(overlay);
+  window.addEventListener('resize', mgMatchResizeFn);
+  overlay.querySelectorAll('#mgMatchLeft .mg-match-item').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.id;
+    if (mgMatchPairs[id]) { delete mgMatchPairs[id]; mgMatchRepaint(overlay); return; }
+    overlay.querySelectorAll('#mgMatchLeft .mg-match-item').forEach(x => x.classList.remove('selected'));
+    mgMatchSel = id;
+    el.classList.add('selected');
+  }));
+  overlay.querySelectorAll('#mgMatchRight .mg-match-item').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.id;
+    const pairedLeft = Object.keys(mgMatchPairs).find(k => mgMatchPairs[k] === id);
+    if (pairedLeft) { delete mgMatchPairs[pairedLeft]; mgMatchRepaint(overlay); return; }
+    if (!mgMatchSel) return;
+    mgMatchPairs[mgMatchSel] = id;
+    mgMatchSel = null;
+    mgMatchRepaint(overlay);
+  }));
+  mgMatchRepaint(overlay);
+}
+
+// ─── 证物归类 ───
+let mgClassSel = null;
+
+function mgClassBind(overlay) {
+  mgClassSel = null;
+  const tray = overlay.querySelector('#mgClassTray');
+  const refresh = () => {
+    const btn = overlay.querySelector('#mgConfirm');
+    if (btn) btn.disabled = tray.querySelectorAll('.mg-class-item').length > 0;
+  };
+  // 委托挂在每次渲染新建的 .mg-panel 上，避免重复绑定累积
+  overlay.querySelector('.mg-panel').addEventListener('click', e => {
+    const item = e.target.closest('.mg-class-item');
+    const bin = e.target.closest('.mg-class-bin');
+    if (item) {
+      if (tray.contains(item)) {
+        tray.querySelectorAll('.mg-class-item').forEach(x => x.classList.remove('selected'));
+        mgClassSel = item;
+        item.classList.add('selected');
+      } else {
+        item.classList.remove('selected');
+        tray.appendChild(item);
+        mgClassSel = null;
+      }
+      refresh();
+      return;
+    }
+    if (bin && mgClassSel) {
+      mgClassSel.classList.remove('selected');
+      bin.querySelector('.bin-items').appendChild(mgClassSel);
+      mgClassSel = null;
+      refresh();
+    }
+  });
+  refresh();
+}
+
+// ─── 逐步解锁（逐层即时判定，全对揭示档案）───
+let mgUnlockBusy = false;
+
+function mgUnlockBind(overlay, g) {
+  const box = overlay.querySelector('#mgUnlockBox');
+  const steps = g.steps || [];
+  let idx = 0;
+  let layerHint = '';
+  let attemptsLeft = g.maxAttempts || 3;
+
+  const renderStep = () => {
+    const st = steps[idx];
+    box.innerHTML = `
+      <div class="mg-unlock-progress">${steps.map((_, i) => `<div class="seg ${i < idx ? 'done' : (i === idx ? 'cur' : '')}"></div>`).join('')}</div>
+      <div class="mg-unlock-prompt">第 ${idx + 1} / ${steps.length} 层：${escapeHtml(st.prompt || '')}</div>
+      ${layerHint ? `<div class="mg-unlock-hint">💡 ${escapeHtml(layerHint)}</div>` : ''}
+      <div class="mg-unlock-opts">${(st.options || []).map(o => `<div class="mg-unlock-opt" data-id="${escapeHtml(o.id)}">${escapeHtml(o.text || '')}</div>`).join('')}</div>
+      <div class="mg-tip" style="text-align:center">选对本层才会开启下一层；答错消耗一次机会（剩 ${attemptsLeft} 次）</div>`;
+    box.querySelectorAll('.mg-unlock-opt').forEach(o => o.addEventListener('click', () => pickOpt(o)));
+  };
+
+  const pickOpt = async (o) => {
+    if (mgUnlockBusy) return;
+    mgUnlockBusy = true;
+    box.querySelectorAll('.mg-unlock-opt').forEach(x => x.classList.add('busy'));
+    try {
+      const res = await api(`/api/session/${sessionId}/minigame/result`, {
+        method: 'POST',
+        body: JSON.stringify({ answer: { partial: true, selection: o.dataset.id } }),
+      });
+      if (res.final) { mgShowResult(res); return; }
+      if (res.layerCleared) {
+        o.classList.remove('busy'); o.classList.add('ok');
+        layerHint = '';
+        idx = res.stepIndex;
+        setTimeout(() => { mgUnlockBusy = false; renderStep(); }, 420);
+      } else {
+        o.classList.remove('busy'); o.classList.add('bad');
+        layerHint = res.revealHint || '机关纹丝不动，回想一下剧情里的细节。';
+        attemptsLeft = res.attemptsLeft !== undefined ? res.attemptsLeft : attemptsLeft;
+        setTimeout(() => { mgUnlockBusy = false; renderStep(); }, 420);
+      }
+    } catch (e) {
+      mgUnlockBusy = false;
+      alert('判定失败: ' + e.message);
+      renderStep();
+    }
+  };
+
+  renderStep();
+}
+
+// ─── 巡航收集（canvas 街机）───
+let mgVoyHandle = null;
+
+function mgVoyStop() {
+  if (!mgVoyHandle) return;
+  cancelAnimationFrame(mgVoyHandle.raf);
+  document.removeEventListener('keydown', mgVoyHandle.onKey);
+  document.removeEventListener('keyup', mgVoyHandle.onKey);
+  mgVoyHandle = null;
+}
+
+function mgVoyageBind(overlay, g) {
+  const startBtn = overlay.querySelector('#mgVoyStart');
+  const canvas = overlay.querySelector('#mgVoyCanvas');
+  if (!startBtn || !canvas) return;
+  startBtn.addEventListener('click', () => {
+    startBtn.disabled = true;
+    startBtn.textContent = '航行中…';
+    mgVoyStartGame(canvas, g);
+  });
+}
+
+function mgVoyStartGame(canvas, g) {
+  const W = canvas.width = canvas.clientWidth || 640;
+  const H = canvas.height = canvas.clientHeight || 320;
+  const ctx = canvas.getContext('2d');
+  const labels = (g.targets && g.targets.length) ? g.targets : ['记忆浮标'];
+  const timeLimit = g.timeLimit || 15, passScore = g.passScore || 150;
+  const ship = { x: W / 2, y: H - 40 };
+  const keys = {};
+  let score = 0, entities = [], buoyT = 0, reefT = 0, mineT = 2.5, labelIdx = 0;
+  let last = performance.now(), leftMs = timeLimit * 1000, done = false;
+
+  const onKey = e => {
+    const k = e.key.toLowerCase();
+    if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(k)) e.preventDefault();
+    keys[k] = (e.type === 'keydown');
+  };
+  document.addEventListener('keydown', onKey);
+  document.addEventListener('keyup', onKey);
+
+  let pointer = null;
+  canvas.addEventListener('pointerdown', e => { pointer = e; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointermove', e => { if (pointer) pointer = e; });
+  canvas.addEventListener('pointerup', () => { pointer = null; });
+
+  const timeEl = document.getElementById('mgVoyTime');
+  const scoreEl = document.getElementById('mgVoyScore');
+
+  const finish = () => {
+    if (done) return;
+    done = true;
+    mgVoyStop();
+    mgSubmit(score);
+  };
+
+  const frame = now => {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    leftMs -= dt * 1000;
+    // 驾驶：键盘 + 指针拖拽
+    let vx = 0, vy = 0;
+    if (keys['arrowleft'] || keys['a']) vx -= 1;
+    if (keys['arrowright'] || keys['d']) vx += 1;
+    if (keys['arrowup'] || keys['w']) vy -= 1;
+    if (keys['arrowdown'] || keys['s']) vy += 1;
+    ship.x += vx * 260 * dt;
+    ship.y += vy * 220 * dt;
+    if (pointer) {
+      const rect = canvas.getBoundingClientRect();
+      ship.x += ((pointer.clientX - rect.left) * (W / rect.width) - ship.x) * Math.min(1, dt * 12);
+      ship.y += ((pointer.clientY - rect.top) * (H / rect.height) - ship.y) * Math.min(1, dt * 12);
+    }
+    ship.x = Math.max(18, Math.min(W - 18, ship.x));
+    ship.y = Math.max(30, Math.min(H - 20, ship.y));
+    // 生成浮标、暗礁与游动障碍
+    buoyT += dt; reefT += dt; mineT += dt;
+    if (buoyT > 0.6) {
+      buoyT = 0;
+      entities.push({ kind: 'buoy', x: 26 + Math.random() * (W - 52), y: -26, vy: 85 + Math.random() * 45, label: labels[labelIdx++ % labels.length] });
+    }
+    if (reefT > 2.3) {
+      reefT = 0;
+      entities.push({ kind: 'reef', x: 20 + Math.random() * (W - 40), y: -16, vy: 100 + Math.random() * 40 });
+    }
+    if (mineT > 4.2) {
+      mineT = 0;
+      entities.push({ kind: 'mine', x: 30 + Math.random() * (W - 60), y: 20 + Math.random() * (H * 0.4),
+        vx: (Math.random() < 0.5 ? -1 : 1) * (55 + Math.random() * 45), vy: 16 + Math.random() * 12 });
+    }
+    // 移动与碰撞
+    for (const e of entities) {
+      e.y += e.vy * dt;
+      if (e.kind === 'mine') {
+        e.x += e.vx * dt;
+        if (e.x < 16 || e.x > W - 16) e.vx = -e.vx;
+      }
+      if (!e.hit && Math.hypot(e.x - ship.x, e.y - ship.y) < (e.kind === 'buoy' ? 34 : (e.kind === 'mine' ? 26 : 26))) {
+        e.hit = true;
+        score += e.kind === 'buoy' ? 10 : -10;
+      }
+    }
+    entities = entities.filter(e => !e.hit && e.y < H + 30);
+    // 绘制：水面波纹 → 实体 → 巡逻艇
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(111,168,160,.12)';
+    for (let i = 0; i < 3; i++) {
+      const wy = ((now / 18) + i * 120) % H;
+      ctx.fillRect(0, wy, W, 1);
+    }
+    for (const e of entities) {
+      if (e.kind === 'buoy') {
+        // 放大浮标：纸色圆球 + 朱红描边，标签字号加大保证可读
+        ctx.fillStyle = '#f2ead9';
+        ctx.beginPath(); ctx.arc(e.x, e.y, 22, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#e4572e'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(e.x, e.y, 22, 0, 7); ctx.stroke();
+        ctx.fillStyle = '#2b2620';
+        ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(e.label || '').slice(0, 4), e.x, e.y);
+      } else if (e.kind === 'mine') {
+        // 游动障碍：旋转的菱形水雷，红边警示
+        ctx.save();
+        ctx.translate(e.x, e.y);
+        ctx.rotate(now / 700);
+        ctx.fillStyle = '#4a3535';
+        ctx.beginPath();
+        ctx.moveTo(0, -13); ctx.lineTo(13, 0); ctx.lineTo(0, 13); ctx.lineTo(-13, 0);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#e0654f'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+      } else {
+        ctx.fillStyle = '#3a2c2c';
+        ctx.beginPath(); ctx.arc(e.x, e.y, 13, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#e0654f'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(e.x - 5, e.y - 5); ctx.lineTo(e.x + 5, e.y + 5);
+        ctx.moveTo(e.x + 5, e.y - 5); ctx.lineTo(e.x - 5, e.y + 5);
+        ctx.stroke();
+      }
+    }
+    ctx.fillStyle = '#e4572e';
+    ctx.beginPath();
+    ctx.moveTo(ship.x, ship.y - 14);
+    ctx.lineTo(ship.x - 14, ship.y + 10);
+    ctx.lineTo(ship.x + 14, ship.y + 10);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#f2ead9';
+    ctx.fillRect(ship.x - 10, ship.y + 10, 20, 5);
+    // HUD
+    if (timeEl) timeEl.textContent = `剩余 ${Math.max(0, Math.ceil(leftMs / 1000))} 秒`;
+    if (scoreEl) scoreEl.textContent = `得分 ${score} / ${passScore}`;
+    if (leftMs <= 0) { finish(); return; }
+    mgVoyHandle.raf = requestAnimationFrame(frame);
+  };
+  mgVoyHandle = { raf: requestAnimationFrame(frame), onKey };
+}
+
+// ─── 碎纸复原（点选两块碎片交换）───
+let mgShredPick = -1;
+
+function mgShuffleBind(overlay) {
+  mgShredPick = -1;
+  const grid = overlay.querySelector('#mgShredGrid');
+  if (!grid) return;
+  grid.querySelectorAll('.mg-shred-tile').forEach(t => t.addEventListener('click', () => {
+    const tiles = [...grid.querySelectorAll('.mg-shred-tile')];
+    const i = tiles.indexOf(t);
+    if (mgShredPick < 0) { mgShredPick = i; t.classList.add('selected'); return; }
+    if (mgShredPick === i) { mgShredPick = -1; t.classList.remove('selected'); return; }
+    const a = tiles[mgShredPick];
+    a.classList.remove('selected'); mgShredPick = -1;
+    // 占位节点法交换两个网格子元素
+    const ph = document.createElement('div');
+    grid.insertBefore(ph, a);
+    grid.insertBefore(a, t);
+    grid.insertBefore(t, ph);
+    ph.remove();
+  }));
+}
+
+// ─── 频段截听（示波器对齐 + 稳定截获）───
+let mgRadioHandle = null;
+
+function mgRadioStop() {
+  if (!mgRadioHandle) return;
+  cancelAnimationFrame(mgRadioHandle.raf);
+  mgRadioHandle = null;
+}
+
+function mgRadioWave(ctx, W, H, x0, phase, color, dashed) {
+  // 高斯包络波包：中心在 x0，两波同相位动画，重合时完全叠合
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.setLineDash(dashed ? [6, 5] : []);
+  ctx.beginPath();
+  const amp = H * 0.32, mid = H / 2, sigma = W * 0.06;
+  for (let x = 0; x <= W; x += 3) {
+    const env = Math.exp(-((x - x0) ** 2) / (2 * sigma * sigma));
+    const y = mid + Math.sin((x - x0) / 9 + phase) * amp * env;
+    if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function mgRadioBind(overlay, g) {
+  const canvas = overlay.querySelector('#mgRadioScope');
+  const dial = overlay.querySelector('#mgRadioDial');
+  if (!canvas || !dial) return;
+  const W = canvas.width = canvas.clientWidth || 640;
+  const H = canvas.height = canvas.clientHeight || 210;
+  const ctx = canvas.getContext('2d');
+  const target = g.targetFreq, tol = g.tolerance || 0.2, holdMs = g.holdMs || 1500;
+  const bands = g.interference || [];
+  const xOf = f => ((f - 88) / 20) * W;
+  let held = 0, leftMs = (g.timeLimit || 30) * 1000, last = performance.now(), done = false;
+  const freq = () => parseFloat(dial.value);
+
+  dial.addEventListener('input', () => {
+    const el = overlay.querySelector('#mgRadioFreqVal');
+    if (el) el.textContent = freq().toFixed(1);
+  });
+
+  const finish = () => {
+    if (done) return;
+    done = true;
+    mgRadioStop();
+    mgSubmit(freq());
+  };
+
+  const frame = now => {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    leftMs -= dt * 1000;
+    const f = freq();
+    const inBand = bands.some(b => f >= b.from && f <= b.to);
+    const aligned = Math.abs(f - target) <= tol;
+    held = (aligned && !inBand) ? Math.min(holdMs, held + dt * 1000) : 0;
+    const fill = overlay.querySelector('#mgRadioLockFill');
+    if (fill) fill.style.width = (held / holdMs * 100) + '%';
+    const timeEl = overlay.querySelector('#mgRadioTime');
+    if (timeEl) timeEl.textContent = `剩余 ${Math.max(0, Math.ceil(leftMs / 1000))} 秒`;
+    // 绘制：网格 → 干扰频段 → 目标虚线波 → 接收波
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(147,161,184,.12)'; ctx.lineWidth = 1;
+    for (let i = 1; i < 10; i++) { ctx.beginPath(); ctx.moveTo(i * W / 10, 0); ctx.lineTo(i * W / 10, H); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(224,101,79,.14)';
+    for (const b of bands) ctx.fillRect(xOf(b.from), 0, xOf(b.to) - xOf(b.from), H);
+    const phase = now / 220;
+    mgRadioWave(ctx, W, H, xOf(target), phase, 'rgba(217,164,65,.9)', true);
+    mgRadioWave(ctx, W, H, xOf(f), phase,
+      inBand ? 'rgba(224,101,79,.95)' : (aligned ? 'rgba(124,185,138,.95)' : 'rgba(111,168,160,.95)'), false);
+    if (held >= holdMs) { finish(); return; }
+    if (leftMs <= 0) { finish(); return; }
+    mgRadioHandle.raf = requestAnimationFrame(frame);
+  };
+  mgRadioHandle = { raf: requestAnimationFrame(frame) };
+}
+
+// ─── 现场搜证（限时圈选陈列架）───
+let mgSearchHandle = null;
+
+function mgSearchStop() {
+  if (!mgSearchHandle) return;
+  clearInterval(mgSearchHandle.timer);
+  mgSearchHandle = null;
+}
+
+function mgSearchBind(overlay, g) {
+  const need = g.targetCount || 1;
+  const picks = new Set();
+  const refresh = () => {
+    const btn = overlay.querySelector('#mgConfirm');
+    if (btn) { btn.disabled = picks.size !== need; btn.textContent = `提交圈选（${picks.size}/${need}）`; }
+  };
+  overlay.querySelectorAll('#mgSearchGrid .mg-search-item').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.id;
+    if (picks.has(id)) { picks.delete(id); el.classList.remove('picked'); }
+    else if (picks.size < need) { picks.add(id); el.classList.add('picked'); }
+    refresh();
+  }));
+  let left = g.timeLimit || 45;
+  mgSearchHandle = { picks, timer: setInterval(() => {
+    left -= 1;
+    const t = overlay.querySelector('#mgSearchTime');
+    if (t) t.textContent = `剩余 ${Math.max(0, left)} 秒`;
+    if (left <= 0) mgSearchSubmit();
+  }, 1000) };
+  refresh();
+}
+
+function mgSearchSubmit() {
+  const picks = mgSearchHandle ? [...mgSearchHandle.picks] : [];
+  mgSearchStop();
+  mgSubmit(picks);
+}
+
+// ─── 密码转盘（内嵌浮层：拨轮试开，A/B 反馈）───
+let mgDialDigits = [];
+
+function mgDialBind(overlay, g) {
+  overlay.querySelectorAll('#mgDialSlots .mg-dial-slot').forEach(slot => {
+    const idx = Number(slot.dataset.idx);
+    slot.querySelectorAll('[data-spin]').forEach(btn => btn.addEventListener('click', () => {
+      mgDialDigits[idx] = (mgDialDigits[idx] + Number(btn.dataset.spin) + 10) % 10;
+      const d = overlay.querySelector('#mgDialDigit' + idx);
+      if (d) d.textContent = String(mgDialDigits[idx]);
+    }));
+  });
+}
+
+function mgDialRetry(res) {
+  // 非终局试拨：把本次拨码与 A/B 反馈记入试拨记录，就地继续推理
+  const overlay = document.getElementById('vnMinigame');
+  const rows = overlay.querySelector('#mgDialRows');
+  if (!rows) return false;  // 玩法层已被替换时退回通用重试流程
+  rows.querySelectorAll('.mg-dial-row').forEach(el => {
+    if (el.textContent.includes('暂无试拨记录')) el.remove();
+  });
+  const fb = res.guessFeedback || {};
+  const fbHtml = fb.formatError ? escapeHtml(fb.formatError) : `<em>${fb.a}</em>A <em>${fb.b}</em>B`;
+  rows.insertAdjacentHTML('afterbegin',
+    `<div class="mg-dial-row"><span class="guess">${escapeHtml(fb.guess || '')}</span><span class="fb">${fbHtml}</span></div>`);
+  const tries = overlay.querySelector('#mgDialTries');
+  if (tries) tries.textContent = res.attemptsLeft;
+  const errEl = overlay.querySelector('#mgDialFmtErr');
+  if (errEl) errEl.textContent = fb.formatError || '';
+  overlay.querySelectorAll('.mg-btn').forEach(b => { b.disabled = false; });
+  return true;
+}
+
+// ─── 档案室迷宫（内嵌浮层：网格移动，限时脱身）───
+let mgMazeHandle = null;
+
+function mgMazeStop() {
+  if (!mgMazeHandle) return;
+  clearInterval(mgMazeHandle.timer);
+  if (mgMazeHandle.patrolRaf) cancelAnimationFrame(mgMazeHandle.patrolRaf);
+  if (mgMazeHandle.keyHandler) window.removeEventListener('keydown', mgMazeHandle.keyHandler);
+  mgMazeHandle = null;
+}
+
+function mgMazeBind(overlay, g) {
+  const rows = g.rows || 11, cols = g.cols || 11;
+  let pr = (g.start || [1, 1])[0], pc = (g.start || [1, 1])[1];
+  const [er, ec] = g.exit || [rows - 2, cols - 2];
+  const gridEl = overlay.querySelector('#mgMazeGrid');
+  const cells = [];
+  for (let r = 0; r < rows; r++) {
+    cells.push([]);
+    for (let c = 0; c < cols; c++) {
+      const div = document.createElement('div');
+      div.className = 'mg-maze-cell' + ((g.grid[r] && g.grid[r][c] === 0) ? ' open' : '');
+      gridEl.appendChild(div);
+      cells[r].push(div);
+    }
+  }
+  cells[er][ec].classList.add('exit');
+  cells[pr][pc].classList.add('player');
+
+  let finished = false;
+  let left = g.timeLimit || 20;
+  const penalty = g.caughtPenalty || 3;
+  const updateHud = () => {
+    const t = overlay.querySelector('#mgMazeTime');
+    if (t) t.textContent = `剩余 ${Math.max(0, left)} 秒`;
+  };
+  const finish = (reached) => {
+    if (finished) return;
+    finished = true;
+    mgMazeStop();
+    mgSubmit({ reached });
+  };
+
+  // 巡逻光点：在整个画布里自由游动（无视墙壁），速度有快有慢，撞边反弹
+  const wrapEl = overlay.querySelector('.mg-maze-wrap');
+  const patrols = (g.patrols || []).map(p => {
+    const el = document.createElement('div');
+    el.className = 'mg-maze-patrol';
+    el.style.width = (100 / cols * 0.7) + '%';
+    el.style.height = (100 / rows * 0.7) + '%';
+    wrapEl.appendChild(el);
+    const ang = Math.random() * Math.PI * 2;
+    return { el, x: p.x, y: p.y, vx: Math.cos(ang) * p.speed, vy: Math.sin(ang) * p.speed };
+  });
+  const place = pt => {
+    pt.el.style.left = (pt.x / cols * 100) + '%';
+    pt.el.style.top = (pt.y / rows * 100) + '%';
+  };
+  patrols.forEach(place);
+  let graceUntil = 0;  // 被抓后的短暂无敌，避免连续扣光
+  const caught = () => {
+    if (finished || Date.now() < graceUntil) return;
+    left -= penalty;
+    graceUntil = Date.now() + 1500;
+    updateHud();
+    gridEl.classList.add('caught');
+    setTimeout(() => gridEl.classList.remove('caught'), 400);
+    if (left <= 0) finish(false);
+  };
+  // 光点中心深入玩家格子约 60% 才算被抓（擦边不扣时）
+  const HIT = 0.5 - 0.2;
+  const checkHit = () => patrols.some(pt =>
+    Math.abs(pt.x - (pc + 0.5)) <= HIT && Math.abs(pt.y - (pr + 0.5)) <= HIT);
+  let patrolRaf = 0, last = performance.now();
+  const step = (now) => {
+    if (finished) return;
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    patrols.forEach(pt => {
+      pt.x += pt.vx * dt; pt.y += pt.vy * dt;
+      const m = 0.35;
+      if (pt.x < m) { pt.x = m; pt.vx = Math.abs(pt.vx); }
+      if (pt.x > cols - m) { pt.x = cols - m; pt.vx = -Math.abs(pt.vx); }
+      if (pt.y < m) { pt.y = m; pt.vy = Math.abs(pt.vy); }
+      if (pt.y > rows - m) { pt.y = rows - m; pt.vy = -Math.abs(pt.vy); }
+      place(pt);
+    });
+    if (checkHit()) caught();
+    if (!finished) patrolRaf = requestAnimationFrame(step);
+  };
+  patrolRaf = requestAnimationFrame(step);
+
+  const move = (dr, dc) => {
+    if (finished) return;
+    const nr = pr + dr, nc = pc + dc;
+    if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) return;
+    if (g.grid[nr][nc] === 1) return;
+    cells[pr][pc].classList.remove('player');
+    pr = nr; pc = nc;
+    cells[pr][pc].classList.add('player');
+    if (pr === er && pc === ec) return finish(true);
+    if (checkHit()) caught();
+  };
+  const dirMap = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
+  const keyHandler = (e) => {
+    const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' };
+    const dir = map[e.key];
+    if (!dir) return;
+    e.preventDefault();
+    move(dirMap[dir][0], dirMap[dir][1]);
+  };
+  window.addEventListener('keydown', keyHandler);
+  overlay.querySelectorAll('.mg-maze-dpad [data-dir]').forEach(btn =>
+    btn.addEventListener('click', () => move(dirMap[btn.dataset.dir][0], dirMap[btn.dataset.dir][1])));
+  mgMazeHandle = { timer: setInterval(() => {
+    left -= 1;
+    updateHud();
+    if (left <= 0) finish(false);
+  }, 1000), patrolRaf, keyHandler };
+}
+
+async function mgSubmit(answer) {
+  if (!mgData) return;
+  if (answer === '' || answer === null || answer === undefined || (Array.isArray(answer) && answer.length === 0)) { alert('请先完成作答'); return; }
+  const overlay = document.getElementById('vnMinigame');
+  overlay.querySelectorAll('.mg-btn').forEach(b => { b.disabled = true; });
+  try {
+    const res = await api(`/api/session/${sessionId}/minigame/result`, { method:'POST', body: JSON.stringify({answer}) });
+    if (res.final === false) {
+      if (mgData && mgData.type === 'dial' && mgDialRetry(res)) return;  // 转盘：试拨反馈在浮层内即时展示
+      mgShowRetry(res); return;
+    }
+    mgShowResult(res);
+  } catch(e) {
+    alert('结算失败: ' + e.message);
+    mgBackToChoices();
+  }
+}
+
+function mgShowRetry(res) {
+  mgRetryHint = res.revealHint || '';
+  const overlay = document.getElementById('vnMinigame');
+  overlay.innerHTML = `<div class="mg-panel">
+    <div class="mg-folder-tab">調 查 檔 案</div>
+    <div class="mg-stamp bad">結論有誤</div>
+    <div class="mg-result-title">調查存疑 · 還有 ${res.attemptsLeft} 次機會</div>
+    <div class="mg-result-text">答案不對，已揭示一條針對性線索，帶線索重查</div>
+    ${res.revealHint ? `<div class="mg-correct">線索揭示：${escapeHtml(res.revealHint)}</div>` : ''}
+    <div class="mg-actions"><button class="mg-btn" id="mgRetry">帶線索重試</button><button class="mg-btn ghost" id="mgCancel">放棄返回選項</button></div>
+  </div>`;
+  overlay.querySelector('#mgRetry').addEventListener('click', () => mgRender(mgData));
+  overlay.querySelector('#mgCancel').addEventListener('click', cancelMinigameVN);
+}
+
+function mgShowResult(res) {
+  const overlay = document.getElementById('vnMinigame');
+  const ok = !!res.success;
+  overlay.innerHTML = `<div class="mg-panel">
+    <div class="mg-folder-tab">調 查 檔 案</div>
+    <div class="mg-stamp ${ok ? 'ok' : 'bad'}">${ok ? '調查成立' : '線索存疑'}</div>
+    <div class="mg-result-title">${ok ? '挑戰成功' : '挑戰失敗'}</div>
+    <div class="mg-result-text">${escapeHtml((ok ? res.successText : res.failureText) || '')}</div>
+    ${res.archive ? `<div class="mg-archive"><div class="mg-archive-title">📁 ${escapeHtml(res.archive.title || '封存档案')}</div><div class="mg-archive-content">${escapeHtml(res.archive.content || '')}</div></div>` : ''}
+    ${res.intercept ? `<div class="mg-archive"><div class="mg-archive-title">📡 截获密电 · ${escapeHtml(res.intercept.callSign || '')}</div><div class="mg-archive-content">${escapeHtml(res.intercept.text || '')}</div></div>` : ''}
+    ${(res.correctAnswer && !ok) ? `<div class="mg-correct">正確答案：${escapeHtml(res.correctAnswer)}</div>` : ''}
+    <div class="mg-actions"><button class="mg-btn" id="mgContinue">歸檔，繼續劇情 →</button></div>
+  </div>`;
+  overlay.querySelector('#mgContinue').addEventListener('click', async () => {
+    overlay.style.display = 'none'; overlay.innerHTML = '';
+    mgData = null; mgCluePick = null; mgSeqPick = -1;
+    if (res.session_state === 'finished') renderEnd(res);
+    else { chosenIndex = -1; await generateSceneStream(); }
+  });
+}
+
+function renderEnd(state) {
+  document.removeEventListener('keydown', vnKeyHandler);
+  clearInterval(typewriterTimer);
+  const ending = state.ending || {};
+  const matched = ending.matched_ending || {};
+  const typeLabel = {bad: '坏结局', normal: '普通结局', good: '好结局', true: '真结局'};
+  const typeColor = {bad: '#e0654f', normal: '#d9a441', good: '#7cb98a', true: '#e4572e'};
+  const eType = matched.type || '';
+  const eColor = typeColor[eType] || '#e4572e';
+  const endQueue = [];
+  if (matched.narrative) endQueue.push({ type: 'narration', speaker: '', text: matched.narrative, emotion: '', streaming: false });
+  if (matched.epilogue) endQueue.push({ type: 'narration', speaker: '', text: '【尾声】\n' + matched.epilogue, emotion: '', streaming: false });
+  if (endQueue.length === 0) endQueue.push({ type: 'narration', speaker: '', text: '你已走完这条世界线的全部场景。', emotion: '', streaming: false });
+  vnIsEnding = true;
+  vnEndingData = { matched, eType, eColor, typeLabel };
+  chosenIndex = -1;
+  vnState = { queue: endQueue, idx: -1, charPositions: {}, choices: [], sessionState: 'finished', meta: {}, progress: 1 };
+  vnStreamDone = true; vnStreamStarted = true; typewriterDone = true;
+  vnResetSprites(); vnStopAudio(); vnAudioQueue = [];
+  app.innerHTML = `
+    <div class="vn-stage" id="vnStage">
+      <div class="vn-progress" id="vnProgress" style="width:100%"></div>
+      <div class="vn-bg" id="vnBg" style="background:radial-gradient(ellipse at center,#16233c 0%,#0d1422 100%)"></div>
+      <div class="vn-scene-info">故事结束</div>
+      <div class="vn-top-bar"><button id="vnHomeBtn">退出</button></div>
+      <div class="vn-sprites" id="vnSprites"></div>
+      <div class="vn-dialogue-box" id="vnDialogueBox" style="opacity:0;pointer-events:none"><div id="vnSpeaker"></div><div class="vn-text" id="vnText"></div><div class="vn-emotion" id="vnEmotion"></div><div class="vn-advance-hint" id="vnHint" style="display:none">点击继续 ▶</div></div>
+      <div class="vn-ending-scroll" id="vnEndingScroll" style="display:none"><div class="vn-ending-scroll-text" id="vnEndingScrollText"></div><div class="vn-ending-scroll-hint" id="vnEndingScrollHint">点击继续 ▶</div></div>
+      <div class="vn-ending-overlay" id="vnEndingOverlay"><div class="ending-type" style="color:${eColor};border-color:${eColor}">${typeLabel[eType] || '结局'}</div><div class="ending-title">${escapeHtml(matched.title || '故事结束')}</div><div class="ending-hint">点击继续</div></div>
+      <div class="vn-choices-overlay" id="vnChoices" style="display:none"></div>
+    </div>`;
+  document.getElementById('vnEndingOverlay').addEventListener('click', () => {
+    const ov = document.getElementById('vnEndingOverlay');
+    ov.style.opacity = '0';
+    setTimeout(() => { ov.style.display = 'none'; }, 500);
+    document.addEventListener('keydown', vnKeyHandler);
+    vnStartEndingScroll();
+  });
+  document.getElementById('vnHomeBtn').addEventListener('click', () => { document.removeEventListener('keydown', vnKeyHandler); vnIsEnding = false; location.href = '/'; });
+}
+
+function vnStartEndingScroll() {
+  vnLineStartTime = Date.now();
+  vnEndingScrollActive = true;
+  vnEndingScrollDone = false;
+  const scroll = document.getElementById('vnEndingScroll');
+  const textEl = document.getElementById('vnEndingScrollText');
+  const hint = document.getElementById('vnEndingScrollHint');
+  if (!scroll || !textEl) { vnEndingScrollActive = false; vnShowEndingFinal(); return; }
+  const fullText = vnState.queue.map(l => l.text).join('\n\n');
+  scroll.style.display = 'block';
+  scroll.scrollTop = 0;
+  scroll.onclick = vnAdvance;
+  if (hint) { hint.textContent = '点击继续 ▶'; hint.classList.remove('waiting'); }
+  let charIdx = 0;
+  textEl.textContent = '';
+  clearInterval(vnEndingScrollTimer);
+  vnEndingScrollTimer = setInterval(() => {
+    charIdx += 2;
+    if (charIdx > fullText.length) charIdx = fullText.length;
+    textEl.textContent = fullText.slice(0, charIdx);
+    scroll.scrollTop = scroll.scrollHeight;
+    if (charIdx >= fullText.length) { clearInterval(vnEndingScrollTimer); vnEndingScrollDone = true; }
+  }, 30);
+}
+
+function vnShowEndingFinal() {
+  // 结局数据尚未就绪时（等待 story_complete 事件），显示保存中状态
+  if (!vnEndingData) {
+    const box = document.getElementById('vnDialogueBox');
+    const overlay = document.getElementById('vnChoices');
+    if (box) { box.style.opacity = '0'; box.style.pointerEvents = 'none'; }
+    if (overlay) {
+      overlay.style.display = 'flex';
+      overlay.innerHTML = `<div class="waiting-msg">正在保存剧本...</div>`;
+    }
+    return;
+  }
+  const { matched, eColor, typeLabel, eType } = vnEndingData;
+  const box = document.getElementById('vnDialogueBox');
+  const overlay = document.getElementById('vnChoices');
+  document.removeEventListener('keydown', vnKeyHandler);
+  if (box) { box.style.opacity = '0'; box.style.pointerEvents = 'none'; }
+  if (overlay) {
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `<div class="ending-final-card" style="border-color:${eColor}"><div class="ending-type" style="color:${eColor};border-color:${eColor}">${(typeLabel && typeLabel[eType]) || '结局'}</div><div class="ending-title-sm">${escapeHtml((matched && matched.title) || '故事结束')}</div>${matched && matched.replay_value ? `<div class="ending-replay">💭 ${escapeHtml(matched.replay_value)}</div>` : ''}</div><button class="btn btn-primary" id="endHomeBtn" style="margin-top:8px">返回首页</button>`;
+    document.getElementById('endHomeBtn').addEventListener('click', () => { vnIsEnding = false; location.href = '/'; });
+  }
+}
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function loadHistory() {
+  const p = document.getElementById('historyPanel');
+  if(!p) return;
+  try {
+    const d = await api(`/api/session/${sessionId}/history`);
+    const list = d.history || [];
+    if (!list.length) { p.innerHTML = '<p style="color:var(--muted)">暂无历史</p>'; return; }
+    p.innerHTML = list.map((h, i) => {
+      const narr = h.narration ? `<div class="history-narration">${escapeHtml(h.narration)}</div>` : '';
+      const dlg = (h.dialogues || []).map(x => `<div class="history-dialogue"><span class="history-speaker">${escapeHtml(x.speaker || '')}</span>${escapeHtml(x.text || '')}</div>`).join('');
+      return `<div class="history-entry"><div class="history-scene">场景 ${i+1}: ${escapeHtml(h.scene_name || '')}</div>${narr}${dlg}<div class="history-choice">▸ 选择: ${escapeHtml(h.player_choice || '')}</div></div>`;
+    }).join('');
+  } catch(e) { p.innerHTML = e.message; }
+}
+
+function toggleHistory() {
+  const p = document.getElementById('historyPanel');
+  if(p){p.classList.toggle('show'); if(p.classList.contains('show')) loadHistory();}
+}
+
+async function api(path, opts={}) {
+  const res = await fetch(API+path, {headers:{'Content-Type':'application/json'},...opts});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.detail||`HTTP ${res.status}`);}
+  return res.json();
+}
+
+// ─── 档案式中断通告页 ───
+function renderNotice(code, title, desc) {
+  return `<div class="notice-wrap">
+    <div class="notice-card">
+      <div class="notice-corner" style="top:14px;left:14px;border-right:none;border-bottom:none"></div>
+      <div class="notice-corner" style="top:14px;right:14px;border-left:none;border-bottom:none"></div>
+      <div class="notice-corner" style="bottom:14px;left:14px;border-right:none;border-top:none"></div>
+      <div class="notice-corner" style="bottom:14px;right:14px;border-left:none;border-top:none"></div>
+      <div class="notice-seal">档案<br>中断</div>
+      <div class="notice-kicker">NOTICE // <em>${code}</em> · 档案室通告</div>
+      <h2>${title}</h2>
+      <p class="notice-desc">${desc}</p>
+      <button class="btn btn-action" onclick="location.href='/'">返回首页档案室</button>
+      <div><span class="notice-barcode"></span></div>
+      <div class="notice-foot">QUILLFORGE ARCHIVE · INTERRUPTION NOTICE</div>
+    </div>
+  </div>`;
+}
+
+// ─── 页面初始化 ───
+async function init() {
+  // 检测浏览器刷新：刷新会丢失前端运行态，直接提示返回首页
+  const navEntry = performance.getEntriesByType('navigation')[0];
+  if (navEntry && navEntry.type === 'reload') {
+    app.innerHTML = renderNotice('SESSION LOST', '页面已刷新', '游戏进度仅存于本次运行中，刷新后无法恢复。<br>请返回首页，重新调阅案卷开始调查。');
+    return;
+  }
+
+  if (_mode === 'script') {
+    currentScript = _ctx.script || null;
+    sessionId = _sid;
+    if (!sessionId || !currentScript) {
+      app.innerHTML = renderNotice('MISSING PARAMS', '参数缺失', '无法获取会话信息。<br>请从首页重新调阅案卷进入。');
+      return;
+    }
+    // 并行启动文字生成流（后台缓冲，等用户点击进入后才渲染）
+    _textEventBuffer = [];
+    _textProcessing = false;
+    _textStreamDone = false;
+    _textStreamError = null;
+    const textStreamPromise = startTextStreamBackground();
+    // 显示标题页（等图片 + 等用户点击进入）
+    await pregenerateAssets();
+    // 用户已点击进入，渲染游戏 UI 并回放缓冲 + 继续实时流
+    await generateSceneStream(textStreamPromise);
+  } else {
+    app.innerHTML = renderNotice('INVALID ENTRY', '无效的访问方式', '请从首页选择剧本或输入 AI 生成描述后进入。');
+  }
+}
+
+init();
+</script>
+</body>
+</html>

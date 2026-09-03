@@ -1,0 +1,51 @@
+# 世界线模板
+# 定义故事的主线节点和分支结构
+# 使用方法：复制此模板，填入具体故事大纲
+
+worldline:
+  title: "故事标题"
+  genre: "类型（科幻/奇幻/悬疑/都市/历史等）"
+  tone: "基调（严肃/轻松/黑暗/希望等）"
+  summary: "一句话概括整个故事"
+
+  # 主线节点（用 → 连接，或直接列出）
+  mainNodes:
+    - id: "node_1"
+      name: "起始"
+      description: "故事开始的状态"
+      keyEvents:
+        - "关键事件描述"
+      requiredCharacters: ["角色A", "角色B"]
+
+    - id: "node_2"
+      name: "发展"
+      description: "情节展开"
+      keyEvents:
+        - "关键事件描述"
+      requiredCharacters: ["角色A", "角色B", "角色C"]
+
+    - id: "node_3"
+      name: "高潮"
+      description: "核心冲突爆发"
+      keyEvents:
+        - "关键事件描述"
+      requiredCharacters: ["角色A", "角色B"]
+
+    - id: "node_4"
+      name: "结局"
+      description: "故事收尾"
+      keyEvents:
+        - "关键事件描述"
+      requiredCharacters: ["角色A"]
+
+  # 世界线约束
+  constraints:
+    - "不可跳过的节点：node_3"
+    - "必须在 node_2 之前引入角色C"
+    - "node_4 的结局取决于 node_3 的选择"
+
+# ============================================================
+# 快速格式（简写版）
+# 对于简单故事，可以直接用一行字符串：
+# worldline: "出发 → 旅行 → 危机 → 到达"
+# ============================================================

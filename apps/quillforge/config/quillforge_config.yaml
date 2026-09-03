@@ -1,0 +1,67 @@
+# QuillForge 运行参数配置
+# 控制 Harness 各阶段的行为参数
+
+quillforge:
+  version: "3.2.0"
+  name: "QuillForge"
+
+  # LLM 行为参数（连接、密钥与任务模型统一来自聚合根 .env）
+  llm:
+    temperature: 0.8
+    maxTokens: 4000
+    timeout: 90000  # 毫秒（与 Harness 默认 90s 对齐，实际生效于 NarrativeSUT）
+
+  # Pipeline 阶段配置
+  stages:
+    contextAssembly:
+      # Stage 1 无 LLM 调用，纯数据处理
+      enabled: true
+
+    narrativeAnchoring:
+      enabled: true
+      promptTemplate: "prompts/narration_v2.md"
+      narrationLength:
+        short: [50, 150]    # 字数范围
+        medium: [100, 300]
+        long: [200, 500]
+
+    dialogueGeneration:
+      enabled: true
+      promptTemplate: "prompts/dialogue_v2.md"
+      dialogueCount:
+        min: 3
+        max: 15
+        default: 4
+
+    choiceBranching:
+      enabled: true
+      promptTemplate: "prompts/choices_v2.md"
+      choiceCount:
+        min: 2
+        max: 4
+        default: 3
+
+    validationGate:
+      enabled: true
+      maxRetries: 2
+      # 验证阈值（实际生效于 NarrativeValidator，未配置时回退 0.5/0.12/0.08）
+      thresholds:
+        personalityMatchScore: 0.5  # 性格匹配度最低分（启发式评分，宽松门控）
+        worldlineAdherenceScore: 0.12  # 主线符合度最低分
+        worldlineAdherenceFinalScore: 0.08  # 终局场景主线符合度最低分
+
+  # 续写配置
+  continuation:
+    maxHistoryRounds: 3  # 最多携带最近 N 轮历史上下文
+    contextWindowStrategy: "sliding"  # sliding | summary
+
+  # 内嵌小游戏（剧情模式）
+  minigame:
+    choiceProbability: 0.8  # 每个选项随机挂载小游戏的概率（0~1，剧本显式声明的选项不受此控制）
+    avoidRecentKind: true   # 注入时避开上一场景刚玩过的玩法
+
+  # 日志
+  logging:
+    level: "info"  # debug | info | warn | error
+    logPrompts: true  # 是否记录完整 prompt
+    logResponses: true

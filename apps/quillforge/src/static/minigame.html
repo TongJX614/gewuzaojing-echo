@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小游戏 - QuillForge</title>
+<link href="https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #101826;         /* 深墨青蓝：调查桌底色 */
+    --panel: #182234;
+    --line: #2e3d55;
+    --paper: #f2ead9;       /* 证物纸色 */
+    --paper-dim: #e5d9bc;   /* 牛皮纸 */
+    --verm: #e4572e;        /* 印章朱红：唯一强调色 */
+    --sepia: #2b2620;       /* 纸面墨字 */
+    --sepia-mut: #7a6f5d;
+    --signal: #6fa8a0;      /* 数据青：密文/提示 */
+    --slate: #93a1b8;
+    --ok: #7cb98a; --bad: #e0654f; --warn: #d9a441;
+    --font-sans: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    --font-display: 'ZCOOL QingKe HuangYou', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--ink); color: var(--paper); min-height: 100vh; font-family: var(--font-sans);
+    background-image:
+      radial-gradient(ellipse 120% 60% at 50% -10%, rgba(111,168,160,.07), transparent 60%),
+      linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 28px;
+  }
+  .page { max-width: 880px; margin: 0 auto; padding: 30px 20px 70px; }
+
+  /* ── 顶栏 ── */
+  .topbar { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 26px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+  .topbar h1 { font-family: var(--font-display); font-size: 24px; font-weight: 400; letter-spacing: 4px; color: var(--paper); }
+  .topbar h1 span { color: var(--verm); font-size: 13px; letter-spacing: 3px; margin-left: 10px; vertical-align: 3px; }
+  .topbar .case-no { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: var(--signal); }
+
+  /* ── 按钮 ── */
+  .btn {
+    display: inline-block; padding: 10px 24px; border: 1px solid var(--verm);
+    background: transparent; color: var(--verm); font-size: 14px; cursor: pointer;
+    border-radius: 2px; transition: all .18s; letter-spacing: 2px; font-family: var(--font-sans);
+  }
+  .btn:hover:not(:disabled) { background: var(--verm); color: #fff8f2; }
+  .btn.ghost { border-color: var(--line); color: var(--slate); }
+  .btn.ghost:hover:not(:disabled) { background: transparent; color: var(--paper); border-color: var(--slate); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+
+  /* ── 玩法选择：案卷抽屉 ── */
+  .kind-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 14px; }
+  .kind-card {
+    position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    padding: 24px 22px 20px; cursor: pointer; transition: transform .16s, border-color .16s, box-shadow .16s;
+  }
+  .kind-card:hover { border-color: var(--verm); transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.4); }
+  .kind-card::before {
+    content: attr(data-code); position: absolute; top: -9px; left: 12px;
+    background: var(--paper-dim); color: #5c4f33; font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: 1px; padding: 2px 9px; border-radius: 2px;
+  }
+  .kind-card h3 { font-family: var(--font-display); font-size: 20px; font-weight: 400; letter-spacing: 3px; color: var(--paper); margin-bottom: 8px; }
+  .kind-card h3 small { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; color: var(--signal); margin-left: 8px; vertical-align: 2px; }
+  .kind-card p { font-size: 13px; color: var(--slate); line-height: 1.8; }
+  /* 头号案卷：言弹辩驳（全宽特色卡 + 朱红对決章） */
+  .kind-card.featured {
+    grid-column: 1 / -1; border-color: rgba(228,87,46,.55);
+    background: linear-gradient(120deg, rgba(228,87,46,.10), transparent 55%), var(--panel);
+  }
+  .kind-card.featured::after {
+    content: '對 決'; position: absolute; right: 16px; top: 14px;
+    border: 2px solid var(--verm); color: var(--verm); padding: 3px 10px;
+    font-family: var(--font-display); font-size: 15px; letter-spacing: 4px;
+    transform: rotate(8deg); opacity: .85; pointer-events: none; transition: transform .16s;
+  }
+  .kind-card.featured:hover::after { transform: rotate(4deg) scale(1.06); }
+
+  /* ── 通用面板：调查档案夹 ── */
+  .panel {
+    position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    padding: 34px 28px 28px;
+    background-image: linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px); background-size: 100% 28px;
+  }
+  .folder-tab {
+    position: absolute; top: -11px; left: 24px; background: var(--paper-dim); color: #5c4f33;
+    font-size: 11px; font-weight: 700; letter-spacing: 3px; padding: 3px 16px;
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 3px; color: var(--signal); margin-bottom: 6px; }
+  .panel h2 { font-family: var(--font-display); font-size: 26px; font-weight: 400; letter-spacing: 3px; color: var(--paper); margin-bottom: 12px; }
+  .sub-text { color: var(--slate); font-size: 13px; line-height: 1.8; margin-bottom: 16px; }
+  .question-banner {
+    background: rgba(242,234,217,.06); border-left: 3px solid var(--verm);
+    padding: 12px 16px; border-radius: 0 4px 4px 0; font-size: 15px; line-height: 1.7; margin-bottom: 18px; color: #e9e2d2;
+  }
+  .hint-line { color: var(--signal); font-size: 13px; margin: 14px 0 0; line-height: 1.7; }
+
+  /* ── 线索卡：证物标签 ── */
+  .clue-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .clue-card {
+    position: relative; background: var(--paper); color: var(--sepia); border-radius: 2px;
+    padding: 17px 15px 14px; cursor: pointer; transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  }
+  .clue-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.45); }
+  .clue-card.selected { outline: 2px solid var(--verm); outline-offset: 2px; }
+  .clue-card.selected::after {
+    content: '指認'; position: absolute; right: 8px; top: 50%;
+    transform: translateY(-50%) rotate(-14deg); border: 2px solid var(--verm); color: var(--verm);
+    padding: 2px 8px; font-size: 13px; letter-spacing: 4px; opacity: .9; pointer-events: none;
+    animation: stampIn .22s ease-out;
+  }
+  .clue-card .tag {
+    position: absolute; top: -9px; left: 10px; background: var(--sepia); color: var(--paper);
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; padding: 2px 8px; border-radius: 2px;
+  }
+  .clue-card .src { font-size: 12px; color: var(--sepia-mut); margin-bottom: 5px; border-bottom: 1px dashed rgba(43,38,32,.25); padding-bottom: 5px; }
+  .clue-card .txt { font-size: 13px; line-height: 1.7; }
+
+  /* ── 密码：终端密文 ── */
+  .cipher-box {
+    font-family: var(--font-mono); font-size: 24px; letter-spacing: 4px; text-align: center;
+    padding: 24px 12px; background: rgba(6,10,18,.5); border: 1px dashed var(--signal); border-radius: 4px;
+    color: var(--signal); margin-bottom: 16px; word-break: break-all; line-height: 1.6;
+  }
+  .answer-input {
+    width: 100%; padding: 12px 14px; font-size: 16px; letter-spacing: 2px;
+    background: rgba(6,10,18,.5); border: 1px solid var(--line); border-radius: 4px; color: var(--paper);
+    outline: none; margin-bottom: 16px; font-family: var(--font-sans);
+  }
+  .answer-input:focus { border-color: var(--verm); }
+
+  /* ── 排序卡：卷宗条目 ── */
+  .order-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px; }
+  .order-item {
+    display: flex; align-items: center; gap: 11px; background: var(--paper); color: var(--sepia);
+    border-radius: 2px; padding: 11px 14px; cursor: grab; user-select: none;
+    transition: transform .15s, outline-color .15s, opacity .15s; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  }
+  .order-item:hover { transform: translateX(3px); }
+  .order-item.dragging { opacity: .45; }
+  .order-item.dragover { outline: 2px dashed var(--verm); outline-offset: 2px; }
+  .order-item.selected { outline: 2px solid var(--verm); outline-offset: 2px; }
+  .order-item .num {
+    min-width: 24px; height: 24px; border-radius: 2px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: bold; color: var(--paper); background: var(--sepia); flex-shrink: 0; font-family: var(--font-mono);
+  }
+  .order-item .txt { font-size: 13px; line-height: 1.6; }
+  .order-tip { font-size: 12px; color: var(--slate); margin-bottom: 14px; }
+
+  /* ── 连线配对：左右两栏 + 同号徽章 + SVG 连线层 ── */
+  .match-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 36px; margin-bottom: 16px; }
+  .match-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; overflow: visible; }
+  .match-col { display: flex; flex-direction: column; gap: 10px; }
+  .match-item {
+    position: relative; background: var(--paper); color: var(--sepia); border-radius: 2px;
+    padding: 10px 14px; font-size: 13px; line-height: 1.6; cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.3); transition: transform .15s;
+  }
+  .match-item:hover { transform: translateY(-2px); }
+  .match-item.selected { outline: 2px solid var(--verm); outline-offset: 2px; }
+  .match-item .pair-no {
+    position: absolute; top: -8px; right: 8px; min-width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+    color: #fff8f2; font-family: var(--font-mono);
+  }
+
+  /* ── 证物归类：待分盘 + 分类箱 ── */
+  .class-tray {
+    display: flex; flex-wrap: wrap; gap: 9px; min-height: 48px;
+    background: rgba(6,10,18,.35); border: 1px dashed var(--line); border-radius: 4px;
+    padding: 10px; margin-bottom: 16px;
+  }
+  .class-item {
+    background: var(--paper); color: var(--sepia); border-radius: 2px; padding: 8px 12px;
+    font-size: 13px; line-height: 1.5; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,.3);
+    transition: transform .15s;
+  }
+  .class-item:hover { transform: translateY(-2px); }
+  .class-item.selected { outline: 2px solid var(--verm); outline-offset: 2px; }
+  .class-bins { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .class-bin {
+    background: rgba(242,234,217,.05); border: 1px solid var(--line); border-radius: 4px;
+    min-height: 96px; padding: 10px; cursor: pointer; transition: border-color .15s;
+  }
+  .class-bin:hover { border-color: var(--signal); }
+  .class-bin .bin-name { font-size: 13px; letter-spacing: 2px; color: var(--signal); border-bottom: 1px dashed var(--line); padding-bottom: 7px; margin-bottom: 8px; }
+  .class-bin .bin-items { display: flex; flex-direction: column; gap: 7px; }
+
+  /* ── 逐步解锁：层数进度 + 选项 ── */
+  .unlock-progress { display: flex; gap: 6px; justify-content: center; margin-bottom: 18px; }
+  .unlock-progress .seg { width: 40px; height: 5px; background: var(--line); border-radius: 2px; }
+  .unlock-progress .seg.done { background: var(--verm); }
+  .unlock-progress .seg.cur { background: var(--signal); }
+  .unlock-prompt { font-size: 16px; line-height: 1.7; color: #e9e2d2; text-align: center; margin-bottom: 18px; }
+  .unlock-opts { display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px; }
+  .unlock-opt {
+    background: var(--paper); color: var(--sepia); border-radius: 2px; padding: 12px 16px;
+    font-size: 14px; cursor: pointer; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    transition: transform .15s;
+  }
+  .unlock-opt:hover { transform: translateY(-2px); outline: 2px solid var(--verm); outline-offset: 2px; }
+  .unlock-opt.ok { outline: 2px solid var(--ok); outline-offset: 2px; background: #e7eedd; }
+  .unlock-opt.bad { outline: 2px solid var(--bad); outline-offset: 2px; animation: shakeX .3s ease-out; }
+  .unlock-opt.busy { opacity: .55; pointer-events: none; }
+  @keyframes shakeX { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  .unlock-hint { color: var(--signal); font-size: 13px; text-align: center; line-height: 1.8; margin-bottom: 4px; }
+
+  /* ── 巡航收集：HUD + 画布 ── */
+  .voyage-hud { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 13px; color: var(--signal); margin-bottom: 8px; }
+  .voyage-canvas {
+    width: 100%; height: 340px; display: block; border: 1px solid var(--line); border-radius: 4px;
+    background: linear-gradient(rgba(6,10,18,.6), rgba(12,22,38,.92)); touch-action: none;
+  }
+
+  /* ── 碎纸复原：调查台拼盘 ── */
+  .shred-doc { text-align: center; font-family: var(--font-display); font-size: 15px; letter-spacing: 3px; color: var(--warn); margin-bottom: 14px; }
+  .shred-grid { display: grid; gap: 8px; margin-bottom: 16px; }
+  .shred-tile {
+    position: relative; background: var(--paper); color: var(--sepia);
+    border-radius: 6px 10px 5px 12px / 10px 5px 12px 6px;
+    min-height: 74px; padding: 10px 12px; font-size: 12.5px; line-height: 1.6; cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.3); transition: transform .15s, background .15s;
+    display: flex; align-items: center; justify-content: center; text-align: center; user-select: none;
+  }
+  .shred-tile:hover { transform: translateY(-2px); }
+  .shred-tile.selected { background: #fbe3d6; box-shadow: 0 0 0 2px var(--verm), 0 4px 10px rgba(0,0,0,.35); transform: scale(1.03); }
+
+  /* ── 频段截听：示波器 + 调频旋钮 ── */
+  .radio-hud { display: flex; justify-content: space-between; gap: 10px; font-family: var(--font-mono); font-size: 13px; color: var(--signal); margin-bottom: 8px; flex-wrap: wrap; }
+  .radio-scope {
+    width: 100%; height: 220px; display: block; border: 1px solid var(--line); border-radius: 4px;
+    background: linear-gradient(rgba(6,10,18,.7), rgba(10,18,30,.92)); margin-bottom: 12px;
+  }
+  .radio-freq { text-align: center; font-family: var(--font-mono); font-size: 22px; color: var(--paper); letter-spacing: 2px; margin-bottom: 4px; }
+  .radio-freq em { color: var(--verm); font-style: normal; }
+  .radio-dial { width: 100%; accent-color: var(--verm); cursor: pointer; margin-bottom: 10px; }
+  .radio-lockbar { height: 8px; background: rgba(6,10,18,.5); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+  .radio-lockbar .fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--signal), var(--ok)); }
+
+  /* ── 现场搜证：证物陈列架 ── */
+  .search-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .search-item {
+    position: relative; background: var(--paper); color: var(--sepia); border-radius: 2px;
+    padding: 12px 10px 10px; cursor: pointer; text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.3); transition: transform .15s; user-select: none;
+  }
+  .search-item:hover { transform: translateY(-2px); }
+  .search-item.picked { outline: 2px solid var(--verm); outline-offset: 2px; }
+  .search-item.picked::after {
+    content: '圈选'; position: absolute; right: 6px; top: 6px; border: 1px solid var(--verm); color: var(--verm);
+    font-size: 10px; padding: 1px 5px; letter-spacing: 2px; transform: rotate(6deg); background: rgba(255,248,242,.85);
+  }
+  .search-item .nm { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .search-item .ds { font-size: 11px; color: var(--sepia-mut); line-height: 1.5; }
+
+  /* ── 加载 / 结算：落章 ── */
+  .center-box { text-align: center; padding: 60px 20px; }
+  .spinner {
+    width: 44px; height: 44px; margin: 0 auto 22px; border-radius: 50%;
+    border: 3px solid var(--line); border-top-color: var(--verm); animation: spin .9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .stamp {
+    width: max-content; margin: 0 auto 18px; border: 3px solid currentColor;
+    outline: 1px solid currentColor; outline-offset: 3px; padding: 8px 24px;
+    font-family: var(--font-display); font-size: 30px; letter-spacing: 9px; text-indent: 9px;
+    transform: rotate(-7deg); animation: stampIn .3s ease-out; text-align: center;
+  }
+  .stamp.ok { color: var(--ok); } .stamp.bad { color: var(--bad); } .stamp.warn { color: var(--warn); }
+  @keyframes stampIn { from { transform: rotate(-7deg) scale(1.7); opacity: 0; } to { transform: rotate(-7deg) scale(1); opacity: 1; } }
+  .result-title { font-size: 16px; letter-spacing: 4px; margin-bottom: 12px; color: var(--slate); }
+  .result-text { font-size: 14px; line-height: 1.9; color: #e9e2d2; max-width: 560px; margin: 0 auto 10px; }
+  .correct-answer { color: var(--signal); font-size: 13px; line-height: 1.8; margin-bottom: 22px; }
+  .archive-box {
+    max-width: 560px; margin: 4px auto 18px; text-align: left;
+    background: rgba(242,234,217,.07); border: 1px dashed var(--warn); border-radius: 4px; padding: 14px 18px;
+  }
+  .archive-title { font-size: 14px; letter-spacing: 2px; color: var(--warn); margin-bottom: 8px; }
+  .archive-content { font-size: 13px; line-height: 1.9; color: #e9e2d2; white-space: pre-wrap; }
+  .retry-note { color: var(--warn); font-size: 14px; line-height: 1.9; margin-bottom: 6px; }
+  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  .hidden { display: none !important; }
+  @media(max-width:640px){ .kind-grid, .clue-grid { grid-template-columns: 1fr; } .panel { padding: 30px 18px 22px; } .panel h2 { font-size: 20px; } .stamp { font-size: 22px; letter-spacing: 5px; text-indent: 5px; } .match-grid { gap: 10px 16px; } .voyage-canvas { height: 280px; } .search-grid { grid-template-columns: repeat(2, 1fr); } .radio-scope { height: 180px; } .maze-wrap { width: min(92vw, 340px); } }
+  
+  /* ── 密码转盘：拨轮 + 试拨记录 ── */
+  .dial-locknote { font-size: 13px; color: var(--sepia-mut); font-style: italic; margin: 6px 0 14px; }
+  .dial-slots { display: flex; justify-content: center; gap: 14px; margin: 18px 0 8px; }
+  .dial-slot {
+    width: 64px; height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    background: rgba(6,10,18,.55); border: 1px solid var(--line); border-radius: 6px; padding: 4px 0;
+  }
+  .dial-slot .digit { font-family: var(--font-mono); font-size: 34px; color: var(--paper); line-height: 1.4; }
+  .dial-slot .spin { display: flex; flex-direction: column; gap: 2px; }
+  .dial-slot .spin button { width: 44px; height: 22px; font-size: 12px; line-height: 1; cursor: pointer; background: rgba(255,255,255,.06); color: var(--sepia-mut); border: 1px solid var(--line); border-radius: 3px; }
+  .dial-slot .spin button:hover { color: var(--verm); border-color: var(--verm); }
+  .dial-history { margin-top: 16px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .dial-history .dh-title { font-size: 12px; color: var(--sepia-mut); margin-bottom: 6px; }
+  .dial-row { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 14px; padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .dial-row .guess { letter-spacing: 6px; color: var(--paper); }
+  .dial-row .fb { color: var(--signal); font-size: 12px; }
+  .dial-row .fb em { color: var(--verm); font-style: normal; }
+  .dial-fmterror { color: var(--verm); font-size: 12px; text-align: center; min-height: 18px; margin-top: 6px; }
+  
+  /* ── 档案室迷宫：网格 + 方向键 ── */
+  .maze-hud { display: flex; justify-content: space-between; gap: 10px; font-family: var(--font-mono); font-size: 13px; color: var(--signal); margin-bottom: 8px; }
+  .maze-wrap { position: relative; width: min(88vw, 380px); margin: 0 auto; aspect-ratio: 1; }
+  .maze-grid { display: grid; width: 100%; height: 100%; gap: 0; border: 1px solid var(--line); }
+  .maze-cell { background: rgba(6,10,18,.85); }
+  .maze-cell.open { background: rgba(214,199,166,.10); }
+  .maze-cell.exit { background: rgba(51,255,119,.22); box-shadow: inset 0 0 0 1px var(--ok); }
+  .maze-patrol { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(255,196,64,.95) 0%, rgba(255,176,32,.55) 55%, rgba(255,176,32,0) 100%);
+    box-shadow: 0 0 10px rgba(255,176,32,.8); z-index: 2; }
+  .maze-grid.caught { outline: 2px solid var(--verm); outline-offset: -2px; }
+  .maze-cell.player { background: var(--verm); border-radius: 3px; }
+  .maze-dpad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 40px); gap: 6px; justify-content: center; margin-top: 14px; }
+  .maze-dpad button { font-size: 16px; cursor: pointer; background: rgba(255,255,255,.06); color: var(--sepia-mut); border: 1px solid var(--line); border-radius: 5px; }
+  .maze-dpad button:hover { color: var(--verm); border-color: var(--verm); }
+  .maze-dpad button[data-dir="up"] { grid-column: 2; }
+  .maze-dpad button[data-dir="left"] { grid-column: 1; grid-row: 2; }
+  .maze-dpad button[data-dir="down"] { grid-column: 2; grid-row: 2; }
+  .maze-dpad button[data-dir="right"] { grid-column: 3; grid-row: 2; }
+  @media(prefers-reduced-motion:reduce){ .stamp, .clue-card.selected::after { animation: none; } .kind-card, .clue-card, .order-item, .btn { transition: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <h1>小游戏<span>QUILLFORGE · 調査檔案</span></h1>
+    <span class="case-no">CASE FILE // MINIGAMES</span>
+  </div>
+
+  <!-- 玩法选择 -->
+  <div id="viewMenu" class="hidden">
+    <p class="sub-text">选择一卷待查档案，系统将基于当前剧本素材实时生成小游戏内容（约 10~60 秒）。答题类每卷有 3 次作答机会，答错会揭示一条针对性线索。</p>
+    <div class="kind-grid">
+      <div class="kind-card featured" data-code="FILE 00" onclick="enterDebate()">
+        <h3>言弹辩驳<small>DEBATE</small></h3>
+        <p>弹丸论破式飞屏击破：装填言弹、滚轮换弹，射穿论辩中呼啸而过的朱红「破绽」与蓝青「共鸣」。</p>
+      </div>
+      <div class="kind-card" data-code="FILE A-01" onclick="startGame('clue')">
+        <h3>线索指认<small>EVIDENCE</small></h3>
+        <p>从若干证物卡中，选出唯一能回答关键问题的线索。指认成立，推理即成立。</p>
+      </div>
+      <div class="kind-card" data-code="FILE B-02" onclick="startGame('cipher')">
+        <h3>密码解密<small>CIPHER</small></h3>
+        <p>破译一段与剧情紧密相关的密文，加密规则就藏在提示里。</p>
+      </div>
+      <div class="kind-card" data-code="FILE C-03" onclick="startGame('sequence')">
+        <h3>时间线排序<small>TIMELINE</small></h3>
+        <p>打乱的剧情片段散落一地，把它们按真实发生的先后顺序排列。</p>
+      </div>
+      <div class="kind-card" data-code="FILE D-04" onclick="startGame('match')">
+        <h3>连线配对<small>MATCH</small></h3>
+        <p>调查板上散落着成对的信息，把左栏与右栏一一连线对应。</p>
+      </div>
+      <div class="kind-card" data-code="FILE E-05" onclick="startGame('classify')">
+        <h3>证物归类<small>CLASSIFY</small></h3>
+        <p>散落的证物条目需要按统一依据，投入正确的分类箱。</p>
+      </div>
+      <div class="kind-card" data-code="FILE F-06" onclick="startGame('unlock')">
+        <h3>逐步解锁<small>UNLOCK</small></h3>
+        <p>一道多层机关，每一层当场验证，层层答对方能解锁封存档案。</p>
+      </div>
+      <div class="kind-card" data-code="FILE G-07" onclick="startGame('voyage')">
+        <h3>巡航收集<small>VOYAGE</small></h3>
+        <p>驾驶巡逻艇限时航行，撞击打捞记忆浮标攒分达标，小心暗礁与游动水雷。</p>
+      </div>
+      <div class="kind-card" data-code="FILE H-08" onclick="startGame('shuffle')">
+        <h3>碎纸复原<small>SHUFFLE</small></h3>
+        <p>关键证物被撕成碎片，在调查台上两两交换，把它拼回一份完整的文件。</p>
+      </div>
+      <div class="kind-card" data-code="FILE I-09" onclick="startGame('radio')">
+        <h3>频段截听<small>RADIO</small></h3>
+        <p>旋转调频旋钮，让接收波形与目标密电波形重合，稳住片刻即可截获电文。</p>
+      </div>
+      <div class="kind-card" data-code="FILE J-10" onclick="startGame('search')">
+        <h3>现场搜证<small>SEARCH</small></h3>
+        <p>限时勘查证物陈列架，圈出所有符合搜索目标的证物，一个不多一个不少。</p>
+      </div>
+      <div class="kind-card" data-code="FILE K-11" onclick="startGame('dial')">
+        <h3>密码转盘<small>DIAL</small></h3>
+        <p>拨动转盘密码锁试开，每次试拨都会得到 A/B 反馈，凭推理逼近真实密码。</p>
+      </div>
+      <div class="kind-card" data-code="FILE L-12" onclick="startGame('maze')">
+        <h3>档案室迷宫<small>MAZE</small></h3>
+        <p>赶在限时内穿过迂回曲折的迷宫抵达出口，方向键或触屏方向键移动。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加载中 -->
+  <div id="viewLoading" class="hidden">
+    <div class="center-box">
+      <div class="spinner"></div>
+      <div class="result-text" id="loadingText">正在调取档案…</div>
+    </div>
+  </div>
+
+  <!-- 游戏区 -->
+  <div id="viewGame" class="hidden">
+    <div class="panel">
+      <div class="folder-tab">調 查 檔 案</div>
+      <div class="eyebrow" id="gameEyebrow"></div>
+      <h2 id="gameTitle"></h2>
+      <div id="gameBody"></div>
+      <div class="actions" id="gameActions"></div>
+    </div>
+  </div>
+
+  <!-- 结算 -->
+  <div id="viewResult" class="hidden">
+    <div class="panel center-box" style="padding: 52px 28px;">
+      <div class="folder-tab">調 查 檔 案</div>
+      <div class="stamp" id="resultStamp"></div>
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-text" id="resultText"></div>
+      <div id="resultArchive"></div>
+      <div class="correct-answer" id="resultCorrect"></div>
+      <div class="actions" id="resultActions">
+        <button class="btn" onclick="startGame(currentKind)">再查一卷</button>
+        <button class="btn ghost" onclick="showMenu()">换个玩法</button>
+        <button class="btn ghost" onclick="location.href='/'">返回首页</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let scriptId = '';
+let currentKind = '';
+let gameData = null;
+let selectedClueId = null;
+let selectedOrderIdx = -1;
+
+// ─── 视图切换 ───
+function show(viewId) {
+  stopVoyage(); stopRadio(); stopSearch(); stopMaze();
+  if (matchResizeFn) { window.removeEventListener('resize', matchResizeFn); matchResizeFn = null; }
+  ['viewMenu', 'viewLoading', 'viewGame', 'viewResult'].forEach(id =>
+    document.getElementById(id).classList.toggle('hidden', id !== viewId));
+}
+function showMenu() { show('viewMenu'); }
+
+// ─── 言弹辩驳：从小游戏页入场，写入一次性凭证后跳转辩论页 ───
+function enterDebate() {
+  sessionStorage.setItem('debate_ctx', JSON.stringify({ script_id: scriptId }));
+  location.href = '/debate';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function api(url, options) {
+  const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || res.statusText);
+  return data;
+}
+
+// ─── 生成并进入游戏 ───
+async function startGame(kind) {
+  currentKind = kind;
+  show('viewLoading');
+  document.getElementById('loadingText').textContent = '正在调取档案（LLM 创作中，约 10~60 秒）…';
+  try {
+    const res = await api(`/api/minigame/generate?script_id=${encodeURIComponent(scriptId)}&kind=${kind}`, { method: 'POST' });
+    gameData = res.data;
+    renderGame();
+  } catch (e) {
+    alert('生成失败：' + e.message);
+    showMenu();
+  }
+}
+
+// ─── 游戏渲染分派 ───
+function renderGame() {
+  selectedClueId = null;
+  selectedOrderIdx = -1;
+  show('viewGame');
+  document.getElementById('gameTitle').textContent = gameData.title || '';
+  const eyebrowMap = {
+    clue: '線索指認 · EVIDENCE',
+    cipher: '密碼解密 · CIPHER',
+    sequence: '時間線排序 · TIMELINE',
+    match: '連線配對 · MATCH',
+    classify: '證物歸類 · CLASSIFY',
+    unlock: '逐步解鎖 · UNLOCK',
+    voyage: '巡航打撈 · VOYAGE',
+    shuffle: '碎紙復原 · SHUFFLE',
+    radio: '頻段截聽 · RADIO',
+    search: '現場搜證 · SEARCH',
+    dial: '密碼轉盤 · DIAL',
+    maze: '檔案室迷宮 · MAZE',
+  };
+  const eyebrow = eyebrowMap[gameData.type]
+    || (gameData.mode === 'cipher' ? '密碼解密 · CIPHER' : '時間線排序 · TIMELINE');
+  document.getElementById('gameEyebrow').textContent = eyebrow;
+  const body = document.getElementById('gameBody');
+  const actions = document.getElementById('gameActions');
+  actions.innerHTML = '';
+
+  if (gameData.type === 'clue') renderClue(body, actions);
+  else if (gameData.type === 'match') renderMatch(body, actions);
+  else if (gameData.type === 'classify') renderClassify(body, actions);
+  else if (gameData.type === 'unlock') renderUnlock(body, actions);
+  else if (gameData.type === 'voyage') renderVoyage(body, actions);
+  else if (gameData.type === 'shuffle') renderShuffle(body, actions);
+  else if (gameData.type === 'radio') renderRadio(body, actions);
+  else if (gameData.type === 'search') renderSearch(body, actions);
+  else if (gameData.type === 'dial') renderDial(body, actions);
+  else if (gameData.type === 'maze') renderMaze(body, actions);
+  else if (gameData.mode === 'cipher') renderCipher(body, actions);
+  else renderOrdering(body, actions);  // 时间线排序
+
+  if (gameData.maxAttempts) {
+    body.insertAdjacentHTML('afterbegin',
+      `<div class="sub-text" id="attemptsTip">共 ${gameData.maxAttempts} 次作答机会，每次答错会揭示一条针对性线索</div>`);
+  }
+}
+
+// ─── 线索指认 ───
+function renderClue(body, actions) {
+  const cards = gameData.clues.map((c, i) => `
+    <div class="clue-card" data-id="${escapeHtml(c.id)}" onclick="selectClue(this)">
+      <span class="tag">證-${String(i + 1).padStart(2, '0')}</span>
+      <div class="src">来源：${escapeHtml(c.source)}</div>
+      <div class="txt">${escapeHtml(c.text)}</div>
+    </div>`).join('');
+  body.innerHTML = `
+    <div class="question-banner">${escapeHtml(gameData.question)}</div>
+    <div class="clue-grid">${cards}</div>`;
+  actions.innerHTML = '<button class="btn" id="submitClueBtn" disabled onclick="submitClue()">指认</button><button class="btn ghost" onclick="showMenu()">返回选择玩法</button>';
+}
+
+function selectClue(el) {
+  document.querySelectorAll('.clue-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedClueId = el.dataset.id;
+  document.getElementById('submitClueBtn').disabled = false;
+}
+
+function submitClue() {
+  if (!selectedClueId) return;
+  submitAnswer(selectedClueId);
+}
+
+// ─── 密码解密 ───
+function renderCipher(body, actions) {
+  body.innerHTML = `
+    ${gameData.story ? `<div class="question-banner">${escapeHtml(gameData.story)}</div>` : ''}
+    <div class="cipher-box">${escapeHtml(gameData.cipherText)}</div>
+    ${gameData.hint ? `<div class="hint-line">提示：${escapeHtml(gameData.hint)}</div>` : ''}
+    <div class="sub-text" style="margin-top:10px">答案共 ${gameData.answerLength || '?'} 个字</div>
+    <input class="answer-input" id="cipherInput" maxlength="30" placeholder="输入解密后的明文"
+           onkeydown="if(event.key==='Enter') submitCipher()">`;
+  actions.innerHTML = '<button class="btn" onclick="submitCipher()">解密</button><button class="btn ghost" onclick="showMenu()">返回选择玩法</button>';
+  setTimeout(() => document.getElementById('cipherInput').focus(), 50);
+}
+
+function submitCipher() {
+  const val = document.getElementById('cipherInput').value.trim();
+  if (!val) { alert('请先输入答案'); return; }
+  submitAnswer(val);
+}
+
+// ─── 排序（时间线）───
+function renderOrdering(body, actions) {
+  const lead = gameData.story ? `<div class="question-banner">${escapeHtml(gameData.story)}</div>` : '';
+  const items = gameData.items.map((it, i) => `
+    <div class="order-item" draggable="true" data-idx="${i}" data-id="${escapeHtml(it.id)}">
+      <span class="num">${i + 1}</span>
+      <span class="txt">${escapeHtml(it.text)}</span>
+    </div>`).join('');
+  body.innerHTML = `
+    ${lead}
+    <div class="order-tip">拖动卡片调整顺序，或点击两张卡片交换位置。</div>
+    <div class="order-list" id="orderList">${items}</div>
+    ${gameData.hint ? `<div class="hint-line">提示：${escapeHtml(gameData.hint)}</div>` : ''}`;
+  actions.innerHTML = '<button class="btn" onclick="submitOrder()">确认顺序</button><button class="btn ghost" onclick="showMenu()">返回选择玩法</button>';
+  bindOrderingEvents();
+}
+
+function bindOrderingEvents() {
+  const list = document.getElementById('orderList');
+  let dragIdx = -1;
+
+  list.querySelectorAll('.order-item').forEach(item => {
+    item.addEventListener('dragstart', () => {
+      dragIdx = Number(item.dataset.idx);
+      item.classList.add('dragging');
+    });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', e => { e.preventDefault(); item.classList.add('dragover'); });
+    item.addEventListener('dragleave', () => item.classList.remove('dragover'));
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.classList.remove('dragover');
+      const dropIdx = Number(item.dataset.idx);
+      if (dragIdx >= 0 && dragIdx !== dropIdx) swapOrderItems(dragIdx, dropIdx);
+      dragIdx = -1;
+    });
+    item.addEventListener('click', () => {
+      const idx = Number(item.dataset.idx);
+      if (selectedOrderIdx < 0) {
+        selectedOrderIdx = idx;
+        item.classList.add('selected');
+      } else if (selectedOrderIdx === idx) {
+        selectedOrderIdx = -1;
+        item.classList.remove('selected');
+      } else {
+        swapOrderItems(selectedOrderIdx, idx);
+        selectedOrderIdx = -1;
+      }
+    });
+  });
+}
+
+function swapOrderItems(a, b) {
+  const list = document.getElementById('orderList');
+  const items = [...list.querySelectorAll('.order-item')];
+  // 以 dataset.id 维护逻辑顺序：交换两项后整体重绘序号
+  const order = items.map(el => el.dataset.id);
+  [order[a], order[b]] = [order[b], order[a]];
+  const byId = {};
+  items.forEach(el => { byId[el.dataset.id] = el; });
+  order.forEach((id, i) => {
+    const el = byId[id];
+    el.dataset.idx = i;
+    el.querySelector('.num').textContent = i + 1;
+    el.classList.remove('selected');
+    list.appendChild(el);
+  });
+}
+
+function submitOrder() {
+  const ids = [...document.querySelectorAll('#orderList .order-item')].map(el => el.dataset.id);
+  submitAnswer(ids);
+}
+
+// ─── 连线配对 ───
+let matchSel = null;
+let matchPairs = {};
+let matchResizeFn = null;
+const PAIR_COLORS = ['#e4572e', '#6fa8a0', '#d9a441', '#7cb98a', '#c89968'];
+
+function renderMatch(body, actions) {
+  matchSel = null; matchPairs = {};
+  body.innerHTML = `
+    <div class="question-banner">${escapeHtml(gameData.question || '')}</div>
+    <div class="order-tip">先点左栏一项，再点右栏一项完成连线；点已连线的卡片可取消。</div>
+    <div class="match-grid" id="matchWrap">
+      <svg class="match-lines" id="matchSvg"></svg>
+      <div class="match-col" id="matchLeft">${(gameData.lefts || []).map(l => `<div class="match-item" data-id="${escapeHtml(l.id)}">${escapeHtml(l.text)}</div>`).join('')}</div>
+      <div class="match-col" id="matchRight">${(gameData.rights || []).map(r => `<div class="match-item" data-id="${escapeHtml(r.id)}">${escapeHtml(r.text)}</div>`).join('')}</div>
+    </div>`;
+  actions.innerHTML = '<button class="btn" id="matchConfirmBtn" disabled onclick="submitMatch()">确认连线</button><button class="btn ghost" onclick="showMenu()">返回选择玩法</button>';
+  document.querySelectorAll('#matchLeft .match-item').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.id;
+    if (matchPairs[id]) { delete matchPairs[id]; repaintMatch(); return; }
+    document.querySelectorAll('#matchLeft .match-item').forEach(x => x.classList.remove('selected'));
+    matchSel = id;
+    el.classList.add('selected');
+  }));
+  document.querySelectorAll('#matchRight .match-item').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.id;
+    const paired = Object.keys(matchPairs).find(k => matchPairs[k] === id);
+    if (paired) { delete matchPairs[paired]; repaintMatch(); return; }
+    if (!matchSel) return;
+    matchPairs[matchSel] = id;
+    matchSel = null;
+    repaintMatch();
+  }));
+  if (matchResizeFn) window.removeEventListener('resize', matchResizeFn);
+  matchResizeFn = () => repaintMatch();
+  window.addEventListener('resize', matchResizeFn);
+  repaintMatch();
+}
+
+function repaintMatch() {
+  document.querySelectorAll('.match-item').forEach(el => {
+    const old = el.querySelector('.pair-no');
+    if (old) old.remove();
+    el.classList.remove('selected');
+  });
+  const wrap = document.getElementById('matchWrap');
+  const svg = document.getElementById('matchSvg');
+  let lines = '', n = 0;
+  for (const [l, r] of Object.entries(matchPairs)) {
+    const le = document.querySelector(`#matchLeft .match-item[data-id="${l}"]`);
+    const re = document.querySelector(`#matchRight .match-item[data-id="${r}"]`);
+    if (!le || !re) continue;
+    const color = PAIR_COLORS[n % PAIR_COLORS.length];
+    [le, re].forEach(el => {
+      const b = document.createElement('span');
+      b.className = 'pair-no'; b.textContent = n + 1; b.style.background = color;
+      el.appendChild(b);
+    });
+    if (wrap && svg) {
+      const wr = wrap.getBoundingClientRect();
+      const lr = le.getBoundingClientRect(), rr = re.getBoundingClientRect();
+      const x1 = lr.right - wr.left, y1 = lr.top + lr.height / 2 - wr.top;
+      const x2 = rr.left - wr.left, y2 = rr.top + rr.height / 2 - wr.top;
+      lines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2"/>`
+        + `<circle cx="${x1}" cy="${y1}" r="3" fill="${color}"/><circle cx="${x2}" cy="${y2}" r="3" fill="${color}"/>`;
+    }
+    n++;
+  }
+  if (svg) svg.innerHTML = lines;
+  const total = document.querySelectorAll('#matchLeft .match-item').length;
+  const btn = document.getElementById('matchConfirmBtn');
+  if (btn) btn.disabled = n < total;
+}
+
+function submitMatch() { submitAnswer({ ...matchPairs }); }
+
+// ─── 证物归类 ───
+let classSel = null;
+
+function renderClassify(body, actions) {
+  classSel = null;
+  body.innerHTML = `
+    <div id="classifyRoot">
+      <div class="question-banner">${escapeHtml(gameData.question || '')}</div>
+      <div class="order-tip">先点选一个条目，再点分类箱投入；点箱内条目可取回。</div>
+      <div class="class-tray" id="classTray">${(gameData.items || []).map(it => `<div class="class-item" data-id="${escapeHtml(it.id)}">${escapeHtml(it.text)}</div>`).join('')}</div>
+      <div class="class-bins">${(gameData.categories || []).map(c => `<div class="class-bin" data-cat="${escapeHtml(c.id)}"><div class="bin-name">${escapeHtml(c.name)}</div><div class="bin-items"></div></div>`).join('')}</div>
+    </div>`;
+  actions.innerHTML = '<button class="btn" id="classConfirmBtn" disabled onclick="submitClassify()">确认归类</button><button class="btn ghost" onclick="showMenu()">返回选择玩法</button>';
+  const root = document.getElementById('classifyRoot');
+  const tray = document.getElementById('classTray');
+  const refresh = () => { document.getElementById('classConfirmBtn').disabled = tray.querySelectorAll('.class-item').length > 0; };
+  root.addEventListener('click', e => {
+    const item = e.target.closest('.class-item');
+    const bin = e.target.closest('.class-bin');
+    if (item) {
+      if (tray.contains(item)) {
+        tray.querySelectorAll('.class-item').forEach(x => x.classList.remove('selected'));
+        classSel = item;
+        item.classList.add('selected');
+      } else {
+        item.classList.remove('selected');
+        tray.appendChild(item);
+        classSel = null;
+      }
+      refresh();
+      return;
+    }
+    if (bin && classSel) {
+      classSel.classList.remove('selected');
+      bin.querySelector('.bin-items').appendChild(classSel);
+      classSel = null;
+      refresh();
+    }
+  });
+  refresh();
+}
+
+function submitClassify() {
+  const map = {};
+  document.querySelectorAll('.class-bin').forEach(bin => {
+    bin.querySelectorAll('.class-item').forEach(it => { map[it.dataset.id] = bin.dataset.cat; });
+  });
+  submitAnswer(map);
+}
+
+// ─── 逐步解锁（逐层即时判定，进度由服务端管理）───
+let unlockIdx = 0;
+let unlockBusy = false;
+let unlockHint = '';
+
+function renderUnlock(body, actions) {
+  unlockIdx = 0; unlockBusy = false; unlockHint = '';
+  body.innerHTML = `
+    ${gameData.story ? `<div class="question-banner">${escapeHtml(gameData.story)}</div>` : ''}
+    <div class="order-tip">每选一项当场验证：选对进入下一层，选错揭示本层提示；全部答对解锁封存档案。</div>
+    <div id="unlockBox"></div>`;
+  actions.innerHTML = '<button class="btn ghost" onclick="showMenu()">返回选择玩法</button>';
+  renderUnlockStep();
+}
+
+function renderUnlockStep() {
+  const box = document.getElementById('unlockBox');
+  const steps = gameData.steps || [];
+  const st = steps[unlockIdx];
+  box.innerHTML = `
+    <div class="unlock-progress">${steps.map((_, i) => `<div class="seg ${i < unlockIdx ? 'done' : (i === unlockIdx ? 'cur' : '')}"></div>`).join('')}</div>
+    <div class="unlock-prompt">第 ${unlockIdx + 1} / ${steps.length} 层：${escapeHtml(st.prompt || '')}</div>
+    <div class="unlock-opts">${(st.options || []).map(o => `<div class="unlock-opt" data-id="${escapeHtml(o.id)}">${escapeHtml(o.text)}</div>`).join('')}</div>
+    ${unlockHint ? `<div class="unlock-hint">💡 ${escapeHtml(unlockHint)}</div>` : ''}`;
+  box.querySelectorAll('.unlock-opt').forEach(o => o.addEventListener('click', () => unlockSelect(o)));
+}
+
+async function unlockSelect(o) {
+  if (unlockBusy) return;
+  unlockBusy = true; o.classList.add('busy');
+  const tip = document.getElementById('attemptsTip');
+  try {
+    const res = await api('/api/minigame/answer', {
+      method: 'POST',
+      body: JSON.stringify({ game_id: gameData.gameId, answer: { partial: true, selection: o.dataset.id } }),
+    });
+    if (res.final) { renderResult(res); return; }
+    if (tip && res.attemptsLeft != null) tip.textContent = `剩余 ${res.attemptsLeft} 次机会，答错会揭示针对性线索`;
+    if (res.layerCleared) {
+      o.classList.remove('busy'); o.classList.add('ok');
+      unlockHint = ''; unlockIdx = res.stepIndex;
+      setTimeout(() => { unlockBusy = false; renderUnlockStep(); }, 420);
+    } else {
+      o.classList.remove('busy'); o.classList.add('bad');
+      unlockHint = res.revealHint || '机关纹丝不动，回想一下剧情里的细节。';
+      setTimeout(() => { unlockBusy = false; renderUnlockStep(); }, 420);
+    }
+  } catch (e) {
+    unlockBusy = false; o.classList.remove('busy');
+    alert('判定失败：' + e.message);
+  }
+}
+
+// ─── 巡航收集（canvas 街机）───
+let voyHandle = null;
+
+function stopVoyage() {
+  if (!voyHandle) return;
+  cancelAnimationFrame(voyHandle.raf);
+  document.removeEventListener('keydown', voyHandle.onKey);
+  document.removeEventListener('keyup', voyHandle.onKey);
+  voyHandle = null;
+}
+
+function renderVoyage(body, actions) {
+  body.innerHTML = `
+    ${gameData.story ? `<div class="question-banner">${escapeHtml(gameData.story)}</div>` : ''}
+    <div class="voyage-hud"><span id="voyTime">剩余 ${gameData.timeLimit || 15} 秒</span><span id="voyScore">得分 0 / ${gameData.passScore || 150}</span></div>
+    <canvas class="voyage-canvas" id="voyCanvas"></canvas>
+    <div class="order-tip">方向键 / WASD 或按住拖动驾驶巡逻艇：撞浮标（${escapeHtml((gameData.targets || []).map(t => (t && t.label) ? t.label : t).join('、') || '目标')}）+10，碰暗礁与游动水雷 -10。</div>`;
+  actions.innerHTML = '<button class="btn" id="voyStartBtn">出航</button><button class="btn ghost" onclick="showMenu()">返回选择玩法</button>';
+  document.getElementById('voyStartBtn').addEventListener('click', () => {
+    const b = document.getElementById('voyStartBtn');
+    b.disabled = true; b.textContent = '航行中…';
+    startVoyage(document.getElementById('voyCanvas'));
+  });
+}
+
+function startVoyage(canvas) {
+  const W = canvas.width = canvas.clientWidth || 640;
+  const H = canvas.height = canvas.clientHeight || 340;
+  const ctx = canvas.getContext('2d');
+  const labels = (gameData.targets && gameData.targets.length) ? gameData.targets : ['记忆浮标'];
+  const timeLimit = gameData.timeLimit || 15, passScore = gameData.passScore || 150;
+  const ship = { x: W / 2, y: H - 40 };
+  const keys = {};
+  let score = 0, entities = [], buoyT = 0, reefT = 0, mineT = 2.5, labelIdx = 0;
+  let last = performance.now(), leftMs = timeLimit * 1000, done = false;
+
+  const onKey = e => {
+    const k = e.key.toLowerCase();
+    if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(k)) e.preventDefault();
+    keys[k] = (e.type === 'keydown');
+  };
+  document.addEventListener('keydown', onKey);
+  document.addEventListener('keyup', onKey);
+
+  let pointer = null;
+  canvas.addEventListener('pointerdown', e => { pointer = e; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointermove', e => { if (pointer) pointer = e; });
+  canvas.addEventListener('pointerup', () => { pointer = null; });
+
+  const finish = () => {
+    if (done) return;
+    done = true;
+    stopVoyage();
+    submitAnswer(score);
+  };
+
+  const frame = now => {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    leftMs -= dt * 1000;
+    let vx = 0, vy = 0;
+    if (keys['arrowleft'] || keys['a']) vx -= 1;
+    if (keys['arrowright'] || keys['d']) vx += 1;
+    if (keys['arrowup'] || keys['w']) vy -= 1;
+    if (keys['arrowdown'] || keys['s']) vy += 1;
+    ship.x += vx * 260 * dt;
+    ship.y += vy * 220 * dt;
+    if (pointer) {
+      const rect = canvas.getBoundingClientRect();
+      ship.x += ((pointer.clientX - rect.left) * (W / rect.width) - ship.x) * Math.min(1, dt * 12);
+      ship.y += ((pointer.clientY - rect.top) * (H / rect.height) - ship.y) * Math.min(1, dt * 12);
+    }
+    ship.x = Math.max(18, Math.min(W - 18, ship.x));
+    ship.y = Math.max(30, Math.min(H - 20, ship.y));
+    buoyT += dt; reefT += dt; mineT += dt;
+    if (buoyT > 0.6) {
+      buoyT = 0;
+      entities.push({ kind: 'buoy', x: 26 + Math.random() * (W - 52), y: -24, vy: 85 + Math.random() * 45, label: labels[labelIdx++ % labels.length] });
+    }
+    if (reefT > 2.3) {
+      reefT = 0;
+      entities.push({ kind: 'reef', x: 20 + Math.random() * (W - 40), y: -16, vy: 100 + Math.random() * 40 });
+    }
+    if (mineT > 4.2) {
+      mineT = 0;
+      entities.push({ kind: 'mine', x: 20 + Math.random() * (W - 40), y: 20 + Math.random() * (H * 0.4),
+        vx: (Math.random() < 0.5 ? -1 : 1) * (55 + Math.random() * 45), vy: 16 + Math.random() * 12 });
+    }
+    for (const e of entities) {
+      e.y += e.vy * dt;
+      if (e.kind === 'mine') {
+        e.x += e.vx * dt;
+        if (e.x < 16 || e.x > W - 16) e.vx = -e.vx;
+      }
+      if (!e.hit && Math.hypot(e.x - ship.x, e.y - ship.y) < (e.kind === 'buoy' ? 34 : 26)) {
+        e.hit = true;
+        score += e.kind === 'buoy' ? 10 : -10;
+      }
+    }
+    entities = entities.filter(e => !e.hit && e.y < H + 30);
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(111,168,160,.12)';
+    for (let i = 0; i < 3; i++) {
+      const wy = ((now / 18) + i * 120) % H;
+      ctx.fillRect(0, wy, W, 1);
+    }
+    for (const e of entities) {
+      if (e.kind === 'buoy') {
+        ctx.fillStyle = '#f2ead9';
+        ctx.beginPath(); ctx.arc(e.x, e.y, 22, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#e4572e'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(e.x, e.y, 22, 0, 7); ctx.stroke();
+        ctx.fillStyle = '#2b2620';
+        ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(e.label || '').slice(0, 4), e.x, e.y);
+      } else if (e.kind === 'mine') {
+        ctx.save();
+        ctx.translate(e.x, e.y); ctx.rotate(now / 700);
+        ctx.fillStyle = '#3a2c2c';
+        ctx.beginPath();
+        ctx.moveTo(0, -13); ctx.lineTo(13, 0); ctx.lineTo(0, 13); ctx.lineTo(-13, 0);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#e0654f'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+      } else {
+        ctx.fillStyle = '#3a2c2c';
+        ctx.beginPath(); ctx.arc(e.x, e.y, 13, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#e0654f'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(e.x - 5, e.y - 5); ctx.lineTo(e.x + 5, e.y + 5);
+        ctx.moveTo(e.x + 5, e.y - 5); ctx.lineTo(e.x - 5, e.y + 5);
+        ctx.stroke();
+      }
+    }
+    ctx.fillStyle = '#e4572e';
+    ctx.beginPath();
+    ctx.moveTo(ship.x, ship.y - 14);
+    ctx.lineTo(ship.x - 14, ship.y + 10);
+    ctx.lineTo(ship.x + 14, ship.y + 10);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#f2ead9';
+    ctx.fillRect(ship.x - 10, ship.y + 10, 20, 5);
+    const timeEl = document.getElementById('voyTime');
+    const scoreEl = document.getElementById('voyScore');
+    if (timeEl) timeEl.textContent = `剩余 ${Math.max(0, Math.ceil(leftMs / 1000))} 秒`;
+    if (scoreEl) scoreEl.textContent = `得分 ${score} / ${passScore}`;
+    if (leftMs <= 0) { finish(); return; }
+    voyHandle.raf = requestAnimationFrame(frame);
+  };
+  voyHandle = { raf: requestAnimationFrame(frame), onKey };
+}
+
+// ─── 碎纸复原（点选两块碎片交换）───
+let shredPick = -1;
+
+function renderShuffle(body, actions) {
+  shredPick = -1;
+  body.innerHTML = `
+    ${gameData.story ? `<div class="question-banner">${escapeHtml(gameData.story)}</div>` : ''}
+    <div class="shred-doc">《 ${escapeHtml(gameData.docTitle || '')} 》</div>
+    <div class="order-tip">点选两块碎片交换位置，把文件拼回正确的阅读顺序。</div>
+    <div class="shred-grid" id="shredGrid" style="grid-template-columns:repeat(${gameData.cols || 3},1fr)">${(gameData.pieces || []).map(p => `<div class="shred-tile" data-id="${escapeHtml(p.id)}">${escapeHtml(p.text || '')}</div>`).join('')}</div>`;
+  actions.innerHTML = '<button class="btn" onclick="submitShuffle()">确认复原</button><button class="btn ghost" onclick="showMenu()">返回选择玩法</button>';
+  document.querySelectorAll('#shredGrid .shred-tile').forEach(t => t.addEventListener('click', () => {
+    const tiles = [...document.querySelectorAll('#shredGrid .shred-tile')];
+    const i = tiles.indexOf(t);
+    if (shredPick < 0) { shredPick = i; t.classList.add('selected'); return; }
+    if (shredPick === i) { shredPick = -1; t.classList.remove('selected'); return; }
+    const a = tiles[shredPick];
+    a.classList.remove('selected'); shredPick = -1;
+    swapGridTiles(document.getElementById('shredGrid'), a, t);
+  }));
+}
+
+function swapGridTiles(grid, a, b) {
+  // 占位节点法交换两个网格子元素，兼容任意相对位置
+  const placeholder = document.createElement('div');
+  grid.insertBefore(placeholder, a);
+  grid.insertBefore(a, b);
+  grid.insertBefore(b, placeholder);
+  placeholder.remove();
+}
+
+function submitShuffle() {
+  const ids = [...document.querySelectorAll('#shredGrid .shred-tile')].map(el => el.dataset.id);
+  submitAnswer(ids);
+}
+
+// ─── 频段截听（示波器对齐 + 稳定截获）───
+let radioHandle = null;
+
+function stopRadio() {
+  if (!radioHandle) return;
+  cancelAnimationFrame(radioHandle.raf);
+  radioHandle = null;
+}
+
+function renderRadio(body, actions) {
+  const g = gameData;
+  const startFreq = Math.max(88, Math.min(108, (g.targetFreq || 98) - 4));
+  body.innerHTML = `
+    ${g.story ? `<div class="question-banner">${escapeHtml(g.story)}</div>` : ''}
+    <div class="radio-hud"><span>目标呼号：${escapeHtml(g.callSign || '')}</span><span id="radioTime">剩余 ${g.timeLimit || 30} 秒</span></div>
+    <canvas class="radio-scope" id="radioScope"></canvas>
+    <div class="radio-freq"><em id="radioFreqVal">${startFreq.toFixed(1)}</em> MHz</div>
+    <input type="range" class="radio-dial" id="radioDial" min="88" max="108" step="0.1" value="${startFreq.toFixed(1)}">
+    <div class="order-tip">拖动滑条或用 ← → 微调旋钮，让青色接收波形与黄色虚线目标波形重合，稳住 ${((g.holdMs || 1500) / 1000).toFixed(1)} 秒完成截获；红色干扰频段会重置稳定进度。</div>
+    <div class="radio-lockbar"><div class="fill" id="radioLockFill"></div></div>`;
+  actions.innerHTML = '<button class="btn ghost" onclick="showMenu()">返回选择玩法</button>';
+  startRadio();
+}
+
+function drawRadioWave(ctx, W, H, x0, phase, color, dashed) {
+  // 高斯包络的波包：中心在 x0，两波同相位动画，重合时完全叠合
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.setLineDash(dashed ? [6, 5] : []);
+  ctx.beginPath();
+  const amp = H * 0.32, mid = H / 2, sigma = W * 0.06;
+  for (let x = 0; x <= W; x += 3) {
+    const env = Math.exp(-((x - x0) ** 2) / (2 * sigma * sigma));
+    const y = mid + Math.sin((x - x0) / 9 + phase) * amp * env;
+    if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function startRadio() {
+  const g = gameData;
+  const canvas = document.getElementById('radioScope');
+  const dial = document.getElementById('radioDial');
+  if (!canvas || !dial) return;
+  const W = canvas.width = canvas.clientWidth || 640;
+  const H = canvas.height = canvas.clientHeight || 220;
+  const ctx = canvas.getContext('2d');
+  const target = g.targetFreq, tol = g.tolerance || 0.2, holdMs = g.holdMs || 1500;
+  const bands = g.interference || [];
+  const fMin = 88, fMax = 108;
+  const xOf = f => ((f - fMin) / (fMax - fMin)) * W;
+  let held = 0, leftMs = (g.timeLimit || 30) * 1000, last = performance.now(), done = false;
+  const freq = () => parseFloat(dial.value);
+
+  dial.addEventListener('input', () => {
+    const el = document.getElementById('radioFreqVal');
+    if (el) el.textContent = freq().toFixed(1);
+  });
+
+  const finish = () => {
+    if (done) return;
+    done = true;
+    stopRadio();
+    submitAnswer(freq());
+  };
+
+  const frame = now => {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    leftMs -= dt * 1000;
+    const f = freq();
+    const inBand = bands.some(b => f >= b.from && f <= b.to);
+    const aligned = Math.abs(f - target) <= tol;
+    held = (aligned && !inBand) ? Math.min(holdMs, held + dt * 1000) : 0;
+    const fill = document.getElementById('radioLockFill');
+    if (fill) fill.style.width = (held / holdMs * 100) + '%';
+    const timeEl = document.getElementById('radioTime');
+    if (timeEl) timeEl.textContent = `剩余 ${Math.max(0, Math.ceil(leftMs / 1000))} 秒`;
+    // 绘制：网格 → 干扰频段 → 目标虚线波 → 接收波
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(147,161,184,.12)'; ctx.lineWidth = 1;
+    for (let i = 1; i < 10; i++) { ctx.beginPath(); ctx.moveTo(i * W / 10, 0); ctx.lineTo(i * W / 10, H); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(224,101,79,.14)';
+    for (const b of bands) ctx.fillRect(xOf(b.from), 0, xOf(b.to) - xOf(b.from), H);
+    const phase = now / 220;
+    drawRadioWave(ctx, W, H, xOf(target), phase, 'rgba(217,164,65,.9)', true);
+    drawRadioWave(ctx, W, H, xOf(f), phase,
+      inBand ? 'rgba(224,101,79,.95)' : (aligned ? 'rgba(124,185,138,.95)' : 'rgba(111,168,160,.95)'), false);
+    if (held >= holdMs) { finish(); return; }
+    if (leftMs <= 0) { finish(); return; }
+    radioHandle.raf = requestAnimationFrame(frame);
+  };
+  radioHandle = { raf: requestAnimationFrame(frame) };
+}
+
+// ─── 现场搜证（限时圈选陈列架）───
+let searchHandle = null;
+
+function stopSearch() {
+  if (!searchHandle) return;
+  clearInterval(searchHandle.timer);
+  searchHandle = null;
+}
+
+function renderSearch(body, actions) {
+  const g = gameData;
+  const need = g.targetCount || 1;
+  const picks = new Set();
+  body.innerHTML = `
+    ${g.story ? `<div class="question-banner">${escapeHtml(g.story)}</div>` : ''}
+    <div class="radio-hud"><span>目标：${escapeHtml(g.targetDesc || '')}（${need} 件）</span><span id="searchTime">剩余 ${g.timeLimit || 45} 秒</span></div>
+    <div class="order-tip">点选你认为符合目标的证物，选满 ${need} 件后提交；多圈、漏圈都算失败。</div>
+    <div class="search-grid" id="searchGrid">${(g.items || []).map(it => `<div class="search-item" data-id="${escapeHtml(it.id)}"><div class="nm">${escapeHtml(it.name || '')}</div><div class="ds">${escapeHtml(it.desc || '')}</div></div>`).join('')}</div>`;
+  actions.innerHTML = `<button class="btn" id="searchConfirmBtn" disabled>提交圈选（0/${need}）</button><button class="btn ghost" onclick="showMenu()">返回选择玩法</button>`;
+  const refresh = () => {
+    const btn = document.getElementById('searchConfirmBtn');
+    if (btn) { btn.disabled = picks.size !== need; btn.textContent = `提交圈选（${picks.size}/${need}）`; }
+  };
+  document.querySelectorAll('#searchGrid .search-item').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.id;
+    if (picks.has(id)) { picks.delete(id); el.classList.remove('picked'); }
+    else if (picks.size < need) { picks.add(id); el.classList.add('picked'); }
+    refresh();
+  }));
+  document.getElementById('searchConfirmBtn').addEventListener('click', () => submitSearch());
+  let left = g.timeLimit || 45;
+  searchHandle = { picks, timer: setInterval(() => {
+    left -= 1;
+    const t = document.getElementById('searchTime');
+    if (t) t.textContent = `剩余 ${Math.max(0, left)} 秒`;
+    if (left <= 0) submitSearch();
+  }, 1000) };
+}
+
+function submitSearch() {
+  const picks = searchHandle ? [...searchHandle.picks] : [];
+  stopSearch();
+  submitAnswer(picks);
+}
+
+// ─── 密码转盘（拨轮试锁，A/B 反馈迭代推理）───
+let dialDigits = [];
+
+function dialSlotHtml(i) {
+  return `<div class="dial-slot" data-idx="${i}">
+    <div class="spin"><button data-spin="1" type="button">▲</button></div>
+    <div class="digit" id="dialDigit${i}">0</div>
+    <div class="spin"><button data-spin="-1" type="button">▼</button></div>
+  </div>`;
+}
+
+function renderDial(body, actions) {
+  const g = gameData;
+  const n = g.codeLength || 3;
+  dialDigits = Array(n).fill(0);
+  body.innerHTML = `
+    ${g.story ? `<div class="question-banner">${escapeHtml(g.story)}</div>` : ''}
+    ${g.lockNote ? `<div class="dial-locknote">“${escapeHtml(g.lockNote)}”</div>` : ''}
+    ${g.lockMark ? `<div class="dial-locknote">锁身刻痕：${escapeHtml(g.lockMark)}</div>` : ''}
+    <div class="order-tip">锁身上的谜面与刻痕暗示了密码的来历；拨错后会揭示更明确的线索。</div>
+    <div class="radio-hud"><span>剩余试拨：<em id="dialTries">${g.maxAttempts || 5}</em> 次</span><span>A=数字位置均对 · B=数字对但位置不对</span></div>
+    <div class="dial-slots" id="dialSlots">${dialDigits.map((_, i) => dialSlotHtml(i)).join('')}</div>
+    <div class="dial-fmterror" id="dialFmtErr"></div>
+    <div class="dial-history"><div class="dh-title">试拨记录（新在上）</div><div id="dialRows"><div class="dial-row" style="color:var(--sepia-mut)"><span class="guess">—</span><span class="fb">暂无试拨记录</span></div></div></div>`;
+  actions.innerHTML = `<button class="btn" id="dialTurnBtn">拨动转盘试开</button><button class="btn ghost" onclick="showMenu()">返回选择玩法</button>`;
+  document.querySelectorAll('#dialSlots .dial-slot').forEach(slot => {
+    const idx = Number(slot.dataset.idx);
+    slot.querySelectorAll('[data-spin]').forEach(btn => btn.addEventListener('click', () => {
+      dialDigits[idx] = (dialDigits[idx] + Number(btn.dataset.spin) + 10) % 10;
+      document.getElementById('dialDigit' + idx).textContent = String(dialDigits[idx]);
+    }));
+  });
+  document.getElementById('dialTurnBtn').addEventListener('click', () => submitAnswer(dialDigits.join('')));
+}
+
+function onDialRetry(res) {
+  // 非终局试拨：把本次拨码与 A/B 反馈记入试拨记录，回到玩法层继续推理
+  const rows = document.getElementById('dialRows');
+  if (!rows) return false;  // 玩法层不在时退回通用重试流程
+  rows.querySelectorAll('.dial-row').forEach(el => {
+    if (el.textContent.includes('暂无试拨记录')) el.remove();
+  });
+  const fb = res.guessFeedback || {};
+  const fbHtml = fb.formatError ? escapeHtml(fb.formatError)
+    : `<em>${fb.a}</em>A <em>${fb.b}</em>B`;
+  rows.insertAdjacentHTML('afterbegin',
+    `<div class="dial-row"><span class="guess">${escapeHtml(fb.guess || '')}</span><span class="fb">${fbHtml}</span></div>`);
+  const tries = document.getElementById('dialTries');
+  if (tries) tries.textContent = res.attemptsLeft;
+  const errEl = document.getElementById('dialFmtErr');
+  if (errEl) errEl.textContent = fb.formatError || '';
+  show('viewGame');
+  return true;
+}
+
+// ─── 档案室迷宫（网格移动，限时脱身）───
+let mazeHandle = null;
+
+function stopMaze() {
+  if (!mazeHandle) return;
+  clearInterval(mazeHandle.timer);
+  if (mazeHandle.patrolRaf) cancelAnimationFrame(mazeHandle.patrolRaf);
+  if (mazeHandle.keyHandler) window.removeEventListener('keydown', mazeHandle.keyHandler);
+  mazeHandle = null;
+}
+
+function renderMaze(body, actions) {
+  const g = gameData;
+  const rows = g.rows, cols = g.cols;
+  let pr = g.start[0], pc = g.start[1];
+  const [er, ec] = g.exit;
+  const penalty = g.caughtPenalty || 3;
+  body.innerHTML = `
+    ${g.story ? `<div class="question-banner">${escapeHtml(g.story)}</div>` : ''}
+    <div class="maze-hud"><span>${escapeHtml(g.mapNote || '')}</span><span id="mazeTime">剩余 ${g.timeLimit || 20} 秒</span></div>
+    <div class="order-tip">躲开三盏游动的巡逻光点，被照到会扣 ${penalty} 秒；方向键 / WASD 或点方向键移动</div>
+    <div class="maze-wrap"><div class="maze-grid" id="mazeGrid" style="grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr);"></div></div>
+    <div class="maze-dpad">
+      <button data-dir="up" type="button">▲</button>
+      <button data-dir="left" type="button">◀</button>
+      <button data-dir="down" type="button">▼</button>
+      <button data-dir="right" type="button">▶</button>
+    </div>`;
+  actions.innerHTML = `<button class="btn ghost" onclick="showMenu()">放弃脱身</button>`;
+  const gridEl = document.getElementById('mazeGrid');
+  const cells = [];
+  for (let r = 0; r < rows; r++) {
+    cells.push([]);
+    for (let c = 0; c < cols; c++) {
+      const div = document.createElement('div');
+      div.className = 'maze-cell' + (g.grid[r][c] === 0 ? ' open' : '');
+      gridEl.appendChild(div);
+      cells[r].push(div);
+    }
+  }
+  cells[er][ec].classList.add('exit');
+  cells[pr][pc].classList.add('player');
+
+  let finished = false;
+  let left = g.timeLimit || 20;
+  const updateHud = () => {
+    const t = document.getElementById('mazeTime');
+    if (t) t.textContent = `剩余 ${Math.max(0, left)} 秒`;
+  };
+  const finish = (reached) => {
+    if (finished) return;
+    finished = true;
+    stopMaze();
+    submitAnswer({ reached });
+  };
+
+  // 巡逻光点：在整个画布里自由游动（无视墙壁），速度有快有慢，撞边反弹
+  const wrapEl = body.querySelector('.maze-wrap');
+  const patrols = (g.patrols || []).map(p => {
+    const el = document.createElement('div');
+    el.className = 'maze-patrol';
+    el.style.width = (100 / cols * 0.7) + '%';
+    el.style.height = (100 / rows * 0.7) + '%';
+    wrapEl.appendChild(el);
+    const ang = Math.random() * Math.PI * 2;
+    return { el, x: p.x, y: p.y, vx: Math.cos(ang) * p.speed, vy: Math.sin(ang) * p.speed };
+  });
+  const place = pt => {
+    pt.el.style.left = (pt.x / cols * 100) + '%';
+    pt.el.style.top = (pt.y / rows * 100) + '%';
+  };
+  patrols.forEach(place);
+  let graceUntil = 0;  // 被抓后的短暂无敌，避免连续扣光
+  const caught = () => {
+    if (finished || Date.now() < graceUntil) return;
+    left -= penalty;
+    graceUntil = Date.now() + 1500;
+    updateHud();
+    gridEl.classList.add('caught');
+    setTimeout(() => gridEl.classList.remove('caught'), 400);
+    if (left <= 0) finish(false);
+  };
+  // 光点中心深入玩家格子约 60% 才算被抓（擦边不扣时）
+  const HIT = 0.5 - 0.2;
+  const checkHit = () => patrols.some(pt =>
+    Math.abs(pt.x - (pc + 0.5)) <= HIT && Math.abs(pt.y - (pr + 0.5)) <= HIT);
+  let patrolRaf = 0, last = performance.now();
+  const step = (now) => {
+    if (finished) return;
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    patrols.forEach(pt => {
+      pt.x += pt.vx * dt; pt.y += pt.vy * dt;
+      const m = 0.35;
+      if (pt.x < m) { pt.x = m; pt.vx = Math.abs(pt.vx); }
+      if (pt.x > cols - m) { pt.x = cols - m; pt.vx = -Math.abs(pt.vx); }
+      if (pt.y < m) { pt.y = m; pt.vy = Math.abs(pt.vy); }
+      if (pt.y > rows - m) { pt.y = rows - m; pt.vy = -Math.abs(pt.vy); }
+      place(pt);
+    });
+    if (checkHit()) caught();
+    if (!finished) patrolRaf = requestAnimationFrame(step);
+  };
+  patrolRaf = requestAnimationFrame(step);
+
+  const move = (dr, dc) => {
+    if (finished) return;
+    const nr = pr + dr, nc = pc + dc;
+    if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) return;
+    if (g.grid[nr][nc] === 1) return;
+    cells[pr][pc].classList.remove('player');
+    pr = nr; pc = nc;
+    cells[pr][pc].classList.add('player');
+    if (pr === er && pc === ec) return finish(true);
+    if (checkHit()) caught();
+  };
+  const dirMap = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
+  const keyHandler = (e) => {
+    const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' };
+    const dir = map[e.key];
+    if (!dir) return;
+    e.preventDefault();
+    move(dirMap[dir][0], dirMap[dir][1]);
+  };
+  window.addEventListener('keydown', keyHandler);
+  document.querySelectorAll('.maze-dpad [data-dir]').forEach(btn =>
+    btn.addEventListener('click', () => move(dirMap[btn.dataset.dir][0], dirMap[btn.dataset.dir][1])));
+  mazeHandle = { timer: setInterval(() => {
+    left -= 1;
+    updateHud();
+    if (left <= 0) finish(false);
+  }, 1000), patrolRaf, keyHandler };
+}
+
+// ─── 提交判定 ───
+const RESULT_ACTIONS_FINAL = '<button class="btn" onclick="startGame(currentKind)">再查一卷</button><button class="btn ghost" onclick="showMenu()">换个玩法</button><button class="btn ghost" onclick="location.href=\'/\'">返回首页</button>';
+let retryHint = '';
+let retryAttempts = 0;
+
+function showRetryFeedback(res) {
+  // 非终局答错：盖「結論有誤」失败章，展示线索后由玩家主动重试
+  retryHint = res.revealHint || '';
+  retryAttempts = res.attemptsLeft || 0;
+  show('viewResult');
+  const stamp = document.getElementById('resultStamp');
+  stamp.textContent = '結論有誤';
+  stamp.className = 'stamp bad';
+  document.getElementById('resultTitle').textContent = '調查存疑 · 尚可重查';
+  document.getElementById('resultText').textContent = `還有 ${res.attemptsLeft} 次機會，已揭示一條針對性線索`;
+  document.getElementById('resultArchive').innerHTML = '';
+  document.getElementById('resultCorrect').textContent = retryHint ? `線索揭示：${retryHint}` : '';
+  document.getElementById('resultActions').innerHTML = '<button class="btn" onclick="retryGame()">带线索重试</button><button class="btn ghost" onclick="showMenu()">换个玩法</button>';
+}
+
+function retryGame() {
+  renderGame();
+  const body = document.getElementById('gameBody');
+  const tip = body.querySelector('#attemptsTip');
+  if (tip) tip.remove();
+  if (retryHint) {
+    body.insertAdjacentHTML('afterbegin',
+      `<div class="retry-note">線索揭示：${escapeHtml(retryHint)}（剩 ${retryAttempts} 次機會）</div>`);
+  }
+}
+
+async function submitAnswer(answer) {
+  show('viewLoading');
+  document.getElementById('loadingText').textContent = '正在复核结论…';
+  try {
+    const res = await api('/api/minigame/answer', {
+      method: 'POST',
+      body: JSON.stringify({ game_id: gameData.gameId, answer }),
+    });
+    if (res.final === false) {
+      if (gameData.type === 'dial' && onDialRetry(res)) return;  // 转盘：试拨反馈在玩法层内即时展示
+      showRetryFeedback(res); return;
+    }
+    renderResult(res);
+  } catch (e) {
+    alert('判定失败：' + e.message);
+    showMenu();
+  }
+}
+
+function renderResult(res) {
+  show('viewResult');
+  document.getElementById('resultActions').innerHTML = RESULT_ACTIONS_FINAL;
+  const stamp = document.getElementById('resultStamp');
+  stamp.textContent = res.success ? '調查成立' : '線索存疑';
+  stamp.className = 'stamp ' + (res.success ? 'ok' : 'bad');
+  document.getElementById('resultTitle').textContent = res.success ? '挑戰成功' : '挑戰失敗';
+  document.getElementById('resultText').textContent = res.success ? res.successText : res.failureText;
+  document.getElementById('resultArchive').innerHTML = res.archive
+    ? `<div class="archive-box"><div class="archive-title">📁 ${escapeHtml(res.archive.title || '封存檔案')}</div><div class="archive-content">${escapeHtml(res.archive.content || '')}</div></div>`
+    : (res.intercept
+      ? `<div class="archive-box"><div class="archive-title">📡 截獲密電 · ${escapeHtml(res.intercept.callSign || '')}</div><div class="archive-content">${escapeHtml(res.intercept.text || '')}</div></div>`
+      : '');
+  document.getElementById('resultCorrect').textContent = (!res.success && res.correctAnswer) ? `正確答案：${res.correctAnswer}` : '';
+}
+
+// ─── 入场：读取首页写入的一次性凭证，读后即删 ───
+window.onload = () => {
+  let ctx = null;
+  try { ctx = JSON.parse(sessionStorage.getItem('minigame_ctx') || 'null'); } catch (e) {}
+  sessionStorage.removeItem('minigame_ctx');
+  if (!ctx || !ctx.script_id) {
+    location.replace('/');
+    return;
+  }
+  scriptId = ctx.script_id;
+  show('viewMenu');
+};
+</script>
+</body>
+</html>

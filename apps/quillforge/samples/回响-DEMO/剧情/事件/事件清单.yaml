@@ -1,0 +1,166 @@
+# 事件清单
+# 定义影响剧情流程但不分岔的普通事件
+
+events:
+  # ============================================================
+  # 事件1：林晓的异常
+  # ============================================================
+  - id: "event_01"
+    name: "林晓的异常"
+    type: "随机"
+    description: "林晓在修复过程中出现短暂的运算延迟，投影闪烁"
+
+    trigger_conditions:
+      - type: "随机触发"
+        value: "进入scene_02时"
+        probability: 0.7
+
+    location: "记忆空间"
+    time: "scene_02进行中"
+    characters_involved:
+      - "lin_xiao"
+
+    content: |
+      林晓的投影突然闪烁了一下，她的声音出现了短暂的延迟。
+      "苏然...我...我刚才好像..."
+      她没有说完，投影恢复正常。
+      "抱歉，可能是算力不足。我们继续吧。"
+      但你注意到，她的瞳色从蓝色短暂变成了紫色。
+
+    choices:
+      - id: "ask_lin_xiao"
+        text: "询问林晓怎么了"
+        consequences: "林晓说她没事，但你感觉到她在隐瞒什么"
+      - id: "ignore_anomaly"
+        text: "暂时忽略"
+        consequences: "你选择相信林晓，继续工作"
+
+    rewards:
+      - type: "线索"
+        value: "林晓的投影异常可能与她的核心模块有关"
+
+    repeatable: false
+    cooldown: 0
+
+  # ============================================================
+  # 事件2：记忆碎片中的声音
+  # ============================================================
+  - id: "event_02"
+    name: "记忆碎片中的声音"
+    type: "探索"
+    description: "在记忆空间中听到一段模糊的对话"
+
+    trigger_conditions:
+      - type: "场景触发"
+        value: "在scene_02中探索特定区域"
+
+    location: "记忆空间"
+    time: "scene_02进行中"
+    characters_involved:
+      - "su_ran"
+
+    content: |
+      你走进一条破碎的走廊，突然听到一段模糊的对话：
+      "实验体编号12...记忆编辑成功率..."
+      "副作用呢？"
+      "部分实验体出现意识混淆，三名实验者脑死亡..."
+      "继续实验。这些数据太宝贵了。"
+      对话戛然而止，走廊的灯光突然熄灭。
+
+    choices:
+      - id: "record_voice"
+        text: "记录这段对话"
+        consequences: "你将这段对话保存为证据"
+      - id: "move_on"
+        text: "继续前进"
+        consequences: "你选择不深入追究这段对话"
+
+    rewards:
+      - type: "证据"
+        value: "织女号实验的关键对话记录"
+
+    repeatable: false
+    cooldown: 0
+
+  # ============================================================
+  # 事件3：杜维明的试探
+  # ============================================================
+  - id: "event_03"
+    name: "杜维明的试探"
+    type: "日常"
+    description: "杜维明在对峙前试图试探苏然的立场"
+
+    trigger_conditions:
+      - type: "场景触发"
+        value: "进入scene_03前"
+
+    location: "织星科技总部·大厅"
+    time: "scene_03开始前"
+    characters_involved:
+      - "su_ran"
+      - "du_weiming"
+
+    content: |
+      你刚走进织星科技的大厅，杜维明的全息影像出现在你面前。
+      "苏然，好久不见。听说你最近接了一个...有趣的委托？"
+      他的声音温和，但你听出了试探的意味。
+      "年轻人总是充满好奇心，这是好事。但好奇心有时候..."
+      他停顿了一下，微笑着看你。
+      "会带来不必要的麻烦。"
+
+    choices:
+      - id: "deflect"
+        text: "模糊回应"
+        consequences: "杜维明没有得到他想要的信息"
+      - id: "challenge"
+        text: "直接反问"
+        consequences: "杜维明的笑容微微僵硬，他意识到你不好对付"
+
+    rewards:
+      - type: "信息"
+        value: "确认杜维明已经知道你接了委托"
+
+    repeatable: false
+    cooldown: 0
+
+  # ============================================================
+  # 事件4：记忆中的温暖
+  # ============================================================
+  - id: "event_04"
+    name: "记忆中的温暖"
+    type: "日常"
+    description: "在记忆碎片中看到一段温暖的过去"
+
+    trigger_conditions:
+      - type: "随机触发"
+        value: "在scene_02修复过程中"
+        probability: 0.5
+
+    location: "记忆空间"
+    time: "scene_02进行中"
+    characters_involved:
+      - "su_ran"
+
+    content: |
+      在一片破碎的记忆中，你看到了一个温暖的画面：
+      一个年轻的女孩（你）站在织星塔的观景台上，
+      身边是一个银发的老人。
+      "爷爷，记忆真的能保存一辈子吗？"
+      "当然，小然。记忆是我们最珍贵的东西，
+       没有人能夺走它——只要我们不放弃记住。"
+      画面破碎，你发现自己在流泪。
+
+    choices:
+      - id: "hold_memory"
+        text: "保留这段记忆"
+        consequences: "你将这段温暖的记忆保存在脑海中"
+      - id: "let_go"
+        text: "放下这段记忆"
+        consequences: "你选择专注于任务，将记忆推到一边"
+
+    rewards:
+      - type: "情感"
+        value: "与已故爷爷的回忆，强化了你保护记忆的信念"
+
+    repeatable: false
+    cooldown: 0

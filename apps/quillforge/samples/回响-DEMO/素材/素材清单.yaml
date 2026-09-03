@@ -1,0 +1,191 @@
+# 素材清单
+# 定义剧本所需的视觉、音频和互动素材
+
+assets:
+  # ============================================================
+  # 视觉素材
+  # ============================================================
+  visual:
+    - type: "角色立绘"
+      description: "三个主要角色的立绘，包含多种表情和姿态"
+      dimensions: "800x1200"
+      style: "赛博朋克风格，霓虹灯光效果，细节丰富"
+      format: "PNG（透明背景）"
+      quantity: "每个角色6个变体"
+      characters:
+        - name: "苏然"
+          variants: 6
+          expressions: 4
+          outfits: 2
+        - name: "林晓"
+          variants: 6
+          expressions: 4
+          outfits: 1
+        - name: "杜维明"
+          variants: 6
+          expressions: 4
+          outfits: 2
+
+    - type: "场景背景"
+      description: "4个主要场景的背景图"
+      dimensions: "1920x1080"
+      style: "赛博朋克风格，霓虹灯光与阴影交织"
+      format: "PNG"
+      scenes:
+        - name: "苏然的记忆工坊"
+          mood: "压抑、私密、科技感"
+          details: "十几平米的空间，堆满记忆修复设备，窗外是新深圳霓虹天际线"
+        - name: "记忆空间"
+          mood: "超现实、碎片化、诡异"
+          details: "破碎的走廊、扭曲的实验室、闪烁的警示灯"
+        - name: "织星科技会议室"
+          mood: "高压、冷峻、权力感"
+          details: "68层落地窗会议室，窗外是新深圳全景"
+        - name: "结局场景"
+          mood: "根据结局不同而变化"
+          details: "三个结局各有独立的背景设计"
+
+    - type: "UI元素"
+      description: "游戏界面元素"
+      dimensions: "多种尺寸"
+      style: "简洁、科技感、霓虹色系"
+      format: "PNG/SVG"
+      items:
+        - "选择按钮（普通/悬停/选中状态）"
+        - "对话框背景"
+        - "记忆修复进度条"
+        - "神经接口连接动画"
+        - "证据展示UI"
+        - "关系值显示条"
+
+    - type: "插图"
+      description: "关键剧情节点的插图"
+      dimensions: "1920x1080"
+      style: "电影感、戏剧性构图"
+      format: "PNG"
+      count: 5
+      items:
+        - "苏然发现记忆属于自己"
+        - "织女号灾难重现"
+        - "苏然与杜维明对峙"
+        - "林晓删除后门程序"
+        - "结局画面"
+
+  # ============================================================
+  # 音频素材
+  # ============================================================
+  audio:
+    - type: "背景音乐"
+      description: "场景背景音乐，营造氛围"
+      tracks:
+        - name: "主题曲 - 回响"
+          mood: "悬疑、紧张、史诗感"
+          instruments: "电子合成器、弦乐、钢琴"
+          tempo: "中速偏慢"
+          duration: "3-5分钟"
+
+        - name: "场景1 - 信号"
+          mood: "压抑、不安、科技感"
+          instruments: "低频合成器、环境音效"
+          tempo: "慢"
+          duration: "贯穿整个场景"
+
+        - name: "场景2 - 碎片"
+          mood: "超现实、诡异、紧张"
+          instruments: "失真合成器、回声效果"
+          tempo: "变化"
+          duration: "贯穿整个场景"
+
+        - name: "场景3 - 对峙"
+          mood: "高压、对峙、权力感"
+          instruments: "弦乐、打击乐、电子音效"
+          tempo: "渐快"
+          duration: "贯穿整个场景"
+
+        - name: "结局A - 沉默"
+          mood: "空洞、遗憾、压抑"
+          instruments: "钢琴独奏、环境音"
+          tempo: "慢"
+          duration: "2-3分钟"
+
+        - name: "结局B - 交易"
+          mood: "释然、平静、淡淡的忧伤"
+          instruments: "吉他、钢琴、弦乐"
+          tempo: "中速"
+          duration: "2-3分钟"
+
+        - name: "结局C - 回响"
+          mood: "希望、坚定、史诗感"
+          instruments: "全编制管弦乐、电子合成器"
+          tempo: "渐强"
+          duration: "3-4分钟"
+
+    - type: "音效"
+      description: "场景音效和UI音效"
+      effects:
+        - name: "神经接口启动音"
+          duration: "2秒"
+          description: "苏然连接神经接口时的电子音效"
+
+        - name: "记忆空间环境音"
+          duration: "循环"
+          description: "记忆空间中的诡异环境音效"
+
+        - name: "选择按钮点击音"
+          duration: "0.5秒"
+          description: "玩家做出选择时的确认音效"
+
+        - name: "记忆碎片浮现音"
+          duration: "3秒"
+          description: "记忆碎片在空间中浮现的音效"
+
+        - name: "警示灯闪烁音"
+          duration: "1秒"
+          description: "记忆空间中警示灯闪烁的音效"
+
+        - name: "投影闪烁音"
+          duration: "0.5秒"
+          description: "林晓投影闪烁时的音效"
+
+  # ============================================================
+  # 互动素材
+  # ============================================================
+  interactive:
+    - type: "选择系统"
+      description: "玩家做出选择的交互界面"
+      features:
+        - "多选项展示（2-3个选项）"
+        - "选项悬停效果"
+        - "选择确认动画"
+        - "倒计时选择（部分场景）"
+        - "隐藏选项解锁提示"
+
+    - type: "对话系统"
+      description: "角色对话展示系统"
+      features:
+        - "打字机效果逐字显示"
+        - "角色语音口型同步（可选）"
+        - "对话历史回顾"
+        - "角色表情切换"
+
+    - type: "记忆修复系统"
+      description: "场景2专用的记忆修复交互"
+      features:
+        - "记忆碎片拖拽重组"
+        - "修复进度条"
+        - "记忆片段播放"
+        - "神经接口连接状态显示"
+
+    - type: "关系系统"
+      description: "角色关系值显示"
+      features:
+        - "关系值变化提示"
+        - "关系状态描述"
+        - "关键关系节点通知"
+
+    - type: "成就系统"
+      description: "结局达成记录"
+      features:
+        - "结局解锁通知"
+        - "完成度统计"
+        - "隐藏成就（需要特定条件）"
