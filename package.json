@@ -1,0 +1,24 @@
+{
+  "name": "gewuzaojing-echo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Echo pixel RPG and QuillForge generative narrative workspace",
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "test": "node scripts/test.mjs",
+    "test:repository": "node --test tests/repository-checks.test.mjs && node scripts/check-repository.mjs"
+  },
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "pnpm": {
+    "overrides": {
+      "esbuild": "^0.27.2",
+      "is-generator-function": "1.0.10"
+    }
+  }
+}
