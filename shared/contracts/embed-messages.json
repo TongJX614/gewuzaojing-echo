@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "messages": {
+    "quillforge:ready": { "direction": "quillforge-to-echo", "payload": "empty-object" },
+    "echo:pause-request": { "direction": "quillforge-to-echo", "payload": "empty-object" },
+    "echo:pause": { "direction": "echo-to-quillforge", "payload": "empty-object" },
+    "echo:resume": { "direction": "echo-to-quillforge", "payload": "empty-object" }
+  }
+}

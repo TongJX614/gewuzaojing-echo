@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "override": "GEWUZAOJING_ENV_FILE",
+  "rootMarkers": ["package.json", "shared/contracts/environment.json"],
+  "portableGrammar": {
+    "encoding": "utf-8",
+    "keyPattern": "^[A-Z][A-Z0-9_]*$",
+    "split": "first-equals",
+    "fullLineCommentsOnly": true,
+    "quotes": false,
+    "expansion": false,
+    "duplicateKeys": "error"
+  },
+  "connectionSources": ["shared", "dedicated"],
+  "connectionGroups": ["SHARED_LLM", "ECHO_LLM", "QUILLFORGE_LLM"],
+  "requiredEchoScalars": [
+    "ECHO_LLM_SOURCE", "ECHO_CHAT_MODEL", "ECHO_QUEST_MODEL", "ECHO_HOST", "ECHO_PORT"
+  ],
+  "requiredQuillForgeScalars": [
+    "QUILLFORGE_LLM_SOURCE", "QUILLFORGE_RUNTIME_MODEL", "QUILLFORGE_SCRIPT_MODEL",
+    "QUILLFORGE_DEBATE_MODEL", "QUILLFORGE_MINIGAME_MODEL", "QUILLFORGE_HOST",
+    "QUILLFORGE_PORT", "QUILLFORGE_ECHO_ENTRY_ENABLED"
+  ],
+  "errorCodes": [
+    "AGGREGATION_ROOT_NOT_FOUND", "ENV_PATH_NOT_ABSOLUTE", "ENV_FILE_MISSING",
+    "ENV_FILE_READ_FAILED", "ENV_SYNTAX", "ATOMIC_CONNECTION_OVERRIDE",
+    "REQUIRED_ENV_VALUE", "INVALID_CONNECTION_SOURCE", "UNSUPPORTED_PROVIDER",
+    "INVALID_BASE_URL", "PLACEHOLDER_SECRET", "INVALID_PORT"
+  ]
+}

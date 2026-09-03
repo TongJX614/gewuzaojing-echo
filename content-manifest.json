@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "path": "apps/echo/public",
+      "kind": "authored-game-content",
+      "license": "CC-BY-NC-SA-4.0",
+      "source": "Echo current verified working tree",
+      "redistribution": "approved"
+    },
+    {
+      "path": "apps/quillforge/samples/回响-DEMO",
+      "kind": "authored-sample-world",
+      "license": "CC-BY-NC-SA-4.0",
+      "source": "QuillForge current verified working tree",
+      "redistribution": "approved"
+    }
+  ]
+}
