@@ -1,0 +1,60 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: node --test tests/repository-checks.test.mjs tests/content-checks.test.mjs tests/public-docs.test.mjs
+      - run: node scripts/check-repository.mjs
+      - run: node scripts/check-content-manifest.mjs
+
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir apps/echo test
+      - run: pnpm --dir apps/echo run validate
+      - run: pnpm --dir apps/echo run build
+
+  quillforge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: python -m pip install -r apps/quillforge/requirements.txt
+      - run: PYTHONPATH=apps/quillforge/src python -m pytest apps/quillforge/tests -q -m 'not live'
+      - run: node --test apps/quillforge/tests_js/*.test.cjs
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: [repository, echo, quillforge]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: corepack enable
+      - run: pnpm setup
+      - run: node scripts/integration-smoke.mjs
