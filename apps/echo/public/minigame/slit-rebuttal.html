@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>量子辩驳：让狭缝作证</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --retro-red: #d90429;      /* 宝石红 */
+            --retro-blue: #00b4d8;     /* 荧光青 */
+            --retro-gold: #d4af37;     /* 复古黄铜 */
+            --retro-dark-gold: #8a5a19;/* 暗铜色 */
+            --retro-bg: #0c111a;       /* 调整为更偏暗灰的工业复古深色 */
+            --retro-grid: #1a2a40;     /* 蓝图网格线 */
+            --text-glow: #fdf0d5;      /* 羊皮纸/灯丝白 */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--retro-bg);
+            font-family: 'Noto Serif SC', Georgia, 'Times New Roman', serif;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: crosshair;
+        }
+
+        #shake-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .shake {
+            animation: screenShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+        
+        @keyframes screenShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-15px, -10px) rotate(-1deg); }
+            20% { transform: translate(18px, 10px) rotate(1deg); }
+            30% { transform: translate(-15px, 15px) rotate(-1deg); }
+            40% { transform: translate(15px, -15px) rotate(1deg); }
+            50% { transform: translate(-10px, 10px) rotate(0deg); }
+            70% { transform: translate(5px, -5px) rotate(0deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .blueprint-grid {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(var(--retro-grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--retro-grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.5;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 强化老式显像管扫描线，加入微弱的暖棕色暗角增加怀旧感 */
+        .scanlines-vignette {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            background: 
+                repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px),
+                radial-gradient(circle at center, rgba(30,20,10,0) 30%, rgba(20,10,0,0.7) 120%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* 全局 SVG 噪点层：赋予画面极致的斑驳感与胶片颗粒感 */
+        .noise-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.1; /* 调校斑驳程度 */
+            z-index: 999; /* 覆盖在所有元素上方 */
+            pointer-events: none;
+        }
+
+        .debate-text {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 2.9rem;
+            font-weight: 700;
+            color: var(--text-glow);
+            text-shadow: 2px 4px 8px rgba(0,0,0,0.9);
+            z-index: 10;
+            transform-origin: center;
+            pointer-events: none;
+            letter-spacing: 4px;
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+
+        .text-wrapper {
+            display: inline-block;
+            transition: opacity 0.1s;
+        }
+
+        @keyframes textShakeAnim {
+            0% { transform: translate(0, 0) scale(1); color: var(--text-glow); }
+            15% { transform: translate(-10px, 8px) scale(1.04); color: #ff6b6b; }
+            30% { transform: translate(10px, -8px) scale(1.04); }
+            45% { transform: translate(-10px, -8px) scale(1.04); }
+            60% { transform: translate(10px, 8px) scale(1.04); }
+            80% { transform: translate(-4px, 3px) scale(1.01); }
+            100% { transform: translate(0, 0) scale(1); color: var(--text-glow); }
+        }
+
+        .text-shake {
+            animation: textShakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both !important;
+        }
+
+        .weak-point {
+            cursor: crosshair;
+            pointer-events: auto;
+            display: inline-block;
+            transition: all 0.2s;
+            padding: 0 5px;
+            border-bottom: 2px dashed rgba(255,255,255,0.3);
+        }
+
+        .weak-point:hover { transform: scale(1.1) rotate(-1deg); border-bottom-color: transparent; }
+        .weak-point.refute { color: var(--retro-red); text-shadow: 0 0 15px rgba(217, 4, 41, 0.8), 2px 2px 5px rgba(0,0,0,0.9); }
+        .weak-point.agree { color: var(--retro-blue); text-shadow: 0 0 15px rgba(0, 180, 216, 0.8), 2px 2px 5px rgba(0,0,0,0.9); }
+
+        @keyframes flyAcross {
+            0% { transform: translateX(100vw) rotate(var(--angle)) scale(0.9); opacity: 0; }
+            8% { opacity: 1; }
+            92% { opacity: 1; }
+            100% { transform: translateX(-100vw) rotate(var(--angle)) scale(1.1); opacity: 0; }
+        }
+
+        #cylinder-container {
+            position: absolute;
+            bottom: -60px; left: -60px;
+            width: 320px; height: 320px;
+            z-index: 20;
+            transform-origin: center;
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .cylinder {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #594318, var(--retro-gold), #594318, var(--retro-gold), #594318);
+            border: 8px solid #2b1f0c;
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .cylinder::after {
+            content: ''; position: absolute;
+            top: 50%; left: 50%;
+            width: 60px; height: 60px;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, #333, #111);
+            border-radius: 50%;
+            border: 4px solid var(--retro-gold);
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+        }
+        .chamber {
+            position: absolute; width: 70px; height: 70px;
+            border-radius: 50%; background: #0a0a0a;
+            top: 50%; left: 50%;
+            margin-top: -35px; margin-left: -35px;
+            border: 4px solid #33230d;
+            box-shadow: inset 0 0 20px rgba(0,0,0,1);
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.1); font-size: 0.85rem;
+            font-weight: bold; flex-direction: column;
+            font-family: 'Space Mono', monospace;
+        }
+        .chamber.loaded {
+            background: radial-gradient(circle at 50% 50%, #4a2500, #0a0a0a 80%);
+            border-color: var(--retro-gold); color: var(--text-glow);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(255, 150, 0, 0.4);
+            cursor: pointer; text-shadow: 0 0 5px rgba(255,200,0,0.8);
+        }
+        .bullet-icon {
+            width: 12px; height: 24px;
+            background: linear-gradient(to bottom, #fff, #ffaa00);
+            border-radius: 10px; margin-bottom: 6px;
+            box-shadow: 0 0 10px #ffaa00, 0 0 20px #ff0000; opacity: 0.9;
+        }
+        .chamber.loaded:hover { filter: brightness(1.4); transform: scale(1.08); transition: all 0.2s; box-shadow: 0 0 25px rgba(212, 175, 55, 0.6), inset 0 0 30px rgba(255, 150, 0, 0.6); }
+
+        #active-bullet-info {
+            position: absolute; bottom: 40px; left: 280px;
+            background: rgba(8, 16, 26, 0.85);
+            border: 2px solid var(--retro-gold); color: var(--text-glow);
+            padding: 15px 25px; border-radius: 4px; max-width: 400px;
+            z-index: 20; box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6), 0 0 15px rgba(212, 175, 55, 0.2);
+            pointer-events: none; transition: all 0.2s; backdrop-filter: blur(4px);
+        }
+        #bullet-name-display {
+            font-size: 1.6rem; display: block; margin-bottom: 8px;
+            font-family: 'Noto Serif SC', serif; font-weight: 900;
+            color: var(--retro-gold); text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 4px;
+        }
+        #bullet-desc-display { font-size: 0.95rem; color: #b0c4de; font-family: 'Space Mono', 'Microsoft YaHei', sans-serif; line-height: 1.5; }
+
+        #speaker-box {
+            position: absolute; top: 40px; right: 40px;
+            background: linear-gradient(135deg, #2a2a2a, #111);
+            color: var(--retro-gold); border: 3px solid var(--retro-gold);
+            padding: 12px 30px; font-size: 2rem; font-weight: 900;
+            font-family: 'Noto Serif SC', serif;
+            box-shadow: 6px 6px 15px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
+            border-radius: 4px; z-index: 5; transition: all 0.4s ease; opacity: 0; letter-spacing: 2px;
+        }
+
+        #shatter-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none; }
+        
+        #flash-overlay {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            background: white; opacity: 0; z-index: 40; pointer-events: none; transition: opacity 0.1s;
+        }
+
+        /* 更有刀锋锐利感的切线 */
+        #split-line {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200vmax; height: 6px;
+            background: linear-gradient(90deg, transparent, #fff 20%, #fff 80%, transparent);
+            z-index: 55;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(0);
+            box-shadow: 0 0 20px #fff, 0 0 60px currentColor;
+            border-radius: 100%;
+        }
+
+        /* 刷的一刀！疾速、霸道的斩击动画 */
+        @keyframes slashCut {
+            0% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(0); opacity: 1; height: 2px; }
+            15% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(1); opacity: 1; height: 20px; box-shadow: 0 0 40px #fff, 0 0 100px currentColor; }
+            30% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(1); opacity: 1; height: 120vh; background: #fff; }
+            100% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(1.2); opacity: 0; height: 120vh; }
+        }
+
+        /* 强化版复古厚重印章大字 */
+        #hit-graphic {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%); 
+            font-size: 15rem;
+            font-weight: 900;
+            font-family: 'Noto Serif SC', serif;
+            white-space: nowrap;
+            z-index: 60;
+            pointer-events: none;
+            opacity: 0;
+            padding: 20px 70px;
+            border: 18px solid currentColor; 
+            border-radius: 8px;
+            background: transparent;
+            text-shadow: 6px 6px 0px rgba(0,0,0,0.9), -2px -2px 0px rgba(255,255,255,0.2);
+            box-shadow: inset 0 0 30px currentColor, 0 0 50px currentColor;
+        }
+
+        /* 如巨石砸下般的冲击印章动画 */
+        @keyframes stampHit {
+            0% { transform: translate(-50%, -50%) scale(4) rotate(calc(var(--stamp-angle) - 15deg)); opacity: 0; filter: blur(25px); }
+            10% { transform: translate(-50%, -50%) scale(0.8) rotate(calc(var(--stamp-angle) + 5deg)); opacity: 1; filter: blur(0px); box-shadow: inset 0 0 80px currentColor, 0 0 120px currentColor; }
+            16% { transform: translate(-50%, -50%) scale(1.15) rotate(calc(var(--stamp-angle) - 2deg)); }
+            22% { transform: translate(-50%, -50%) scale(0.95) rotate(calc(var(--stamp-angle) + 1deg)); }
+            30% { transform: translate(-50%, -50%) scale(1) rotate(var(--stamp-angle)); }
+            85% { transform: translate(-50%, -50%) scale(1.05) rotate(var(--stamp-angle)); opacity: 1; filter: blur(0px); }
+            100% { transform: translate(-50%, -50%) scale(1.5) rotate(var(--stamp-angle)); opacity: 0; filter: blur(15px); }
+        }
+
+        /* 游戏结束面板 */
+        #game-over-panel {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(11, 19, 32, 0.95);
+            border: 4px double var(--retro-gold); color: var(--text-glow);
+            padding: 50px 60px; text-align: center;
+            z-index: 100; display: none;
+            box-shadow: 0 0 50px rgba(0,0,0,1), 0 0 20px rgba(212, 175, 55, 0.3);
+            border-radius: 8px; font-family: 'Noto Serif SC', serif;
+        }
+        #game-over-panel h1 { font-weight: 900; color: var(--retro-gold); text-shadow: 2px 2px 5px #000; }
+        #game-over-panel p { font-family: 'Space Mono', monospace; }
+        #game-over-panel button {
+            background: transparent; border: 2px solid var(--retro-gold);
+            color: var(--retro-gold); font-family: 'Space Mono', monospace; transition: all 0.3s;
+        }
+        #game-over-panel button:hover { background: var(--retro-gold); color: #000; box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); }
+    </style>
+</head>
+<body>
+
+    <div id="shake-container">
+        <div class="blueprint-grid"></div>
+        <div class="scanlines-vignette"></div>
+        <div class="noise-overlay"></div>
+
+        <div id="speaker-box">系统提示</div>
+
+        <div id="active-bullet-info">
+            <span style="font-size: 0.8rem; color: #6c7a89; text-transform: uppercase;">Current Argument</span>
+            <span id="bullet-name-display">选择言弹</span>
+            <div id="bullet-desc-display">滚轮/右键切换仪器模块。</div>
+        </div>
+
+        <div id="cylinder-container">
+            <div class="cylinder" id="cylinder"></div>
+        </div>
+
+        <div id="debate-container" class="absolute inset-0 overflow-hidden pointer-events-none z-10"></div>
+
+        <div id="flash-overlay"></div>
+        <div id="split-line"></div>
+        <canvas id="shatter-canvas"></canvas>
+        
+        <div id="hit-graphic">论破!</div>
+
+        <div id="game-over-panel">
+            <h1 class="text-6xl mb-6">论证通过</h1>
+            <p class="text-xl mb-4 text-gray-300">进度：破绽 4 / 4 均已击破</p>
+            <p class="text-lg mb-8 text-gray-400">档案记录：波尔的互补原理依然坚挺。动量和位置的精密测量与干涉不可兼得。</p>
+            <button id="minigame-return-btn" class="font-bold py-3 px-8 rounded text-xl pointer-events-auto">回到会场</button>
+        </div>
+    </div>
+
+    <script>
+        const truthBullets = [
+            { id: 'conjugate-a', name: '海森堡测不准原理', short: '测不准', desc: '鱼和熊掌不可兼得！想极其精准地测出狭缝被光子踢飞的“力度”，就绝对无法同时固定它的“位置”。' },
+            { id: 'phase-reference-a', name: '光波相位错乱', short: '相位', desc: '狭缝只要发生一丁点晃动，到达屏幕的光波步调就会完全错乱。无数次错位叠加在一起，只会变成一滩模糊的光晕！' },
+            { id: 'momentum-conservation', name: '动量守恒', short: '守恒', desc: '[干扰项] 作用力与反作用力。光子改变方向必然会给狭缝一脚反作用力，但这反而是在支持爱因斯坦“可以测出路径”的观点！' },
+            { id: 'measurement-collapse', name: '波函数坍缩', short: '坍缩', desc: '[干扰项] “因为你看了所以它变了”。这只是一句空洞的口号，并没有真正指出爱因斯坦这套装置在物理机制上的破绽。' },
+            { id: 'energy-time', name: '能时不确定性', short: '能时', desc: '[干扰项] 限制的是“能量”和“时间”的精度。但爱因斯坦现在要测的是“上下位移”和“回冲力度”，你拿错武器了！' },
+            { id: 'complementarity', name: '波粒互补原理', short: '互补', desc: '[干扰项] “不能同时获取路径和干涉”——这是我们要得出的最终结论，不能不讲道理地把它直接当成证据来用！' }
+        ];
+
+        let currentPhase = 0;
+        
+        const debatePhases = [
+            // 第一轮发言：让狭缝作证
+            [
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "让我们换一种问法。", delay: 1000, duration: 4400, yPos: 20, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "别再把窄缝死死钉在支架上。", delay: 2600, duration: 4400, yPos: 35, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "把它悬在弹簧上，让它能够上下自由晃动。", delay: 4200, duration: 4400, yPos: 50, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "既然光子撞击一定会留下痕迹——", delay: 5800, duration: 4400, yPos: 65, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "那么今天，就让这道狭缝亲自作证！", delay: 7400, duration: 4400, yPos: 25, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "光子穿过狭缝后，如果往上飞，", delay: 9000, duration: 4400, yPos: 40, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "狭缝就会被往下踹一脚；", delay: 10600, duration: 4400, yPos: 55, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "如果往下飞，它被踹的方向就会不同。", delay: 12200, duration: 4400, yPos: 70, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "差别哪怕极小，也绝对不可能是零！", delay: 13800, duration: 4400, yPos: 30, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "只要仪器的指针能分辨出这一脚的力度，", delay: 15400, duration: 4400, yPos: 45, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "光子的路线就已经彻底暴露了。", delay: 17000, duration: 4400, yPos: 60, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "力度看指针，位置看刻度——", delay: 18600, duration: 4400, yPos: 32, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "【狭缝的位置和回冲力度，完全可以同时精确测量】！", target: 'conjugate-a', delay: 20200, duration: 9450, yPos: 50, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "同时，在光子抵达之前，", delay: 21800, duration: 4400, yPos: 66, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "我们还可以用精密刻度，把狭缝校准在一个绝对准确的位置。", delay: 23400, duration: 4700, yPos: 40, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "两份记录，各司其职——【刻度与指针互不干扰】！", target: 'conjugate-a', delay: 25000, duration: 10000, yPos: 58, angle: -1 }
+            ],
+            // 第二轮发言：两份证词
+            [
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "很好。你质疑它起始的位置不够精确。", delay: 1000, duration: 4600, yPos: 25, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "那我们就退一步——", delay: 2600, duration: 3350, yPos: 40, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "就算狭缝确实有一点点模糊的摆动，", delay: 4200, duration: 4400, yPos: 55, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "又能怎样？", delay: 5800, duration: 3150, yPos: 70, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "每一个光子，仍然会老老实实留下两份证词。", delay: 7400, duration: 4600, yPos: 30, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "狭缝被踹的力度，记录了它走了哪条路；", delay: 9000, duration: 4600, yPos: 45, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "而屏幕上的亮点，记录了它最终落在哪里。", delay: 10600, duration: 4600, yPos: 60, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "一个亮点确实看不出什么。", delay: 12200, duration: 3800, yPos: 28, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "但一千个、一万个光子打过去，干涉条纹必然会自己浮现。", delay: 13800, duration: 4850, yPos: 42, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "至于狭缝那微不足道的位置摆动——【不过是让光子的出发点轻轻晃了一下】而已。", target: 'phase-reference-a', delay: 15400, duration: 9450, yPos: 52, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "于是，同一台装置，完美捕获了粒子的路线，", delay: 17000, duration: 4600, yPos: 36, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "又留下了波的干涉！", delay: 18600, duration: 3800, yPos: 64, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "就算起点有些微晃动，【也不会打乱光波之间的干涉步调】——清晰的明暗条纹依然会完美显现！", target: 'phase-reference-a', delay: 20200, duration: 10000, yPos: 45, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "尼尔斯——你还要嘴硬说它们不能共存吗？", delay: 21800, duration: 5250, yPos: 72, angle: 2 }
+            ]
+        ];
+
+        const cylinder = document.getElementById('cylinder');
+        const cylinderContainer = document.getElementById('cylinder-container');
+        const bulletNameDisplay = document.getElementById('bullet-name-display');
+        const bulletDescDisplay = document.getElementById('bullet-desc-display');
+        const shakeContainer = document.getElementById('shake-container');
+        
+        let currentRotation = 0;
+        let selectedBulletIndex = 0;
+        const totalChambers = 6;
+        let chambers = [];
+
+        function initCylinder() {
+            for (let i = 0; i < totalChambers; i++) {
+                const angle = (360 / totalChambers) * i;
+                const rad = angle * (Math.PI / 180);
+                const radius = 100; 
+                
+                const x = radius * Math.sin(rad);
+                const y = -radius * Math.cos(rad);
+
+                const chamber = document.createElement('div');
+                chamber.className = 'chamber';
+                chamber.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
+
+                if (i < truthBullets.length) {
+                    chamber.classList.add('loaded');
+                    const icon = document.createElement('div');
+                    icon.className = 'bullet-icon';
+                    chamber.appendChild(icon);
+                    
+                    const textNode = document.createTextNode(truthBullets[i].short);
+                    chamber.appendChild(textNode);
+                    
+                    chamber.dataset.bulletId = truthBullets[i].id;
+                    
+                    chamber.onclick = (e) => {
+                        e.stopPropagation();
+                        rotateToBullet(i);
+                    };
+                }
+
+                cylinder.appendChild(chamber);
+                chambers.push(chamber);
+            }
+            updateBulletDisplay();
+        }
+
+        function rotateToBullet(index) {
+            if(index >= truthBullets.length) return;
+            const anglePerChamber = 360 / totalChambers;
+            currentRotation = -(index * anglePerChamber);
+            cylinderContainer.style.transform = `rotate(${currentRotation}deg)`;
+            selectedBulletIndex = index;
+            updateBulletDisplay();
+        }
+
+        function updateBulletDisplay() {
+            if (selectedBulletIndex < truthBullets.length) {
+                const bullet = truthBullets[selectedBulletIndex];
+                bulletNameDisplay.innerText = bullet.name;
+                // 干扰项标注危险色
+                if(bullet.desc.startsWith('[干扰项]')) {
+                    bulletNameDisplay.style.color = '#e63946';
+                } else {
+                    bulletNameDisplay.style.color = 'var(--retro-gold)';
+                }
+                bulletDescDisplay.innerText = bullet.desc;
+            }
+        }
+
+        window.addEventListener('wheel', (e) => {
+            if (isDebatePaused) return;
+            if (e.deltaY > 0) {
+                let next = (selectedBulletIndex + 1) % truthBullets.length;
+                rotateToBullet(next);
+            } else {
+                let prev = (selectedBulletIndex - 1 + truthBullets.length) % truthBullets.length;
+                rotateToBullet(prev);
+            }
+        });
+
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (isDebatePaused) return;
+            let next = (selectedBulletIndex + 1) % truthBullets.length;
+            rotateToBullet(next);
+        });
+
+        const debateContainer = document.getElementById('debate-container');
+        const speakerBox = document.getElementById('speaker-box');
+        let debateTimeouts = [];
+        let isDebatePaused = false;
+        let restartPhaseAfterEchoMenu = false;
+
+        function startDebatePhase() {
+            if(currentPhase >= debatePhases.length) {
+                showGameOver();
+                return;
+            }
+
+            debateContainer.innerHTML = '';
+            debateTimeouts.forEach(t => clearTimeout(t));
+            debateTimeouts = [];
+            isDebatePaused = false;
+            shakeContainer.classList.remove('shake');
+            
+            const script = debatePhases[currentPhase];
+            phaseWeakTotal = script.filter(l => l.target).length;
+            phaseWeakHits = 0;
+            let maxDelay = 0;
+
+            script.forEach(line => {
+                let t = setTimeout(() => {
+                    if (isDebatePaused) return;
+                    spawnDebateText(line);
+                }, line.delay);
+                debateTimeouts.push(t);
+                if (line.delay + line.duration > maxDelay) {
+                    maxDelay = line.delay + line.duration;
+                }
+            });
+
+            let loop = setTimeout(() => {
+                if (!isDebatePaused) {
+                    showSystemMsg("【论证超时，模型重置】");
+                    setTimeout(startDebatePhase, 2000);
+                }
+            }, maxDelay + 1000);
+            debateTimeouts.push(loop);
+        }
+
+        function showSystemMsg(msg) {
+            speakerBox.innerText = msg;
+            speakerBox.style.opacity = 1;
+            speakerBox.style.boxShadow = `6px 6px 15px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5)`;
+            speakerBox.style.color = '#888';
+            speakerBox.style.borderColor = '#555';
+        }
+
+        function renderLineHtml(lineConfig) {
+            const parts = lineConfig.text.split(/(【[^】]*】)/).filter(Boolean);
+            const inner = parts.map(part => {
+                if (part.startsWith('【') && part.endsWith('】')) {
+                    return `<span class='weak-point refute' data-target='${lineConfig.target}'>${part.slice(1, -1)}</span>`;
+                }
+                return `<span>${part}</span>`;
+            }).join('');
+            return `<span class="text-wrapper pointer-events-auto">${inner}</span>`;
+        }
+
+        function spawnDebateText(lineConfig) {
+            speakerBox.innerText = lineConfig.speaker;
+            speakerBox.style.opacity = 1;
+            speakerBox.style.color = 'var(--retro-gold)';
+            speakerBox.style.borderColor = 'var(--retro-gold)';
+            
+            const el = document.createElement('div');
+            el.className = 'debate-text pointer-events-none'; 
+            
+            el.innerHTML = renderLineHtml(lineConfig);
+            
+            el.style.setProperty('--angle', `${lineConfig.angle}deg`);
+            el.style.top = `${lineConfig.yPos}%`;
+            el.style.animation = `flyAcross ${lineConfig.duration}ms linear forwards`;
+
+            debateContainer.appendChild(el);
+
+            setTimeout(() => {
+                if (el.parentNode) el.parentNode.removeChild(el);
+            }, lineConfig.duration);
+        }
+
+        const shatterCanvas = document.getElementById('shatter-canvas');
+        const ctx = shatterCanvas.getContext('2d');
+        const flashOverlay = document.getElementById('flash-overlay');
+        const hitGraphic = document.getElementById('hit-graphic');
+
+        function resizeCanvas() {
+            shatterCanvas.width = window.innerWidth;
+            shatterCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let shards = [];
+        let animationFrameId;
+
+        document.addEventListener('click', (e) => {
+            if(e.target.closest('#cylinder-container')) return;
+            if(e.target.closest('#active-bullet-info')) return;
+            if(e.target.tagName === 'BUTTON') return;
+            
+            if(isDebatePaused) return;
+
+            const isTextClick = e.target.closest('.text-wrapper');
+            const isWeakPointClick = e.target.classList.contains('weak-point');
+
+            if (isWeakPointClick) {
+                const targetBullet = e.target.getAttribute('data-target');
+                const isRefute = e.target.classList.contains('refute');
+                const activeBullet = truthBullets[selectedBulletIndex];
+
+                if (activeBullet && activeBullet.id === targetBullet) {
+                    onWeakPointHit(e.target, e.clientX, e.clientY, isRefute);
+                } else {
+                    triggerDeflectFeedback(e.clientX, e.clientY, e.target.closest('.text-wrapper'), true);
+                }
+            } else if (isTextClick) {
+                triggerDeflectFeedback(e.clientX, e.clientY, e.target.closest('.text-wrapper'), false);
+            } else {
+                drawMuzzleFlash(e.clientX, e.clientY);
+            }
+        });
+
+        function drawMuzzleFlash(x, y) {
+            const flash = document.createElement('div');
+            flash.style.position = 'absolute';
+            flash.style.left = `${x-30}px`; flash.style.top = `${y-30}px`;
+            flash.style.width = '60px'; flash.style.height = '60px';
+            flash.style.background = 'radial-gradient(circle, rgba(255,240,200,1) 0%, rgba(255,150,0,0.8) 30%, rgba(200,50,0,0) 70%)';
+            flash.style.borderRadius = '50%'; flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '30'; flash.style.transition = 'opacity 0.15s ease-out, transform 0.1s cubic-bezier(0, 1, 0.3, 1)';
+            flash.style.transform = 'scale(0.2)';
+            shakeContainer.appendChild(flash);
+            
+            requestAnimationFrame(() => {
+                flash.style.transform = 'scale(1.8)';
+                flash.style.opacity = 0;
+            });
+
+            setTimeout(() => {
+                if(flash.parentNode) flash.remove();
+            }, 150);
+        }
+
+        function drawSpark(x, y) {
+            const sparkCount = 25; 
+            for(let i=0; i<sparkCount; i++) {
+                const spark = document.createElement('div');
+                spark.style.position = 'absolute';
+                spark.style.left = `${x}px`; spark.style.top = `${y}px`;
+                
+                const sparkLength = Math.random() * 25 + 10;
+                spark.style.width = Math.random() > 0.8 ? '4px' : '2px'; 
+                spark.style.height = `${sparkLength}px`; 
+                
+                const colors = ['#ffffff', '#ffda75', '#ff9e00', '#d90429'];
+                spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                spark.style.borderRadius = '2px'; spark.style.pointerEvents = 'none';
+                spark.style.zIndex = '60'; spark.style.boxShadow = `0 0 10px ${spark.style.background}`; 
+
+                const angle = (Math.random() * Math.PI * 2);
+                spark.style.transform = `rotate(${angle + Math.PI/2}rad)`;
+                shakeContainer.appendChild(spark);
+
+                const speed = Math.random() * 150 + 50; 
+                const tx = Math.cos(angle) * speed; const ty = Math.sin(angle) * speed;
+
+                spark.animate([
+                    { transform: `translate(0,0) rotate(${angle + Math.PI/2}rad) scale(1.5)`, opacity: 1 },
+                    { transform: `translate(${tx}px, ${ty}px) rotate(${angle + Math.PI/2}rad) scale(0.2)`, opacity: 0 }
+                ], { duration: 400 + Math.random() * 250, easing: 'cubic-bezier(0.1, 0.9, 0.2, 1)' });
+
+                setTimeout(() => { if(spark.parentNode) spark.remove(); }, 700);
+            }
+            drawMuzzleFlash(x, y);
+        }
+
+        function triggerDeflectFeedback(x, y, textWrapper, isWrongBullet) {
+            textWrapper.classList.remove('text-shake');
+            void textWrapper.offsetWidth; 
+            textWrapper.classList.add('text-shake');
+            
+            shakeContainer.classList.remove('shake');
+            void shakeContainer.offsetWidth; 
+            shakeContainer.classList.add('shake');
+
+            drawSpark(x, y);
+
+            if (isWrongBullet) {
+                flashOverlay.style.background = 'var(--retro-red)';
+                flashOverlay.style.opacity = 0.25;
+                setTimeout(() => { 
+                    flashOverlay.style.opacity = 0; 
+                    setTimeout(()=> flashOverlay.style.background = 'white', 100);
+                }, 100);
+            }
+        }
+
+        let phaseWeakTotal = 0;
+        let phaseWeakHits = 0;
+
+        const PHASE_SETTLE = [
+            { hitMsg: "测不准原理，对狭缝本身同样适用！" },
+            { hitMsg: "起点的晃动，早就把条纹彻底抹除了！" }
+        ];
+
+        function onWeakPointHit(weakEl, x, y, isRefute) {
+            phaseWeakHits++;
+            const wrapper = weakEl.closest('.text-wrapper');
+
+            const remaining = phaseWeakTotal - phaseWeakHits;
+            if (remaining <= 0) {
+                const settle = PHASE_SETTLE[Math.min(currentPhase, PHASE_SETTLE.length - 1)];
+                triggerTwoStageShatter(x, y, isRefute ? 'RONPA' : 'AGREE', wrapper, "论破!", settle.hitMsg);
+            } else {
+                // 打中第一处：小型碎裂，不暂停时间轴，继续追击
+                shatterSmall(x, y, wrapper);
+                showSystemMsg(`破绽命中！还剩 ${remaining} 处——继续瞄准红色关键词。`);
+                speakerBox.style.color = 'var(--retro-gold)';
+                speakerBox.style.borderColor = 'var(--retro-gold)';
+                drawSpark(x, y);
+            }
+        }
+
+        function shatterSmall(x, y, wrapper) {
+            if (wrapper) wrapper.style.opacity = 0;
+            flashOverlay.style.opacity = 0.35;
+            setTimeout(() => { flashOverlay.style.opacity = 0; }, 60);
+            shakeContainer.classList.remove('shake');
+            void shakeContainer.offsetWidth;
+            shakeContainer.classList.add('shake');
+
+            shards = [];
+            const numShards = 56;
+            for (let i = 0; i < numShards; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 28 + 8;
+                const size = Math.random() * 30 + 8;
+                const vertices = [];
+                const sides = Math.floor(Math.random() * 4) + 3;
+                for (let j = 0; j < sides; j++) {
+                    const vAngle = (Math.PI * 2 / sides) * j + (Math.random() * 0.5);
+                    const vRad = size * (0.5 + Math.random() * 0.5);
+                    vertices.push({ x: Math.cos(vAngle) * vRad, y: Math.sin(vAngle) * vRad });
+                }
+                shards.push({
+                    x: x, y: y,
+                    vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                    rot: 0, rotSpeed: (Math.random() - 0.5) * 0.8,
+                    vertices: vertices,
+                    color: Math.random() > 0.25 ? 'rgba(255,255,255,0.8)' : 'rgba(217, 4, 41, 0.9)',
+                    life: 1.0, decay: Math.random() * 0.02 + 0.008
+                });
+            }
+            cancelAnimationFrame(animationFrameId);
+            drawShatter();
+        }
+
+        function triggerTwoStageShatter(x, y, type, hitElement, customGraphic, hitMsg) {
+            isDebatePaused = true;
+            debateTimeouts.forEach(t => clearTimeout(t)); 
+            
+            document.querySelectorAll('.debate-text').forEach(el => {
+                el.style.animationPlayState = 'paused';
+            });
+
+            hitElement.style.opacity = 0;
+
+            // 【第一段】：原位受击玻璃破碎
+            flashOverlay.style.background = 'white';
+            flashOverlay.style.opacity = 0.8;
+            setTimeout(() => { flashOverlay.style.opacity = 0; }, 50);
+
+            shakeContainer.classList.remove('shake');
+            void shakeContainer.offsetWidth;
+            shakeContainer.classList.add('shake');
+
+            shards = [];
+            const numShards = 72; 
+            for (let i = 0; i < numShards; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 35 + 10; 
+                const size = Math.random() * 50 + 15;
+                
+                const vertices = [];
+                const sides = Math.floor(Math.random() * 4) + 3; 
+                for (let j = 0; j < sides; j++) {
+                    const vAngle = (Math.PI * 2 / sides) * j + (Math.random() * 0.5);
+                    const vRad = size * (0.5 + Math.random() * 0.5);
+                    vertices.push({ x: Math.cos(vAngle) * vRad, y: Math.sin(vAngle) * vRad });
+                }
+
+                shards.push({
+                    x: x, y: y, 
+                    vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                    rot: 0, rotSpeed: (Math.random() - 0.5) * 0.8,
+                    vertices: vertices,
+                    color: Math.random() > 0.25 ? 'rgba(255,255,255,0.8)' : (type === 'RONPA' ? 'var(--retro-red)' : 'var(--retro-blue)'),
+                    life: 1.0, decay: Math.random() * 0.02 + 0.008
+                });
+            }
+
+            cancelAnimationFrame(animationFrameId);
+            drawShatter();
+            
+            // 【第二段】：蓄力极速拔刀，调用带有 customGraphic 和 hitMsg 的新逻辑
+            setTimeout(() => {
+                playSplitAndSlash(type, customGraphic, hitMsg);
+            }, 600); 
+        }
+
+        function playSplitAndSlash(type, customGraphic, hitMsg) {
+            // 极速黑屏，制造时间凝滞的“蓄力压迫感”
+            flashOverlay.style.background = '#000';
+            flashOverlay.style.opacity = 0.85;
+            flashOverlay.style.transition = 'opacity 0.05s';
+            
+            setTimeout(() => {
+                // 瞬间闪白爆发 + 屏幕狂震
+                shakeContainer.classList.remove('shake');
+                void shakeContainer.offsetWidth;
+                shakeContainer.classList.add('shake');
+                
+                flashOverlay.style.background = '#fff';
+                flashOverlay.style.opacity = 1;
+                setTimeout(() => { 
+                    flashOverlay.style.transition = 'opacity 0.4s ease-out'; 
+                    flashOverlay.style.opacity = 0; 
+                }, 100);
+
+                // 刷的一刀！切裂屏幕 (使用新版 slashCut)
+                const splitLine = document.getElementById('split-line');
+                const angle = Math.random() > 0.5 ? 25 : -25; // 随机斩击角度
+                splitLine.style.setProperty('--slash-angle', `${angle}deg`);
+                splitLine.style.color = type === 'RONPA' ? 'var(--retro-red)' : 'var(--retro-blue)';
+                splitLine.style.animation = 'slashCut 0.5s cubic-bezier(0.05, 0.9, 0.1, 1) forwards';
+
+                // 巨型印章重重砸下
+                showHitGraphic(type, customGraphic);
+                
+                // 展示硬核台词
+                setTimeout(() => {
+                    if (hitMsg) {
+                        showSystemMsg(hitMsg);
+                        speakerBox.style.color = 'var(--retro-red)';
+                        speakerBox.style.borderColor = 'var(--retro-red)';
+                        speakerBox.style.transform = 'scale(1.1)';
+                    }
+                }, 300);
+
+            }, 120); // 极短的蓄力时间后爆发
+
+            setTimeout(() => {
+                currentPhase++;
+                shards = []; 
+                ctx.clearRect(0, 0, shatterCanvas.width, shatterCanvas.height);
+                const splitLine = document.getElementById('split-line');
+                splitLine.style.animation = 'none'; 
+                hideHitGraphic();
+                speakerBox.style.transform = 'scale(1)';
+                startDebatePhase();
+            }, 3500); // 延长时间以供观赏台词
+        }
+
+        function drawShatter() {
+            ctx.clearRect(0, 0, shatterCanvas.width, shatterCanvas.height);
+            let alive = false;
+
+            shards.forEach(shard => {
+                if (shard.life <= 0) return;
+                alive = true;
+
+                shard.x += shard.vx; shard.y += shard.vy;
+                shard.vy += 0.8; shard.rot += shard.rotSpeed;
+                shard.life -= shard.decay;
+
+                ctx.save();
+                ctx.translate(shard.x, shard.y);
+                ctx.rotate(shard.rot); ctx.globalAlpha = shard.life;
+                
+                ctx.beginPath();
+                ctx.moveTo(shard.vertices[0].x, shard.vertices[0].y);
+                for (let i = 1; i < shard.vertices.length; i++) {
+                    ctx.lineTo(shard.vertices[i].x, shard.vertices[i].y);
+                }
+                ctx.closePath();
+                
+                ctx.fillStyle = shard.color; ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.restore();
+            });
+
+            if (alive) {
+                animationFrameId = requestAnimationFrame(drawShatter);
+            }
+        }
+
+        function showHitGraphic(type, customGraphic) {
+            hitGraphic.style.animation = 'none';
+            void hitGraphic.offsetWidth; 
+            
+            // 为印章赋予微小的随机倾斜，体现大力手工盖章的不平整感
+            const stampAngle = (Math.random() * 10 - 5).toFixed(1);
+            hitGraphic.style.setProperty('--stamp-angle', `${stampAngle}deg`);
+            
+            hitGraphic.innerText = customGraphic || (type === 'RONPA' ? '驳回' : '证实');
+            
+            // 针对长文本（例如“第一处破绽——击破”）做字号缩放以适配印章框
+            if(hitGraphic.innerText.length > 4) {
+                hitGraphic.style.fontSize = '4.5rem';
+                hitGraphic.style.padding = '15px 40px';
+                hitGraphic.style.borderWidth = '8px';
+            } else {
+                hitGraphic.style.fontSize = '15rem';
+                hitGraphic.style.padding = '20px 70px';
+                hitGraphic.style.borderWidth = '18px';
+            }
+            
+            if (type === 'RONPA') {
+                hitGraphic.style.color = 'var(--retro-red)';
+            } else {
+                hitGraphic.style.color = 'var(--retro-blue)';
+            }
+            
+            hitGraphic.style.opacity = 1;
+            hitGraphic.style.animation = 'stampHit 1.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards';
+        }
+
+        function hideHitGraphic() {
+            hitGraphic.style.animation = 'none';
+            hitGraphic.style.opacity = 0;
+        }
+
+        function showGameOver() {
+            document.getElementById('game-over-panel').style.display = 'block';
+            isDebatePaused = true;
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'minigame:complete', id: 'slit-rebuttal' }, '*');
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && window.parent !== window) {
+                e.preventDefault();
+                window.parent.postMessage({ type: 'echo:pause-request' }, '*');
+            }
+        });
+
+        window.addEventListener('message', (e) => {
+            if (e.source !== window.parent || !e.data) return;
+            if (e.data.type === 'echo:pause') {
+                restartPhaseAfterEchoMenu = !isDebatePaused;
+                isDebatePaused = true;
+                debateTimeouts.forEach(t => clearTimeout(t));
+                debateTimeouts = [];
+                document.getAnimations().forEach(animation => animation.pause());
+            }
+            if (e.data.type === 'echo:resume') {
+                document.getAnimations().forEach(animation => animation.play());
+                if (restartPhaseAfterEchoMenu) {
+                    restartPhaseAfterEchoMenu = false;
+                    startDebatePhase();
+                }
+            }
+        });
+
+        window.onload = () => {
+            initCylinder();
+            showSystemMsg("[ 初始化科研仪器 ]");
+            setTimeout(() => {
+                showSystemMsg("每轮藏有 2 处破绽，全部击破才能通过——瞄准红色关键词射击！");
+                setTimeout(() => {
+                    startDebatePhase();
+                }, 2600);
+            }, 1500);
+            document.getElementById('minigame-return-btn').addEventListener('click', () => {
+                if (window.parent !== window) {
+                    window.parent.postMessage({ type: 'minigame:complete', id: 'slit-rebuttal' }, '*');
+                }
+            });
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,520 @@
+{
+  "version": 1,
+  "schemaVersion": 2,
+  "quests": [
+    {
+      "id": "quest_visit_gravitational_wave_detector",
+      "title": "参观引力波探测器",
+      "desc": "前往天体物理实验室，参观引力波探测器，了解其工作原理。",
+      "category": "side",
+      "autoStart": true,
+      "steps": [
+        {
+          "id": "step_1",
+          "desc": "前往天体物理实验室，找到引力波探测器。",
+          "logic": "AND",
+          "objectives": [
+            {
+              "type": "reach_location",
+              "target": "astro",
+              "count": 1
+            }
+          ],
+          "onCompleteText": "你来到了引力波探测器前。"
+        },
+        {
+          "id": "step_2",
+          "desc": "与研究员对话，了解引力波探测器的运作。",
+          "logic": "AND",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "astro_scientist",
+              "count": 1
+            }
+          ],
+          "onCompleteText": "你了解了引力波探测器的工作原理。"
+        }
+      ],
+      "rewards": {
+        "exp": 50
+      },
+      "completionText": "你参观了引力波探测器，对宇宙的奥秘有了更深的认识。",
+      "stage": "debate1",
+      "advanceStageTo": "meeting"
+    },
+    {
+      "id": "quest_find_book_part1",
+      "title": "找回遗失书籍",
+      "desc": "研究员的书遗失了，需要你的帮助。",
+      "category": "side",
+      "autoStart": true,
+      "startCondition": {
+        "conditions": [
+          {
+            "type": "talked_to_npc",
+            "target": "astro_scientist_back"
+          }
+        ],
+        "logic": "AND"
+      },
+      "steps": [
+        {
+          "id": "step_1",
+          "desc": "与研究员对话，了解书籍遗失的情况。",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "astro_scientist_back",
+              "count": 1
+            }
+          ],
+          "logic": "AND",
+          "onCompleteText": "你得知研究员的书落在了实验室，但需要门禁卡才能进入。"
+        },
+        {
+          "id": "step_2",
+          "desc": "前往阿皮斯实验室，寻找门禁卡。",
+          "objectives": [
+            {
+              "type": "reach_location",
+              "target": "arpes",
+              "count": 1
+            }
+          ],
+          "logic": "AND",
+          "onCompleteText": "你来到了阿皮斯实验室。"
+        },
+        {
+          "id": "step_3",
+          "desc": "在阿皮斯实验室找到门禁卡。",
+          "objectives": [
+            {
+              "type": "collect_item",
+              "target": "item_keycard",
+              "count": 1
+            }
+          ],
+          "logic": "AND",
+          "onCompleteText": "你找到了门禁卡。"
+        },
+        {
+          "id": "step_4",
+          "desc": "将门禁卡交给研究员。",
+          "objectives": [
+            {
+              "type": "submit_item",
+              "target": "item_keycard",
+              "count": 1,
+              "submitTo": "astro_scientist_back"
+            }
+          ],
+          "logic": "AND",
+          "onCompleteText": "研究员拿到了门禁卡，感谢你的帮助。"
+        }
+      ],
+      "rewards": {
+        "items": [
+          "item_food"
+        ],
+        "exp": 100,
+        "flags": [
+          "quest_find_book_part1_done"
+        ]
+      },
+      "completionText": "你帮研究员找回了书籍，他非常感激。",
+      "advanceStageTo": "debate2"
+    },
+    {
+      "id": "quest_lorentz_commission",
+      "title": "洛伦兹的委托",
+      "desc": "洛伦兹主持的会议资料散落在会场，帮他把会场座位安排表和科学家桌牌找回来。",
+      "category": "main",
+      "autoStart": true,
+      "startCondition": {
+        "conditions": [
+          {
+            "type": "visited_scene",
+            "target": "solvay"
+          }
+        ],
+        "logic": "AND"
+      },
+      "steps": [
+        {
+          "id": "step_1",
+          "desc": "靠近洛伦兹，接受委托",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "solvay_lorentz",
+              "count": 1
+            }
+          ],
+          "logic": "AND",
+          "onCompleteText": "「会议资料散落在会场各处，麻烦你帮我找回来。」——已接受洛伦兹的委托。"
+        },
+        {
+          "id": "step_2",
+          "desc": "收集会场座位安排表与科学家人物桌牌",
+          "objectives": [
+            {
+              "type": "collect_item",
+              "target": "item_seating",
+              "count": 1
+            },
+            {
+              "type": "collect_item",
+              "target": "item_nameplate",
+              "count": 1
+            }
+          ],
+          "logic": "AND",
+          "onCompleteText": "你找齐了散落的会议资料。"
+        },
+        {
+          "id": "step_3",
+          "desc": "将文件提交给洛伦兹",
+          "objectives": [
+            {
+              "type": "submit_item",
+              "target": "item_seating",
+              "count": 1,
+              "submitTo": "solvay_lorentz"
+            }
+          ],
+          "logic": "AND",
+          "onCompleteText": "任务完成"
+        }
+      ],
+      "rewards": {
+        "exp": 50,
+        "flags": [
+          "quest_lorentz_commission_done"
+        ]
+      },
+      "completionText": "洛伦兹欣慰地笑了：「谢谢你，年轻人。会议可以顺利召开了。」"
+    },
+    {
+      "id": "quest_point_to_pattern",
+      "title": "从一个落点到一张图",
+      "desc": "单看每一个光点都是粒子的坠落，可落点多了，图样竟显出波的条纹。把这张电子衍射累积图拿给德布罗意看看。",
+      "category": "main",
+      "autoStart": true,
+      "startCondition": {
+        "conditions": [
+          {
+            "type": "has_item",
+            "target": "item_diffraction"
+          },
+          {
+            "type": "quest_completed",
+            "target": "quest_lorentz_commission"
+          }
+        ],
+        "logic": "AND"
+      },
+      "steps": [
+        {
+          "id": "step_1",
+          "desc": "带着衍射图样，与德布罗意交谈",
+          "objectives": [
+            {
+              "type": "submit_item",
+              "target": "item_diffraction",
+              "count": 1,
+              "submitTo": "solvay_de_broglie"
+            }
+          ],
+          "logic": "AND"
+        }
+      ],
+      "rewards": {
+        "exp": 50,
+        "flags": [
+          "quest_point_to_pattern_done"
+        ]
+      },
+      "completionText": "德布罗意若有所思：「一个个落点是粒子，而整体的图样是波。这张图，正是我说的物质波。」",
+      "advanceStageTo": "debate1"
+    },
+    {
+      "id": "quest_attend_report",
+      "title": "参与报告会",
+      "desc": "德布罗意的话言犹在耳。洛伦兹正站在会场前方，Born 与 Heisenberg 的联合报告即将开始——走过去与他交谈，参与这场报告。",
+      "category": "main",
+      "autoStart": true,
+      "startCondition": {
+        "conditions": [
+          {
+            "type": "quest_completed",
+            "target": "quest_point_to_pattern"
+          }
+        ],
+        "logic": "AND"
+      },
+      "steps": [
+        {
+          "id": "step_1",
+          "desc": "走到洛伦兹身边，参与报告会",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "solvay_lorentz",
+              "count": 1
+            }
+          ],
+          "logic": "AND"
+        }
+      ],
+      "rewards": {
+        "exp": 30,
+        "flags": [
+          "quest_attend_report_done"
+        ]
+      },
+      "completionText": "联合报告结束了。爱因斯坦画在黑板上的装置，还留在那里—— Drawable 争论才刚刚开始。",
+      "advanceStageTo": "meeting"
+    },
+    {
+      "id": "quest_attend_bohr_report",
+      "title": "玻尔的应战",
+      "desc": "上午的难题还悬在黑板上方。玻尔将走上讲台，给出他对可回冲狭缝的回答——去听他的报告。",
+      "category": "main",
+      "autoStart": true,
+      "startCondition": {
+        "conditions": [
+          {
+            "type": "quest_completed",
+            "target": "quest_attend_report"
+          }
+        ],
+        "logic": "AND"
+      },
+      "steps": [
+        {
+          "id": "step_1",
+          "desc": "与玻尔交谈，听取他的报告",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "solvay_bohr",
+              "count": 1
+            }
+          ],
+          "logic": "AND"
+        }
+      ],
+      "rewards": {
+        "exp": 30,
+        "flags": [
+          "quest_attend_bohr_report_done"
+        ]
+      },
+      "completionText": "玻尔的互补性阐释完毕，可回冲狭缝的挑战也被正面化解。但爱因斯坦没有停下——他要提出最后的装置。",
+      "advanceStageTo": "finale"
+    },
+    {
+      "id": "quest_photon_box",
+      "title": "最终辩驳：光子箱",
+      "desc": "狭缝的争论落幕了。爱因斯坦说这还不是结束——他还有一台装置。去找他，见证两位巨人最后的交锋。",
+      "category": "main",
+      "autoStart": true,
+      "startCondition": {
+        "conditions": [
+          {
+            "type": "quest_completed",
+            "target": "quest_attend_bohr_report"
+          }
+        ],
+        "logic": "AND"
+      },
+      "steps": [
+        {
+          "id": "step_1",
+          "desc": "与爱因斯坦交谈，听他讲述最后的装置",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "solvay_einstein",
+              "count": 1
+            }
+          ],
+          "logic": "AND"
+        }
+      ],
+      "rewards": {
+        "exp": 40,
+        "flags": [
+          "quest_photon_box_done"
+        ]
+      },
+      "completionText": "光子箱被引力的钟差击穿，而争论仍无定论。黑板上留下两台从未真正制造出的装置——会议之外，物理学的世纪将继续。"
+    }
+  ],
+  "placements": [],
+  "dialogueData": {
+    "dlg_astro_book": {
+      "id": "dlg_astro_book",
+      "scene": "astro",
+      "trigger": "astro_scientist_back",
+      "startNode": "start",
+      "nodes": {
+        "start": {
+          "id": "start",
+          "lines": [
+            {
+              "speaker": "astro_scientist",
+              "text": "……糟了。",
+              "emotion": "sad"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "不好意思，能打扰你一下吗？我遇到点麻烦。",
+              "emotion": "sad"
+            },
+            {
+              "speaker": "su_ran",
+              "text": "怎么了？"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "我把一本书忘在隔离区里了，得回去取。但我自己没有四级门禁卡，进不去。",
+              "emotion": "sad"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "如果你有四级门禁卡的话……能不能帮我把书带出来？"
+            },
+            {
+              "speaker": "su_ran",
+              "text": "一本书？什么书这么重要？"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "《De Revolutionibus Orbium Coelestium》——哥白尼写的。",
+              "emotion": "happy"
+            }
+          ],
+          "choices": [
+            {
+              "text": "这是什么语言？",
+              "next": "topic_latin"
+            },
+            {
+              "text": "为什么是 Revolution？",
+              "next": "topic_revolution"
+            },
+            {
+              "text": "好的，我帮你",
+              "next": "exit"
+            }
+          ]
+        },
+        "topic_latin": {
+          "id": "topic_latin",
+          "lines": [
+            {
+              "speaker": "su_ran",
+              "text": "Revolutionibus……这是什么语言？",
+              "emotion": "happy"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "拉丁语。早期欧洲的学术著作几乎都是用拉丁语写的，这是一直以来的学术传统。",
+              "emotion": "happy"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "包括牛顿的那一本——《Philosophiæ Naturalis Principia Mathematica》，自然哲学的数学原理。也是拉丁语。",
+              "emotion": "happy"
+            },
+            {
+              "speaker": "su_ran",
+              "text": "原来如此。整个欧洲的学者都用同一种语言交流……",
+              "emotion": "happy"
+            }
+          ],
+          "choices": [
+            {
+              "text": "这是什么语言？",
+              "next": "topic_latin"
+            },
+            {
+              "text": "为什么是 Revolution？",
+              "next": "topic_revolution"
+            },
+            {
+              "text": "好的，我帮你",
+              "next": "exit"
+            }
+          ]
+        },
+        "topic_revolution": {
+          "id": "topic_revolution",
+          "lines": [
+            {
+              "speaker": "su_ran",
+              "text": "\"Revolution\"——这个词现在是\"革命\"的意思。但书名里它是在说……运转？"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "没错。Revolution 原本只是指天体的运转——环绕、旋转。"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "但这本书彻底颠覆了教会和学术界对宇宙的权威理论，把地球从宇宙中心拉了下来。",
+              "emotion": "happy"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "它的冲击力太大了，从此以后\"revolution\"才有了如今\"革命性变革\"的含义。",
+              "emotion": "happy"
+            },
+            {
+              "speaker": "su_ran",
+              "text": "一本书改变了这个词本身的意义……",
+              "emotion": "surprise"
+            }
+          ],
+          "choices": [
+            {
+              "text": "这是什么语言？",
+              "next": "topic_latin"
+            },
+            {
+              "text": "为什么是 Revolution？",
+              "next": "topic_revolution"
+            },
+            {
+              "text": "好的，我帮你",
+              "next": "exit"
+            }
+          ]
+        },
+        "exit": {
+          "id": "exit",
+          "lines": [
+            {
+              "speaker": "su_ran",
+              "text": "好，我去帮你拿。四级门禁卡……我想想办法。",
+              "emotion": "happy"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "太感谢了！书在隔离区东侧的书架上，封面是深红色皮装，很好认。",
+              "emotion": "happy"
+            },
+            {
+              "speaker": "astro_scientist",
+              "text": "《天体运行论》……它值得被好好保管。",
+              "emotion": "happy"
+            }
+          ]
+        }
+      },
+      "stage": "debate1"
+    }
+  },
+  "updatedAt": 1788152269382
+}

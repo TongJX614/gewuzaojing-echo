@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>量子辩驳：光子盒的交锋</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --retro-red: #d90429;      /* 宝石红 */
+            --retro-blue: #00b4d8;     /* 荧光青 */
+            --retro-gold: #d4af37;     /* 复古黄铜 */
+            --retro-bg: #0c111a;       /* 偏暗灰的工业复古深色 */
+            --retro-grid: #1a2a40;     /* 蓝图网格线 */
+            --text-glow: #fdf0d5;      /* 羊皮纸/灯丝白 */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--retro-bg);
+            font-family: 'Noto Serif SC', Georgia, 'Times New Roman', serif;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: crosshair;
+        }
+
+        #shake-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 纯粹的物理震屏，无光污染 */
+        .shake {
+            animation: screenShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+        @keyframes screenShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-15px, -10px) rotate(-1deg); }
+            20% { transform: translate(18px, 10px) rotate(1deg); }
+            30% { transform: translate(-15px, 15px) rotate(-1deg); }
+            40% { transform: translate(15px, -15px) rotate(1deg); }
+            50% { transform: translate(-10px, 10px) rotate(0deg); }
+            70% { transform: translate(5px, -5px) rotate(0deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .blueprint-grid {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(var(--retro-grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--retro-grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.5;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .scanlines-vignette {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            background: 
+                repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px),
+                radial-gradient(circle at center, rgba(30,20,10,0) 30%, rgba(20,10,0,0.7) 120%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .noise-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.12; 
+            z-index: 999; 
+            pointer-events: none;
+        }
+
+        /* ---------------- 文字样式与辩论互动 ---------------- */
+        .debate-text {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 2.9rem;
+            font-weight: 700;
+            color: var(--text-glow);
+            text-shadow: 2px 4px 8px rgba(0,0,0,0.9);
+            z-index: 10;
+            transform-origin: center;
+            pointer-events: none;
+            letter-spacing: 4px;
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+
+        .text-wrapper {
+            display: inline-block;
+            transition: opacity 0.1s;
+        }
+
+        @keyframes textShakeAnim {
+            0% { transform: translate(0, 0) scale(1); color: var(--text-glow); }
+            15% { transform: translate(-10px, 8px) scale(1.04); color: #ff6b6b; }
+            30% { transform: translate(10px, -8px) scale(1.04); }
+            45% { transform: translate(-10px, -8px) scale(1.04); }
+            60% { transform: translate(10px, 8px) scale(1.04); }
+            80% { transform: translate(-4px, 3px) scale(1.01); }
+            100% { transform: translate(0, 0) scale(1); color: var(--text-glow); }
+        }
+
+        .text-shake {
+            animation: textShakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both !important;
+        }
+
+        .weak-point {
+            cursor: crosshair;
+            pointer-events: auto;
+            display: inline-block;
+            transition: all 0.2s;
+            padding: 0 5px;
+            border-bottom: 2px dashed rgba(255,255,255,0.3);
+        }
+
+        .weak-point:hover { transform: scale(1.1) rotate(-1deg); border-bottom-color: transparent; }
+        .weak-point.refute { color: var(--retro-red); text-shadow: 0 0 15px rgba(217, 4, 41, 0.8), 2px 2px 5px rgba(0,0,0,0.9); }
+        
+        @keyframes flyAcross {
+            0% { transform: translateX(100vw) rotate(var(--angle)) scale(0.9); opacity: 0; }
+            8% { opacity: 1; }
+            92% { opacity: 1; }
+            100% { transform: translateX(-100vw) rotate(var(--angle)) scale(1.1); opacity: 0; }
+        }
+
+        #cylinder-container {
+            position: absolute; bottom: -60px; left: -60px;
+            width: 320px; height: 320px; z-index: 20;
+            transform-origin: center; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .cylinder {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: conic-gradient(from 0deg, #594318, var(--retro-gold), #594318, var(--retro-gold), #594318);
+            border: 8px solid #2b1f0c; box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .cylinder::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 60px; height: 60px; transform: translate(-50%, -50%);
+            background: radial-gradient(circle, #333, #111); border-radius: 50%;
+            border: 4px solid var(--retro-gold); box-shadow: 0 0 15px rgba(0,0,0,0.8);
+        }
+        .chamber {
+            position: absolute; width: 70px; height: 70px; border-radius: 50%; background: #0a0a0a;
+            top: 50%; left: 50%; margin-top: -35px; margin-left: -35px; border: 4px solid #33230d;
+            box-shadow: inset 0 0 20px rgba(0,0,0,1); display: flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.1); font-size: 0.85rem; font-weight: bold; flex-direction: column;
+            font-family: 'Space Mono', monospace;
+        }
+        .chamber.loaded {
+            background: radial-gradient(circle at 50% 50%, #4a2500, #0a0a0a 80%);
+            border-color: var(--retro-gold); color: var(--text-glow);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(255, 150, 0, 0.4);
+            cursor: pointer; text-shadow: 0 0 5px rgba(255,200,0,0.8);
+        }
+        .bullet-icon {
+            width: 12px; height: 24px; background: linear-gradient(to bottom, #fff, #ffaa00);
+            border-radius: 10px; margin-bottom: 6px; box-shadow: 0 0 10px #ffaa00, 0 0 20px #ff0000; opacity: 0.9;
+        }
+        .chamber.loaded:hover { filter: brightness(1.4); transform: scale(1.08); transition: all 0.2s; box-shadow: 0 0 25px rgba(212, 175, 55, 0.6), inset 0 0 30px rgba(255, 150, 0, 0.6); }
+
+        #active-bullet-info {
+            position: absolute; bottom: 40px; left: 280px; background: rgba(8, 16, 26, 0.85);
+            border: 2px solid var(--retro-gold); color: var(--text-glow); padding: 15px 25px;
+            border-radius: 4px; max-width: 400px; z-index: 20;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6), 0 0 15px rgba(212, 175, 55, 0.2);
+            pointer-events: none; transition: all 0.2s; backdrop-filter: blur(4px);
+        }
+        #bullet-name-display {
+            font-size: 1.6rem; display: block; margin-bottom: 8px; font-family: 'Noto Serif SC', serif;
+            font-weight: 900; color: var(--retro-gold); text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 4px;
+        }
+        #bullet-desc-display { font-size: 0.95rem; color: #b0c4de; font-family: 'Space Mono', 'Microsoft YaHei', sans-serif; line-height: 1.5; }
+
+        #speaker-box {
+            position: absolute; top: 40px; right: 40px; background: linear-gradient(135deg, #2a2a2a, #111);
+            color: var(--retro-gold); border: 3px solid var(--retro-gold); padding: 12px 30px;
+            font-size: 2rem; font-weight: 900; font-family: 'Noto Serif SC', serif;
+            box-shadow: 6px 6px 15px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
+            border-radius: 4px; z-index: 5; transition: all 0.4s ease; opacity: 0; letter-spacing: 2px;
+        }
+
+        #shatter-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none; }
+        
+        #flash-overlay {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            background: white; opacity: 0; z-index: 40; pointer-events: none; transition: opacity 0.1s;
+        }
+
+        #split-line {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200vmax; height: 2px;
+            background: #fff;
+            z-index: 55;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(0);
+            box-shadow: 0 0 30px #fff, 0 0 80px currentColor;
+        }
+
+        /* 纯净的虚空撕裂特效 (卡肉感 -> 撕裂变黑洞) */
+        @keyframes slashCutVoid {
+            0% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(0); opacity: 1; height: 2px; }
+            /* Hit-stop 卡肉停顿 */
+            12% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(1.2); opacity: 1; height: 2px; box-shadow: 0 0 50px #fff, 0 0 120px currentColor; }
+            20% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(1.2); opacity: 1; height: 2px; box-shadow: 0 0 50px #fff, 0 0 150px currentColor; }
+            /* 虚空撕裂，暴露出底层纯黑！ */
+            30% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(1.2); opacity: 1; height: 150vh; background: #000; box-shadow: inset 0 0 100px currentColor, 0 0 80px currentColor; }
+            95% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(1.5); opacity: 1; height: 150vh; background: #000; }
+            100% { transform: translate(-50%, -50%) rotate(var(--slash-angle, 25deg)) scaleX(1.5); opacity: 0; height: 150vh; background: #000; }
+        }
+
+        /* 强化版复古厚重印章大字，取消色散 */
+        #hit-graphic {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%); 
+            font-size: 15rem;
+            font-weight: 900;
+            font-family: 'Noto Serif SC', serif;
+            white-space: nowrap;
+            z-index: 60;
+            pointer-events: none;
+            opacity: 0;
+            padding: 20px 70px;
+            border: 18px solid currentColor; 
+            border-radius: 8px;
+            background: transparent;
+            /* 纯粹的厚重物理阴影，无红蓝滤镜 */
+            text-shadow: 
+                6px 6px 0px rgba(0,0,0,0.9), 
+                -4px -4px 0px rgba(255,255,255,0.2);
+            box-shadow: inset 0 0 30px currentColor, 0 0 50px currentColor;
+        }
+
+        /* 印章轰天坠地动画 (加强速度与反弹) */
+        @keyframes stampHit {
+            0% { transform: translate(-50%, -50%) scale(5) rotate(calc(var(--stamp-angle) - 20deg)); opacity: 0; filter: blur(30px); }
+            8% { transform: translate(-50%, -50%) scale(0.7) rotate(calc(var(--stamp-angle) + 8deg)); opacity: 1; filter: blur(0px); box-shadow: inset 0 0 100px currentColor, 0 0 150px currentColor; }
+            14% { transform: translate(-50%, -50%) scale(1.2) rotate(calc(var(--stamp-angle) - 3deg)); }
+            22% { transform: translate(-50%, -50%) scale(0.9) rotate(calc(var(--stamp-angle) + 2deg)); }
+            30% { transform: translate(-50%, -50%) scale(1) rotate(var(--stamp-angle)); }
+            85% { transform: translate(-50%, -50%) scale(1.05) rotate(var(--stamp-angle)); opacity: 1; filter: blur(0px); }
+            100% { transform: translate(-50%, -50%) scale(1.5) rotate(var(--stamp-angle)); opacity: 0; filter: blur(15px); }
+        }
+
+        #game-over-panel {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(11, 19, 32, 0.95); border: 4px double var(--retro-gold); color: var(--text-glow);
+            padding: 50px 60px; text-align: center; z-index: 100; display: none;
+            box-shadow: 0 0 50px rgba(0,0,0,1), 0 0 20px rgba(212, 175, 55, 0.3);
+            border-radius: 8px; font-family: 'Noto Serif SC', serif;
+        }
+        #game-over-panel h1 { font-weight: 900; color: var(--retro-gold); text-shadow: 2px 2px 5px #000; }
+        #game-over-panel p { font-family: 'Space Mono', monospace; }
+        #game-over-panel button {
+            background: transparent; border: 2px solid var(--retro-gold);
+            color: var(--retro-gold); font-family: 'Space Mono', monospace; transition: all 0.3s;
+        }
+        #game-over-panel button:hover { background: var(--retro-gold); color: #000; box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); }
+    </style>
+</head>
+<body>
+    <div id="shake-container">
+        <!-- 基础环境背景 -->
+        <div class="blueprint-grid"></div>
+        <div class="scanlines-vignette"></div>
+        <div class="noise-overlay"></div>
+
+        <div id="speaker-box">系统提示</div>
+
+        <!-- 言弹 UI -->
+        <div id="active-bullet-info">
+            <span style="font-size: 0.8rem; color: #6c7a89; text-transform: uppercase;">Current Argument</span>
+            <span id="bullet-name-display">选择言弹</span>
+            <div id="bullet-desc-display">滚轮/右键切换仪器模块。</div>
+        </div>
+
+        <div id="cylinder-container">
+            <div class="cylinder" id="cylinder"></div>
+        </div>
+
+        <!-- 文本层 -->
+        <div id="debate-container" class="absolute inset-0 overflow-hidden pointer-events-none z-10"></div>
+
+        <!-- 特效层 -->
+        <div id="flash-overlay"></div>
+        <div id="split-line"></div>
+        <canvas id="shatter-canvas"></canvas>
+        
+        <div id="hit-graphic">论破!</div>
+
+        <!-- 结束面板 -->
+        <div id="game-over-panel">
+            <h1 class="text-6xl mb-6">论证通过</h1>
+            <p class="text-xl mb-4 text-gray-300">进度：破绽 4 / 4 均已击破</p>
+            <p class="text-lg mb-8 text-gray-400">档案记录：波尔的互补原理依然坚挺。光子盒的称量引进了广义相对论效应，时间与能量不可兼得。</p>
+            <button id="minigame-return-btn" class="font-bold py-3 px-8 rounded text-xl pointer-events-auto">返回会场</button>
+        <script>
+            document.getElementById('minigame-return-btn').addEventListener('click', function () {
+                if (window.parent !== window) {
+                    window.parent.postMessage({ type: 'minigame:complete', id: 'photon-box' }, '*');
+                }
+            });
+        </script>
+        </div>
+    </div>
+
+    <script>
+        const truthBullets = [
+            { id: 'weighing-impulse', name: '称量的冲量账本', short: '称量', desc: '质量分辨率不只由刻度决定。质量差 Δm 在重力中形成的微小力差，必须经过称量时间 T，才能积累成可辨认的动量变化。要从箱子原有的微小运动中辨认它，箱子的动量范围必须受到相应限制。' },
+            { id: 'gravitational-clock', name: '箱体高度的引力钟差', short: '钟差', desc: '箱体动量范围被压窄时，其高度范围会受位置—动量关系限制。在重力场中，不同高度的钟相对实验室标准钟具有不同走时率；高度不确定会变成外部时间换算的不确定。' },
+            { id: 'mass-energy', name: '质能等价', short: '质能', desc: '[干扰项] 箱体损失的质量可通过 ΔE = Δm c² 对应离开箱子的能量。它说明怎样把称量结果换算成光子能量。' },
+            { id: 'energy-conservation', name: '能量守恒', short: '守恒', desc: '[干扰项] 光子带走的能量必须记入箱体与光子的总能量账目，放光前后的能量变化应当彼此对应。' },
+            { id: 'photon-recoil', name: '光子反冲', short: '反冲', desc: '[干扰项] 光子逸出会伴随箱体的动量变化；若知道光子的传播方向，可以讨论相应反冲。' },
+            { id: 'energy-time-limit', name: '能量—时间不确定关系', short: '能时', desc: '[干扰项] 能量范围与事件相对外部时间的范围不能同时任意压窄。这是本关需要从具体装置条件中推出的结论。' }
+        ];
+
+        let currentPhase = 0;
+        
+        const debatePhases = [
+            // 第一轮发言：从容的第二次称量
+            [
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "尼尔斯，你刚才说——", delay: 1000, duration: 3350, yPos: 20, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "如果这两项精度真的能够彼此独立地提高，物理学就完了。", delay: 2600, duration: 5050, yPos: 35, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "可为什么不能独立？", delay: 4200, duration: 3350, yPos: 50, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "快门开启的那一瞬，钟的任务已经结束。", delay: 5800, duration: 4400, yPos: 65, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "等光子离开以后，我大可以从容地完成第二次称量。", delay: 7400, duration: 4850, yPos: 25, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "我只需一点点调节砝码，", delay: 9000, duration: 3550, yPos: 42, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "让弹簧秤的指针重新回到原来的零线。", delay: 10600, duration: 4000, yPos: 50, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "补回去多少质量，箱子就失去了多少质量；", delay: 12200, duration: 4600, yPos: 30, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "再乘上光速的平方，便是离开箱子的能量。", delay: 13800, duration: 4400, yPos: 46, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "这是两个平衡状态之间的差，不是对箱内过程的窥探。", delay: 15400, duration: 4850, yPos: 60, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "一个证人守着时刻，一个证人守着能量。", delay: 17000, duration: 4600, yPos: 28, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "它们甚至不必同时开口。", delay: 18600, duration: 3550, yPos: 56, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "光子已经离开——事后的称量只是【读取一个既成的质量差】。", target: 'weighing-impulse', delay: 20200, duration: 9450, yPos: 50, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "它不会再反过来【要求箱子具备任何特定的运动状态】！", target: 'weighing-impulse', delay: 21800, duration: 10000, yPos: 40, angle: -2 }
+            ],
+            // 第二轮发言：秤与钟
+            [
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "很好。你坚持说，秤不是一本被动的账簿。", delay: 1000, duration: 4600, yPos: 25, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "要看清极小的质量差，就必须给它时间，", delay: 2600, duration: 4400, yPos: 40, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "也必须约束箱子的运动——那么，我接受这一步。", delay: 4200, duration: 4850, yPos: 55, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "可钟呢？", delay: 5800, duration: 3150, yPos: 70, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "快门开启时，它已经留下读数。", delay: 7400, duration: 4000, yPos: 28, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "第二次称量发生得再慢，", delay: 9000, duration: 3550, yPos: 42, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "也不能倒回去改写已经发生的时刻。", delay: 10600, duration: 4600, yPos: 56, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "即使称量使箱子的位置不再那么确定，", delay: 12200, duration: 4400, yPos: 30, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "也不过是让它在刻度旁上下浮动一点。", delay: 13800, duration: 4400, yPos: 46, angle: -2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "难道箱子后来升高一分，钟面上已经写下的数字就会自行改变吗？", delay: 15400, duration: 5250, yPos: 62, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "箱体高度的不确定，只属于秤的位置读数——【和箱内那口钟毫无关系】。", target: 'gravitational-clock', delay: 17000, duration: 9450, yPos: 48, angle: -1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "两份证词仍然各守自己的边界：秤负责质量，钟负责时间。", delay: 18600, duration: 5050, yPos: 38, angle: 2 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "钟的读数【不会在换算成外部时间时产生任何不确定】——这就是全部答案。", target: 'gravitational-clock', delay: 20200, duration: 10000, yPos: 52, angle: 1 },
+                { speaker: "阿·爱因斯坦", color: "var(--retro-red)", text: "一只秤，一面钟。你若坚持它们互相牵制，就请指出连接它们的桥在哪里！", delay: 21800, duration: 5900, yPos: 70, angle: -2 }
+            ]
+        ];
+
+        const cylinder = document.getElementById('cylinder');
+        const cylinderContainer = document.getElementById('cylinder-container');
+        const bulletNameDisplay = document.getElementById('bullet-name-display');
+        const bulletDescDisplay = document.getElementById('bullet-desc-display');
+        const shakeContainer = document.getElementById('shake-container');
+        
+        let currentRotation = 0;
+        let selectedBulletIndex = 0;
+        const totalChambers = 6;
+        let chambers = [];
+
+        function initCylinder() {
+            for (let i = 0; i < totalChambers; i++) {
+                const angle = (360 / totalChambers) * i;
+                const rad = angle * (Math.PI / 180);
+                const radius = 100; 
+                
+                const x = radius * Math.sin(rad);
+                const y = -radius * Math.cos(rad);
+
+                const chamber = document.createElement('div');
+                chamber.className = 'chamber';
+                chamber.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
+
+                if (i < truthBullets.length) {
+                    chamber.classList.add('loaded');
+                    const icon = document.createElement('div');
+                    icon.className = 'bullet-icon';
+                    chamber.appendChild(icon);
+                    
+                    const textNode = document.createTextNode(truthBullets[i].short);
+                    chamber.appendChild(textNode);
+                    
+                    chamber.dataset.bulletId = truthBullets[i].id;
+                    
+                    chamber.onclick = (e) => {
+                        e.stopPropagation();
+                        rotateToBullet(i);
+                    };
+                }
+
+                cylinder.appendChild(chamber);
+                chambers.push(chamber);
+            }
+            updateBulletDisplay();
+        }
+
+        function rotateToBullet(index) {
+            if(index >= truthBullets.length) return;
+            const anglePerChamber = 360 / totalChambers;
+            currentRotation = -(index * anglePerChamber);
+            cylinderContainer.style.transform = `rotate(${currentRotation}deg)`;
+            selectedBulletIndex = index;
+            updateBulletDisplay();
+        }
+
+        function updateBulletDisplay() {
+            if (selectedBulletIndex < truthBullets.length) {
+                const bullet = truthBullets[selectedBulletIndex];
+                bulletNameDisplay.innerText = bullet.name;
+                // 干扰项标注危险红字
+                if(bullet.desc.startsWith('[干扰项]')) {
+                    bulletNameDisplay.style.color = '#e63946';
+                } else {
+                    bulletNameDisplay.style.color = 'var(--retro-gold)';
+                }
+                bulletDescDisplay.innerText = bullet.desc;
+            }
+        }
+
+        window.addEventListener('wheel', (e) => {
+            if (isDebatePaused) return;
+            if (e.deltaY > 0) {
+                let next = (selectedBulletIndex + 1) % truthBullets.length;
+                rotateToBullet(next);
+            } else {
+                let prev = (selectedBulletIndex - 1 + truthBullets.length) % truthBullets.length;
+                rotateToBullet(prev);
+            }
+        });
+
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (isDebatePaused) return;
+            let next = (selectedBulletIndex + 1) % truthBullets.length;
+            rotateToBullet(next);
+        });
+
+        const debateContainer = document.getElementById('debate-container');
+        const speakerBox = document.getElementById('speaker-box');
+        let debateTimeouts = [];
+        let isDebatePaused = false;
+        let restartPhaseAfterEchoMenu = false;
+
+        function startDebatePhase() {
+            if(currentPhase >= debatePhases.length) {
+                showGameOver();
+                return;
+            }
+
+            debateContainer.innerHTML = '';
+            debateTimeouts.forEach(t => clearTimeout(t));
+            debateTimeouts = [];
+            isDebatePaused = false;
+            shakeContainer.classList.remove('shake');
+            
+            const script = debatePhases[currentPhase];
+            phaseWeakTotal = script.filter(l => l.target).length;
+            phaseWeakHits = 0;
+            let maxDelay = 0;
+
+            script.forEach(line => {
+                let t = setTimeout(() => {
+                    if (isDebatePaused) return;
+                    spawnDebateText(line);
+                }, line.delay);
+                debateTimeouts.push(t);
+                if (line.delay + line.duration > maxDelay) {
+                    maxDelay = line.delay + line.duration;
+                }
+            });
+
+            let loop = setTimeout(() => {
+                if (!isDebatePaused) {
+                    showSystemMsg("【论证超时，模型重置】");
+                    setTimeout(startDebatePhase, 2000);
+                }
+            }, maxDelay + 1000);
+            debateTimeouts.push(loop);
+        }
+
+        function showSystemMsg(msg) {
+            speakerBox.innerText = msg;
+            speakerBox.style.opacity = 1;
+            speakerBox.style.boxShadow = `6px 6px 15px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5)`;
+            speakerBox.style.color = '#888';
+            speakerBox.style.borderColor = '#555';
+        }
+
+        function renderLineHtml(lineConfig) {
+            const parts = lineConfig.text.split(/(【[^】]*】)/).filter(Boolean);
+            const inner = parts.map(part => {
+                if (part.startsWith('【') && part.endsWith('】')) {
+                    return `<span class='weak-point refute' data-target='${lineConfig.target}'>${part.slice(1, -1)}</span>`;
+                }
+                return `<span>${part}</span>`;
+            }).join('');
+            return `<span class="text-wrapper pointer-events-auto">${inner}</span>`;
+        }
+
+        function spawnDebateText(lineConfig) {
+            speakerBox.innerText = lineConfig.speaker;
+            speakerBox.style.opacity = 1;
+            speakerBox.style.color = 'var(--retro-gold)';
+            speakerBox.style.borderColor = 'var(--retro-gold)';
+            
+            const el = document.createElement('div');
+            el.className = 'debate-text pointer-events-none'; 
+            
+            el.innerHTML = renderLineHtml(lineConfig);
+            
+            el.style.setProperty('--angle', `${lineConfig.angle}deg`);
+            el.style.top = `${lineConfig.yPos}%`;
+            el.style.animation = `flyAcross ${lineConfig.duration}ms linear forwards`;
+
+            debateContainer.appendChild(el);
+
+            setTimeout(() => {
+                if (el.parentNode) el.parentNode.removeChild(el);
+            }, lineConfig.duration);
+        }
+
+        const shatterCanvas = document.getElementById('shatter-canvas');
+        const ctx = shatterCanvas.getContext('2d');
+        const flashOverlay = document.getElementById('flash-overlay');
+        const hitGraphic = document.getElementById('hit-graphic');
+
+        function resizeCanvas() {
+            shatterCanvas.width = window.innerWidth;
+            shatterCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let shards = [];
+        let animationFrameId;
+
+        document.addEventListener('click', (e) => {
+            if(e.target.closest('#cylinder-container')) return;
+            if(e.target.closest('#active-bullet-info')) return;
+            if(e.target.tagName === 'BUTTON') return;
+            
+            if(isDebatePaused) return;
+
+            const isTextClick = e.target.closest('.text-wrapper');
+            const isWeakPointClick = e.target.classList.contains('weak-point');
+
+            if (isWeakPointClick) {
+                const targetBullet = e.target.getAttribute('data-target');
+                const isRefute = e.target.classList.contains('refute');
+                const activeBullet = truthBullets[selectedBulletIndex];
+
+                if (activeBullet && activeBullet.id === targetBullet) {
+                    onWeakPointHit(e.target, e.clientX, e.clientY, isRefute);
+                } else {
+                    triggerDeflectFeedback(e.clientX, e.clientY, e.target.closest('.text-wrapper'), true);
+                }
+            } else if (isTextClick) {
+                triggerDeflectFeedback(e.clientX, e.clientY, e.target.closest('.text-wrapper'), false);
+            } else {
+                drawMuzzleFlash(e.clientX, e.clientY);
+            }
+        });
+
+        function drawMuzzleFlash(x, y) {
+            const flash = document.createElement('div');
+            flash.style.position = 'absolute';
+            flash.style.left = `${x-30}px`; flash.style.top = `${y-30}px`;
+            flash.style.width = '60px'; flash.style.height = '60px';
+            flash.style.background = 'radial-gradient(circle, rgba(255,240,200,1) 0%, rgba(255,150,0,0.8) 30%, rgba(200,50,0,0) 70%)';
+            flash.style.borderRadius = '50%'; flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '30'; flash.style.transition = 'opacity 0.15s ease-out, transform 0.1s cubic-bezier(0, 1, 0.3, 1)';
+            flash.style.transform = 'scale(0.2)';
+            shakeContainer.appendChild(flash);
+            
+            requestAnimationFrame(() => {
+                flash.style.transform = 'scale(1.8)';
+                flash.style.opacity = 0;
+            });
+
+            setTimeout(() => {
+                if(flash.parentNode) flash.remove();
+            }, 150);
+        }
+
+        function drawSpark(x, y) {
+            const sparkCount = 25; 
+            for(let i=0; i<sparkCount; i++) {
+                const spark = document.createElement('div');
+                spark.style.position = 'absolute';
+                spark.style.left = `${x}px`; spark.style.top = `${y}px`;
+                
+                const sparkLength = Math.random() * 25 + 10;
+                spark.style.width = Math.random() > 0.8 ? '4px' : '2px'; 
+                spark.style.height = `${sparkLength}px`; 
+                
+                const colors = ['#ffffff', '#ffda75', '#ff9e00', '#d90429'];
+                spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                spark.style.borderRadius = '2px'; spark.style.pointerEvents = 'none';
+                spark.style.zIndex = '60'; spark.style.boxShadow = `0 0 10px ${spark.style.background}`; 
+
+                const angle = (Math.random() * Math.PI * 2);
+                spark.style.transform = `rotate(${angle + Math.PI/2}rad)`;
+                shakeContainer.appendChild(spark);
+
+                const speed = Math.random() * 150 + 50; 
+                const tx = Math.cos(angle) * speed; const ty = Math.sin(angle) * speed;
+
+                spark.animate([
+                    { transform: `translate(0,0) rotate(${angle + Math.PI/2}rad) scale(1.5)`, opacity: 1 },
+                    { transform: `translate(${tx}px, ${ty}px) rotate(${angle + Math.PI/2}rad) scale(0.2)`, opacity: 0 }
+                ], { duration: 400 + Math.random() * 250, easing: 'cubic-bezier(0.1, 0.9, 0.2, 1)' });
+
+                setTimeout(() => { if(spark.parentNode) spark.remove(); }, 700);
+            }
+            drawMuzzleFlash(x, y);
+        }
+
+        function triggerDeflectFeedback(x, y, textWrapper, isWrongBullet) {
+            textWrapper.classList.remove('text-shake');
+            void textWrapper.offsetWidth; 
+            textWrapper.classList.add('text-shake');
+            
+            shakeContainer.classList.remove('shake');
+            void shakeContainer.offsetWidth; 
+            shakeContainer.classList.add('shake');
+
+            drawSpark(x, y);
+
+            if (isWrongBullet) {
+                flashOverlay.style.background = 'var(--retro-red)';
+                flashOverlay.style.opacity = 0.25;
+                setTimeout(() => { 
+                    flashOverlay.style.opacity = 0; 
+                    setTimeout(()=> flashOverlay.style.background = 'white', 100);
+                }, 100);
+            }
+        }
+
+        let phaseWeakTotal = 0;
+        let phaseWeakHits = 0;
+
+        const PHASE_SETTLE = [
+            { hitMsg: "称量需要时间与动量准备——你的账本，写得并不干净！" },
+            { hitMsg: "高度不确定变成引力钟差——你亲手请出了广义相对论！" }
+        ];
+
+        function onWeakPointHit(weakEl, x, y, isRefute) {
+            phaseWeakHits++;
+            const wrapper = weakEl.closest('.text-wrapper');
+
+            const remaining = phaseWeakTotal - phaseWeakHits;
+            if (remaining <= 0) {
+                const settle = PHASE_SETTLE[Math.min(currentPhase, PHASE_SETTLE.length - 1)];
+                triggerTwoStageShatter(x, y, isRefute ? 'RONPA' : 'AGREE', wrapper, "论破!", settle.hitMsg);
+            } else {
+                shatterSmall(x, y, wrapper);
+                showSystemMsg(`破绽命中！还剩 ${remaining} 处——继续瞄准红色关键词。`);
+                speakerBox.style.color = 'var(--retro-gold)';
+                speakerBox.style.borderColor = 'var(--retro-gold)';
+                drawSpark(x, y);
+            }
+        }
+
+        function shatterSmall(x, y, wrapper) {
+            if (wrapper) wrapper.style.opacity = 0;
+            flashOverlay.style.opacity = 0.35;
+            setTimeout(() => { flashOverlay.style.opacity = 0; }, 60);
+            shakeContainer.classList.remove('shake');
+            void shakeContainer.offsetWidth;
+            shakeContainer.classList.add('shake');
+
+            shards = [];
+            const numShards = 56;
+            for (let i = 0; i < numShards; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 28 + 8;
+                const size = Math.random() * 30 + 8;
+                const vertices = [];
+                const sides = Math.floor(Math.random() * 4) + 3;
+                for (let j = 0; j < sides; j++) {
+                    const vAngle = (Math.PI * 2 / sides) * j + (Math.random() * 0.5);
+                    const vRad = size * (0.5 + Math.random() * 0.5);
+                    vertices.push({ x: Math.cos(vAngle) * vRad, y: Math.sin(vAngle) * vRad });
+                }
+                shards.push({
+                    x: x, y: y,
+                    vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                    rot: 0, rotSpeed: (Math.random() - 0.5) * 0.8,
+                    vertices: vertices,
+                    color: Math.random() > 0.25 ? 'rgba(255,255,255,0.8)' : 'rgba(217, 4, 41, 0.9)',
+                    life: 1.0, decay: Math.random() * 0.02 + 0.008
+                });
+            }
+            cancelAnimationFrame(animationFrameId);
+            drawShatter();
+        }
+
+        function triggerTwoStageShatter(x, y, type, hitElement, customGraphic, hitMsg) {
+            isDebatePaused = true;
+            debateTimeouts.forEach(t => clearTimeout(t)); 
+            
+            document.querySelectorAll('.debate-text').forEach(el => {
+                el.style.animationPlayState = 'paused';
+            });
+
+            hitElement.style.opacity = 0;
+
+            // 第一段：原位受击玻璃破碎
+            flashOverlay.style.background = 'white';
+            flashOverlay.style.opacity = 0.8;
+            setTimeout(() => { flashOverlay.style.opacity = 0; }, 50);
+
+            shakeContainer.classList.remove('shake');
+            void shakeContainer.offsetWidth;
+            shakeContainer.classList.add('shake');
+
+            shards = [];
+            const numShards = 72; 
+            for (let i = 0; i < numShards; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 35 + 10; 
+                const size = Math.random() * 50 + 15;
+                
+                const vertices = [];
+                const sides = Math.floor(Math.random() * 4) + 3; 
+                for (let j = 0; j < sides; j++) {
+                    const vAngle = (Math.PI * 2 / sides) * j + (Math.random() * 0.5);
+                    const vRad = size * (0.5 + Math.random() * 0.5);
+                    vertices.push({ x: Math.cos(vAngle) * vRad, y: Math.sin(vAngle) * vRad });
+                }
+
+                shards.push({
+                    x: x, y: y, 
+                    vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                    rot: 0, rotSpeed: (Math.random() - 0.5) * 0.8,
+                    vertices: vertices,
+                    color: Math.random() > 0.25 ? 'rgba(255,255,255,0.8)' : (type === 'RONPA' ? 'var(--retro-red)' : 'var(--retro-blue)'),
+                    life: 1.0, decay: Math.random() * 0.02 + 0.008
+                });
+            }
+
+            cancelAnimationFrame(animationFrameId);
+            drawShatter();
+            
+            // 第二段：包含卡肉感与虚空黑洞撕裂，移除色散重影
+            setTimeout(() => {
+                playSplitAndSlash(type, customGraphic, hitMsg);
+            }, 600); 
+        }
+
+        function playSplitAndSlash(type, customGraphic, hitMsg) {
+            // 极速黑屏蓄力
+            flashOverlay.style.background = '#000';
+            flashOverlay.style.opacity = 0.85;
+            flashOverlay.style.transition = 'opacity 0.05s';
+            
+            setTimeout(() => {
+                // 瞬间闪烁爆发
+                flashOverlay.style.background = '#fff';
+                flashOverlay.style.opacity = 1;
+                setTimeout(() => { 
+                    flashOverlay.style.transition = 'opacity 0.4s ease-out'; 
+                    flashOverlay.style.opacity = 0; 
+                }, 50);
+
+                // 物理屏幕震动 (回归基础 shake)
+                shakeContainer.classList.remove('shake');
+                void shakeContainer.offsetWidth;
+                shakeContainer.classList.add('shake');
+
+                // 启动切割并暴露出底层黑洞(虚空)
+                const splitLine = document.getElementById('split-line');
+                const angle = Math.random() > 0.5 ? 25 : -25; 
+                splitLine.style.setProperty('--slash-angle', `${angle}deg`);
+                splitLine.style.color = type === 'RONPA' ? 'var(--retro-red)' : 'var(--retro-blue)';
+                splitLine.style.animation = 'slashCutVoid 0.8s cubic-bezier(0.05, 0.9, 0.1, 1) forwards';
+
+                // 巨型印章盖下
+                showHitGraphic(type, customGraphic);
+                
+                // 展示核心反驳台词
+                setTimeout(() => {
+                    if (hitMsg) {
+                        showSystemMsg(hitMsg);
+                        speakerBox.style.color = 'var(--retro-red)';
+                        speakerBox.style.borderColor = 'var(--retro-red)';
+                        speakerBox.style.transform = 'scale(1.1)';
+                    }
+                }, 300);
+
+            }, 150); // 蓄力时间 (Hit-stop 感)
+
+            // 等待整套超华丽演出放完后切到下一阶段
+            setTimeout(() => {
+                currentPhase++;
+                shards = []; 
+                ctx.clearRect(0, 0, shatterCanvas.width, shatterCanvas.height);
+                const splitLine = document.getElementById('split-line');
+                splitLine.style.animation = 'none'; 
+                hideHitGraphic();
+                speakerBox.style.transform = 'scale(1)';
+                startDebatePhase();
+            }, 3500); 
+        }
+
+        function drawShatter() {
+            ctx.clearRect(0, 0, shatterCanvas.width, shatterCanvas.height);
+            let alive = false;
+
+            shards.forEach(shard => {
+                if (shard.life <= 0) return;
+                alive = true;
+
+                shard.x += shard.vx; shard.y += shard.vy;
+                shard.vy += 0.8; shard.rot += shard.rotSpeed;
+                shard.life -= shard.decay;
+
+                ctx.save();
+                ctx.translate(shard.x, shard.y);
+                ctx.rotate(shard.rot); ctx.globalAlpha = shard.life;
+                
+                ctx.beginPath();
+                ctx.moveTo(shard.vertices[0].x, shard.vertices[0].y);
+                for (let i = 1; i < shard.vertices.length; i++) {
+                    ctx.lineTo(shard.vertices[i].x, shard.vertices[i].y);
+                }
+                ctx.closePath();
+                
+                ctx.fillStyle = shard.color; ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.restore();
+            });
+
+            if (alive) {
+                animationFrameId = requestAnimationFrame(drawShatter);
+            }
+        }
+
+        function showHitGraphic(type, customGraphic) {
+            hitGraphic.style.animation = 'none';
+            void hitGraphic.offsetWidth; 
+            
+            // 为印章赋予微小的随机倾斜
+            const stampAngle = (Math.random() * 10 - 5).toFixed(1);
+            hitGraphic.style.setProperty('--stamp-angle', `${stampAngle}deg`);
+            
+            hitGraphic.innerText = customGraphic || (type === 'RONPA' ? '驳回' : '证实');
+            
+            // 长文本字号自适应缩放
+            if(hitGraphic.innerText.length > 4) {
+                hitGraphic.style.fontSize = '4.5rem';
+                hitGraphic.style.padding = '15px 40px';
+                hitGraphic.style.borderWidth = '8px';
+            } else {
+                hitGraphic.style.fontSize = '15rem';
+                hitGraphic.style.padding = '20px 70px';
+                hitGraphic.style.borderWidth = '18px';
+            }
+            
+            if (type === 'RONPA') {
+                hitGraphic.style.color = 'var(--retro-red)';
+            } else {
+                hitGraphic.style.color = 'var(--retro-blue)';
+            }
+            
+            hitGraphic.style.opacity = 1;
+            hitGraphic.style.animation = 'stampHit 1.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards';
+        }
+
+        function hideHitGraphic() {
+            hitGraphic.style.animation = 'none';
+            hitGraphic.style.opacity = 0;
+        }
+
+        function showGameOver() {
+            document.getElementById('game-over-panel').style.display = 'block';
+            isDebatePaused = true;
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && window.parent !== window) {
+                e.preventDefault();
+                window.parent.postMessage({ type: 'echo:pause-request' }, '*');
+            }
+        });
+
+        window.addEventListener('message', (e) => {
+            if (e.source !== window.parent || !e.data) return;
+            if (e.data.type === 'echo:pause') {
+                restartPhaseAfterEchoMenu = !isDebatePaused;
+                isDebatePaused = true;
+                debateTimeouts.forEach(t => clearTimeout(t));
+                debateTimeouts = [];
+                document.getAnimations().forEach(animation => animation.pause());
+            }
+            if (e.data.type === 'echo:resume') {
+                document.getAnimations().forEach(animation => animation.play());
+                if (restartPhaseAfterEchoMenu) {
+                    restartPhaseAfterEchoMenu = false;
+                    startDebatePhase();
+                }
+            }
+        });
+
+        window.onload = () => {
+            initCylinder();
+            showSystemMsg("[ 初始化科研仪器 ]");
+            setTimeout(() => {
+                showSystemMsg("请校准光学瞄准，装填理论言弹");
+                setTimeout(() => {
+                    startDebatePhase();
+                }, 2000);
+            }, 2500);
+        };
+
+    </script>
+</body>
+</html>

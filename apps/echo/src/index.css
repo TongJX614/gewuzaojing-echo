@@ -1,0 +1,453 @@
+@import "https://fonts.googleapis.cn/css2?family=ZCOOL+QingKe+HuangYou&family=Noto+Sans+SC:wght@400;700;900&family=VT323&family=Press+Start+2P&display=swap";
+
+/* HUD 背包按钮浮动动画 */
+@keyframes hud-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #010409;
+  --foreground: #e0ffff;
+  --ui-color: #00f3ff;
+  --ui-color-dim: rgba(0, 243, 255, 0.25);
+  --ui-bg: rgba(2, 10, 18, 0.6);
+  --danger-color: #ff0055;
+  --warning-color: #ffaa00;
+  --text-main: #e0ffff;
+  --crt-aberration: 2px 0px 1px rgba(255, 0, 85, 0.5), -2px 0px 1px rgba(0, 243, 255, 0.5);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  background-image:
+    radial-gradient(circle at center, #02111d 0%, #000000 100%),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 243, 255, 0.03) 2px, rgba(0, 243, 255, 0.03) 4px);
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+button {
+  outline: none;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--ui-color);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===== CRT / Scanline Overlays ===== */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.3));
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.6;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.8) 100%);
+  pointer-events: none;
+  z-index: 45;
+}
+
+.crt-flicker {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 243, 255, 0.02);
+  pointer-events: none;
+  z-index: 51;
+  animation: crt-flicker 0.15s infinite;
+}
+
+@keyframes crt-flicker {
+  0% { opacity: 0.01; }
+  50% { opacity: 0.05; }
+  100% { opacity: 0.01; }
+}
+
+/* ===== Corner Reticles ===== */
+.reticle {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--ui-color-dim);
+  z-index: 40;
+  pointer-events: none;
+}
+.reticle.top-left { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+.reticle.top-right { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+.reticle.bottom-left { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+.reticle.bottom-right { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+/* ===== Cyber Bar Styles ===== */
+.cyber-bar-container {
+  width: 220px;
+  height: 12px;
+  background-color: rgba(0,0,0,0.5);
+  position: relative;
+  border: 1px solid var(--ui-color-dim);
+}
+
+.cyber-bar-fill {
+  height: 100%;
+  background-color: var(--ui-color);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px var(--ui-color);
+}
+
+.cyber-bar-grid {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(0,0,0,0.8) 18px, rgba(0,0,0,0.8) 20px);
+  pointer-events: none;
+}
+
+.cyber-bar-fill.critical {
+  background-color: var(--danger-color);
+  box-shadow: 0 0 10px var(--danger-color);
+  animation: blink-danger 0.5s infinite;
+}
+
+@keyframes blink-danger {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.4; }
+}
+
+/* ===== Cyber Panel (Clip-path) ===== */
+.cyber-panel {
+  background: var(--ui-bg);
+  backdrop-filter: blur(6px);
+  border-left: 3px solid var(--ui-color);
+  padding: 10px 15px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+
+.cyber-panel-right {
+  background: var(--ui-bg);
+  backdrop-filter: blur(6px);
+  border-right: 3px solid var(--ui-color);
+  padding: 10px 15px;
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+}
+
+/* ===== Cyber Label Font ===== */
+.cyber-label {
+  font-family: 'ZCOOL QingKe HuangYou', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  color: var(--ui-color);
+  font-weight: 700;
+  text-shadow: var(--crt-aberration);
+}
+
+/* ===== Chromatic Aberration Text ===== */
+.crt-text {
+  text-shadow: var(--crt-aberration);
+}
+
+/* ===== Dialogue Choice Button ===== */
+.cyber-choice-btn {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  margin: 6px 0;
+  background: rgba(0, 243, 255, 0.06);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  color: var(--text-main);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+}
+
+.cyber-choice-btn:hover {
+  background: rgba(0, 243, 255, 0.15);
+  border-color: var(--ui-color);
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.1);
+  text-shadow: 0 0 8px rgba(0, 243, 255, 0.6);
+}
+
+.cyber-choice-btn::before {
+  content: '>';
+  color: var(--ui-color);
+  margin-right: 8px;
+  font-family: 'ZCOOL QingKe HuangYou', monospace;
+  text-shadow: 0 0 6px var(--ui-color);
+}
+
+/* ===== Portrait Glow ===== */
+.portrait-glow-left {
+  filter: drop-shadow(0 0 12px rgba(0, 243, 255, 0.5)) drop-shadow(0 0 30px rgba(0, 243, 255, 0.2));
+}
+
+.portrait-glow-right {
+  filter: drop-shadow(0 0 12px rgba(255, 0, 85, 0.5)) drop-shadow(0 0 30px rgba(255, 0, 85, 0.2));
+}
+
+/* ===== Notification Flash ===== */
+@keyframes notify-flash {
+  0% { border-left-color: var(--ui-color); }
+  50% { border-left-color: var(--warning-color); }
+  100% { border-left-color: var(--ui-color); }
+}
+
+/* ===== Dialogue Blink (cursor + ▼) ===== */
+@keyframes dlg-blink {
+  50% { opacity: 0; }
+}
+
+/* ===== CG Shake (event_type2 angry) ===== */
+@keyframes cg-shake {
+  0%   { transform: translate(0, 0); }
+  10%  { transform: translate(-6px, 3px); }
+  20%  { transform: translate(5px, -4px); }
+  30%  { transform: translate(-4px, 5px); }
+  40%  { transform: translate(6px, -2px); }
+  50%  { transform: translate(-3px, 4px); }
+  60%  { transform: translate(4px, -3px); }
+  70%  { transform: translate(-5px, 2px); }
+  80%  { transform: translate(3px, -5px); }
+  90%  { transform: translate(-2px, 3px); }
+  100% { transform: translate(0, 0); }
+}
+.cg-shake { animation: cg-shake 0.4s ease-out; }
+
+/* ===== Inventory Toast Animation ===== */
+@keyframes inv-toast-in {
+  0% { transform: translateX(30px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+/* ===== Dialogue Log Scroll ===== */
+.dlg-log-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,243,255,0.3) transparent;
+}
+.dlg-log-scroll::-webkit-scrollbar { width: 4px; display: block; }
+.dlg-log-scroll::-webkit-scrollbar-track { background: transparent; }
+/* ===== Dialogue Control Buttons ===== */
+.control-btn {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--ui-color-dim);
+  color: var(--ui-color);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
+}
+
+.control-btn:hover {
+  background: rgba(0, 243, 255, 0.2);
+  box-shadow: 0 0 10px var(--ui-color-dim);
+}
+
+.control-btn.active {
+  background: rgba(0, 243, 255, 0.3);
+  border-color: var(--ui-color);
+  color: #fff;
+  text-shadow: 0 0 5px var(--ui-color);
+}
+
+/* ===== History Item Text ===== */
+.history-item-text {
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: #e0ffff;
+  letter-spacing: 1px;
+  text-shadow: 1px 0px 0.5px rgba(255, 0, 85, 0.3), -1px 0px 0.5px rgba(0, 243, 255, 0.3);
+}
+
+.history-item-text.danger {
+  color: #ff0055;
+}
+
+/* ===== History Modal ===== */
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--ui-color-dim);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.history-title {
+  font-family: "ZCOOL QingKe HuangYou", sans-serif;
+  font-size: 1.5rem;
+  color: var(--ui-color);
+  letter-spacing: 2px;
+}
+
+.dlg-log-scroll::-webkit-scrollbar-thumb { background: rgba(0,243,255,0.3); border-radius: 2px; }
+
+/* 背包详情面板滚动条 */
+.inv-details-scroll::-webkit-scrollbar { width: 4px; }
+.inv-details-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
+.inv-details-scroll::-webkit-scrollbar-thumb { background: rgba(0,243,255,0.3); border-radius: 2px; }
+.inv-details-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,243,255,0.6); }
+
+/* === 背包HUD动画系统 === */
+
+/* 通知徽章脉冲 */
+@keyframes pulse-danger {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.5; }
+}
+
+/* glitch波纹展开 */
+@keyframes waveExpand {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+.hud-glitch-wave {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #00f3ff;
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* 背包网格槽位交错出现 */
+@keyframes gridSlotStagger {
+  0% { opacity: 0; transform: translateY(10px) scale(0.8); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.inv-slot-stagger {
+  animation: gridSlotStagger 0.3s ease-out forwards;
+}
+
+/* ===== Quest Editor ===== */
+#quest-editor .qe-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-top: 3px;
+  padding: 6px 7px;
+  color: #e0ffff;
+  background: #050b10;
+  border: 1px solid #234553;
+  border-radius: 0;
+  font: 11px 'Noto Sans SC', sans-serif;
+}
+
+#quest-editor textarea.qe-input {
+  resize: vertical;
+}
+
+#quest-editor .qe-input:focus {
+  outline: 1px solid #00f3ff;
+  border-color: #00f3ff;
+}
+
+#quest-editor .qe-btn {
+  padding: 5px 8px;
+  color: #a9c4ce;
+  background: #0a1720;
+  border: 1px solid #31515d;
+  border-radius: 0;
+  font: 11px 'Noto Sans SC', sans-serif;
+  white-space: nowrap;
+}
+
+#quest-editor .qe-btn:hover {
+  color: #fff;
+  border-color: #00f3ff;
+  background: #0c2631;
+}
+
+#quest-editor .qe-btn.qe-primary { color: #33ff88; border-color: #33ff88; }
+#quest-editor .qe-btn.qe-warn { color: #ffaa00; border-color: #8b6500; }
+#quest-editor .qe-btn.qe-danger { color: #ff5577; border-color: #7d263b; }
+
+#quest-editor .qe-tab-btn {
+  padding: 5px 14px;
+  font: 12px 'Noto Sans SC', sans-serif;
+  background: transparent;
+  border: 1px solid #18313d;
+  color: #6d8a97;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+#quest-editor .qe-tab-btn.qe-tab-active {
+  background: #0d2935;
+  border-color: #00f3ff;
+  color: #00f3ff;
+}
+
+#quest-editor .qe-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 8px;
+}
+
+#quest-editor .qe-section-title {
+  margin-top: 12px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #18313d;
+  color: #ffaa00;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+/* 关闭按钮 */
+.inv-close-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 0, 85, 0.4);
+  color: rgba(255, 0, 85, 0.7);
+  font-family: "VT323", "Noto Sans SC", monospace;
+  font-size: 0.9rem;
+  padding: 4px 12px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+
+.inv-close-btn:hover {
+  background: rgba(255, 0, 85, 0.1);
+  border-color: #ff0055;
+  color: #ff0055;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.3);
+}

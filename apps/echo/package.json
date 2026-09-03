@@ -1,0 +1,57 @@
+{
+  "name": "@gewuzaojing/echo",
+  "version": "1.0.0",
+  "description": "Vanilla TypeScript application with Express + Vite (HTML + CSS + TS + Node API)",
+  "scripts": {
+    "build": "vite build && tsup server/server.ts --format cjs --platform node --target node24 --outDir dist-server --no-splitting --no-minify --external vite",
+    "dev": "tsx watch server/server.ts",
+    "env:validate": "node --import tsx scripts/validate-root-env.ts",
+    "lint": "eslint . --quiet",
+    "test": "pnpm run test:brand && pnpm run test:game-save-wiring && pnpm run test:ingame-web-experience && pnpm run test:llm-config && pnpm run test:llm-wiring && pnpm run test:monorepo-layout && pnpm run test:project-two-catalog && pnpm run test:project-two-dialogue && pnpm run test:quest && pnpm run test:save-game && pnpm run test:shared-embed-contract && pnpm run test:system-menu && pnpm run test:title-save-entry && pnpm run test:vr-action-wiring && pnpm run test:vr-experience-entry",
+    "test:brand": "node --import tsx scripts/test-brand-identity.ts",
+    "test:game-save-wiring": "node --import tsx scripts/test-game-save-wiring.ts",
+    "test:ingame-web-experience": "node --import tsx scripts/test-ingame-web-experience.ts",
+    "test:llm-config": "node --import tsx scripts/test-echo-llm-config.ts",
+    "test:llm-wiring": "node --import tsx scripts/test-echo-llm-wiring.ts",
+    "test:monorepo-layout": "node --import tsx scripts/test-monorepo-layout.ts",
+    "test:project-two-catalog": "node --import tsx scripts/test-project-two-catalog.ts",
+    "test:project-two-dialogue": "node --import tsx scripts/test-project-two-dialogue.ts",
+    "test:quest": "node --import tsx scripts/test-quest.ts",
+    "test:save-game": "node --import tsx scripts/test-save-game.ts",
+    "test:shared-embed-contract": "node --import tsx scripts/test-shared-embed-contract.ts",
+    "test:system-menu": "node --import tsx scripts/test-system-menu.ts",
+    "test:title-save-entry": "node --import tsx scripts/test-title-save-entry.ts",
+    "test:vr-action-wiring": "node --import tsx scripts/test-vr-action-wiring.ts",
+    "test:vr-experience-entry": "node --import tsx scripts/test-vr-experience-entry.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "validate": "pnpm run typecheck && pnpm run lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.95.3",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "autoprefixer": "^10.4.20",
+    "coze-coding-dev-sdk": "^0.7.24",
+    "esbuild": "^0.24.2",
+    "eslint": "^9",
+    "eslint-plugin-import": "^2.32.0",
+    "only-allow": "^1.2.2",
+    "postcss": "^8.4.49",
+    "sharp": "^0.35.3",
+    "tailwindcss": "^3.4.17",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8",
+    "vite": "^7.2.4"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=9"
+  }
+}

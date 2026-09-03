@@ -1,0 +1,788 @@
+{
+  "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "base": {
+    "lin_xiao": {
+      "sceneId": "office",
+      "x": 7,
+      "y": 5,
+      "exists": true
+    },
+    "memory_data": {
+      "sceneId": "office",
+      "x": 5,
+      "y": 3,
+      "exists": true
+    },
+    "neural_interface": {
+      "sceneId": "office",
+      "x": 7,
+      "y": 3,
+      "exists": true
+    },
+    "arpes_equipment": {
+      "sceneId": "arpes",
+      "x": 10,
+      "y": 9,
+      "exists": true
+    },
+    "sample_rod": {
+      "sceneId": "arpes",
+      "x": 12,
+      "y": 9,
+      "exists": true
+    },
+    "keycard_find": {
+      "sceneId": "arpes",
+      "x": 6,
+      "y": 7,
+      "exists": true
+    },
+    "bio_find": {
+      "sceneId": "arpes",
+      "x": 18,
+      "y": 11,
+      "exists": true
+    },
+    "astro_scientist": {
+      "sceneId": "astro",
+      "x": 14,
+      "y": 14,
+      "exists": true
+    },
+    "astro_scientist_back": {
+      "sceneId": "astro",
+      "x": 20,
+      "y": 18,
+      "exists": true
+    },
+    "astro_scientist_crouch": {
+      "sceneId": "astro",
+      "x": 10,
+      "y": 22,
+      "exists": true
+    },
+    "astro_scientist_side": {
+      "sceneId": "astro",
+      "x": 25,
+      "y": 12,
+      "exists": true
+    },
+    "astro_scientist_back_side": {
+      "sceneId": "astro",
+      "x": 30,
+      "y": 20,
+      "exists": true
+    },
+    "astro_scientist_crouch_side": {
+      "sceneId": "astro",
+      "x": 16,
+      "y": 26,
+      "exists": true
+    },
+    "astro_hazmat": {
+      "sceneId": "astro",
+      "x": 8,
+      "y": 16,
+      "exists": true
+    },
+    "lisa_cg_event": {
+      "sceneId": "astro",
+      "x": 22,
+      "y": 14,
+      "exists": true
+    },
+    "vr_scientist_1": {
+      "sceneId": "vr",
+      "x": 8,
+      "y": 8,
+      "exists": true
+    },
+    "vr_scientist_2": {
+      "sceneId": "vr",
+      "x": 14,
+      "y": 6,
+      "exists": true
+    },
+    "vr_scientist_3": {
+      "sceneId": "vr",
+      "x": 20,
+      "y": 10,
+      "exists": true
+    },
+    "vr_scientist_4": {
+      "sceneId": "vr",
+      "x": 12,
+      "y": 14,
+      "exists": true
+    },
+    "vr_researcher_main": {
+      "sceneId": "vr",
+      "x": 18,
+      "y": 7,
+      "exists": true
+    },
+    "vr_device": {
+      "sceneId": "vr",
+      "x": 16,
+      "y": 8,
+      "exists": true
+    },
+    "solvay_einstein": {
+      "sceneId": "solvay",
+      "x": 10,
+      "y": 6,
+      "exists": true
+    },
+    "solvay_bohr": {
+      "sceneId": "solvay",
+      "x": 16,
+      "y": 8,
+      "exists": true
+    },
+    "solvay_curie": {
+      "sceneId": "solvay",
+      "x": 14,
+      "y": 12,
+      "exists": true
+    },
+    "solvay_heisenberg": {
+      "sceneId": "solvay",
+      "x": 8,
+      "y": 10,
+      "exists": true
+    },
+    "solvay_schrodinger": {
+      "sceneId": "solvay",
+      "x": 12,
+      "y": 14,
+      "exists": true
+    },
+    "solvay_pauli": {
+      "sceneId": "solvay",
+      "x": 6,
+      "y": 14,
+      "exists": true
+    },
+    "solvay_born": {
+      "sceneId": "solvay",
+      "x": 18,
+      "y": 12,
+      "exists": true
+    },
+    "solvay_lorentz": {
+      "sceneId": "solvay",
+      "x": 4,
+      "y": 8,
+      "exists": true
+    },
+    "solvay_de_broglie": {
+      "sceneId": "solvay",
+      "x": 20,
+      "y": 6,
+      "exists": true
+    },
+    "item_bio_dev_mt0kfowe": {
+      "sceneId": "office",
+      "x": 12,
+      "y": 10,
+      "exists": true
+    },
+    "item_bio_dev_mt0kfpj7": {
+      "sceneId": "office",
+      "x": 12,
+      "y": 10,
+      "exists": true
+    },
+    "solvay_seating": {
+      "sceneId": "solvay",
+      "x": 14,
+      "y": 8,
+      "exists": true
+    },
+    "solvay_nameplate": {
+      "sceneId": "solvay",
+      "x": 10,
+      "y": 11,
+      "exists": true
+    },
+    "solvay_diffraction": {
+      "sceneId": "solvay",
+      "x": 22,
+      "y": 11,
+      "exists": true
+    }
+  },
+  "overrides": {
+    "1": {
+      "arpes_equipment": {
+        "x": 9.963279994931916,
+        "y": 10.766217870257039
+      },
+      "sample_rod": {
+        "x": 14.663402393952724,
+        "y": 11.08935128518972
+      },
+      "bio_find": {
+        "x": 6.937576200562271,
+        "y": 3.1578947368421053
+      },
+      "keycard_find": {
+        "x": 9.158690176322418,
+        "y": 14.463476070528966
+      },
+      "lin_xiao": {
+        "x": 21.237735849056605,
+        "y": 8.407547169811322
+      },
+      "lisa_cg_event": {
+        "x": 21.87313698565214,
+        "y": 12.796934865900383
+      },
+      "astro_scientist_side": {
+        "x": 21.770965848998244,
+        "y": 10.089399744572159
+      },
+      "astro_scientist_crouch": {
+        "x": 30.09791348629071,
+        "y": 9.374201787994892
+      },
+      "astro_scientist_crouch_side": {
+        "x": 18.65474618105444,
+        "y": 4.878671775223499
+      },
+      "astro_scientist": {
+        "x": 27.186036091654696,
+        "y": 7.4840357598978295
+      },
+      "astro_scientist_back": {
+        "x": 6.0366108042983715,
+        "y": 10.242656449553001
+      },
+      "astro_hazmat": {
+        "x": 33.21413315423452,
+        "y": 10.089399744572159
+      },
+      "astro_scientist_back_side": {
+        "x": 31.3750526944644,
+        "y": 19.64240102171137
+      },
+      "vr_scientist_4": {
+        "x": 28.293379930435698,
+        "y": 12.764982373678025
+      },
+      "vr_researcher_main": {
+        "x": 17.698067632850243,
+        "y": 19.525362318840582
+      },
+      "vr_scientist_2": {
+        "x": 13.670583220682468,
+        "y": 24.0716803760282
+      },
+      "vr_scientist_1": {
+        "x": 15.348609072621363,
+        "y": 6.252643948296122
+      },
+      "vr_scientist_3": {
+        "x": 3.442616123150154,
+        "y": 14.682726204465334
+      },
+      "vr_device": {
+        "x": 15.85024154589372,
+        "y": 18.621980676328505
+      },
+      "neural_interface": {
+        "x": 20.99622641509434,
+        "y": 4.6918238225972875
+      },
+      "memory_data": {
+        "x": 3.4264150943396228,
+        "y": 3.876729482974646
+      },
+      "solvay_pauli": {
+        "x": 39.372315035799524,
+        "y": 6.66945107398568,
+        "spriteVariant": "side"
+      },
+      "solvay_einstein": {
+        "x": 34.60381861575179,
+        "y": 4.285202863961814,
+        "spriteVariant": "front"
+      },
+      "solvay_bohr": {
+        "x": 34.7326968973747,
+        "y": 5.573985680190931,
+        "spriteVariant": "back"
+      },
+      "solvay_heisenberg": {
+        "x": 40.78997613365155,
+        "y": 5.89618138424821
+      },
+      "solvay_born": {
+        "x": 7.023866348448687,
+        "y": 4.607398568019093,
+        "spriteVariant": "side"
+      },
+      "solvay_curie": {
+        "x": 32.86396181384248,
+        "y": 26.774463007159902,
+        "spriteVariant": "back"
+      },
+      "solvay_de_broglie": {
+        "x": 20.684964200477328,
+        "y": 6.2828162291169445
+      },
+      "solvay_schrodinger": {
+        "x": 22.0381861575179,
+        "y": 24.712410501193318
+      },
+      "solvay_lorentz": {
+        "x": 26.03341288782816,
+        "y": 21.103818615751788
+      },
+      "item_photo_single_dev_mt0kagl8": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_roster_dev_mt0kakn2": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_roster_dev_mt0kalq8": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_seating_dev_mt0kaxz9": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_seating_dev_mt0kayl9": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_seating_dev_mt0kazi9": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_seating_dev_mt0kazy8": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_seating_dev_mt0kb047": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_med_dev_mt0kbazd": {
+        "sceneId": "vr",
+        "x": 17,
+        "y": 13,
+        "exists": true
+      },
+      "item_med_dev_mt0kbbrc": {
+        "sceneId": "vr",
+        "x": 17,
+        "y": 13,
+        "exists": true
+      },
+      "item_bio_dev_mt0kbnbk": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_bio_dev_mt0kbo10": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_bio_dev_mt0kbpcd": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_bio_dev_mt0kbpuo": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_bio_dev_mt0kbq54": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_seating_dev_mt0kbwrj": {
+        "sceneId": "astro",
+        "x": 20,
+        "y": 17,
+        "exists": true
+      },
+      "item_seating_dev_mt0kbxi3": {
+        "sceneId": "astro",
+        "x": 20,
+        "y": 17,
+        "exists": true
+      },
+      "item_seating_dev_mt0kbxnf": {
+        "sceneId": "astro",
+        "x": 20,
+        "y": 17,
+        "exists": true
+      },
+      "item_seating_dev_mt0kbxsg": {
+        "sceneId": "astro",
+        "x": 20,
+        "y": 17,
+        "exists": true
+      },
+      "item_seating_dev_mt0kbxxw": {
+        "sceneId": "astro",
+        "x": 20,
+        "y": 17,
+        "exists": true
+      },
+      "item_seating_dev_mt0kby8r": {
+        "sceneId": "astro",
+        "x": 20,
+        "y": 17,
+        "exists": true
+      },
+      "item_seating_dev_mt0kf20m": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_seating_dev_mt0kf2lc": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_roster_dev_mt0kizo6": {
+        "sceneId": "office",
+        "x": 11,
+        "y": 5,
+        "exists": true
+      },
+      "item_roster_dev_mt0kj0hx": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 6,
+        "exists": true
+      },
+      "item_nameplate_dev_mt0kjr46": {
+        "sceneId": "office",
+        "x": 11,
+        "y": 10,
+        "exists": true
+      },
+      "item_nameplate_dev_mt0kjrnz": {
+        "sceneId": "office",
+        "x": 11,
+        "y": 10,
+        "exists": true
+      },
+      "item_nameplate_dev_mt0kjru2": {
+        "sceneId": "office",
+        "x": 11,
+        "y": 10,
+        "exists": true
+      },
+      "item_nameplate_dev_mt0kjryz": {
+        "sceneId": "office",
+        "x": 11,
+        "y": 10,
+        "exists": true
+      },
+      "item_nameplate_dev_mt0kpqvo": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "item_roster_dev_mt0kr9u8": {
+        "sceneId": "solvay",
+        "x": 17.73547392484674,
+        "y": 8.264866149026242,
+        "exists": true
+      },
+      "item_roster_dev_mt0kravr": {
+        "sceneId": "solvay",
+        "x": 26.261789714320425,
+        "y": 12.312713038978394,
+        "exists": false
+      },
+      "item_roster_dev_mt0krbsc": {
+        "sceneId": "solvay",
+        "x": 24.539301676042914,
+        "y": 14.810320694480787,
+        "exists": false
+      },
+      "item_seating_dev_mt0kslx0": {
+        "sceneId": "solvay",
+        "x": 20.749827991832387,
+        "y": 2.3222824169688248,
+        "exists": true
+      },
+      "item_nameplate_dev_mt0ksphh": {
+        "sceneId": "solvay",
+        "x": 26.692411723889805,
+        "y": 25.834244139456864,
+        "exists": true
+      },
+      "item_photo_single_dev_mt0ksufu": {
+        "sceneId": "solvay",
+        "x": 6.1086796664735346,
+        "y": 2.2361580150549494,
+        "exists": true
+      },
+      "item_spectrum_dev_mt0kt39w": {
+        "sceneId": "solvay",
+        "x": 44.08954091049267,
+        "y": 1.7194116035716955,
+        "exists": true
+      },
+      "item_spectrum_dev_mt0kt49w": {
+        "sceneId": "solvay",
+        "x": 9.984277752597936,
+        "y": 3.8725216514185856,
+        "exists": true
+      },
+      "item_wavefunc_dev_mt0kt9af": {
+        "sceneId": "solvay",
+        "x": 42.62542607795679,
+        "y": 6.5423781107487295,
+        "exists": true
+      },
+      "item_wavefunc_dev_mt1hi4xs": {
+        "sceneId": "solvay",
+        "x": 17.93663299026853,
+        "y": 10.222348211679625,
+        "exists": true
+      },
+      "item_roster_dev_mt1hiay8": {
+        "sceneId": "solvay",
+        "x": 36.13695095529238,
+        "y": 9.793095429485666,
+        "exists": true
+      },
+      "item_roster_dev_mt1hic84": {
+        "sceneId": "solvay",
+        "x": 32.7887792541795,
+        "y": 12.196911009771835,
+        "exists": true
+      },
+      "item_wavefunc_dev_mt1hq45y": {
+        "sceneId": "solvay",
+        "x": 31.343129427239084,
+        "y": 15.843813517447295,
+        "exists": true
+      },
+      "solvay_seating": {
+        "x": 33.701670644391406,
+        "y": 8.86038186157518
+      },
+      "solvay_nameplate": {
+        "x": 17.33412887828162,
+        "y": 8.022673031026253
+      },
+      "solvay_diffraction": {
+        "x": 11.147971360381861,
+        "y": 7.313842482100238
+      }
+    },
+    "2": {
+      "lin_xiao": {
+        "x": 11.758490566037736,
+        "y": 9.705660377358491
+      },
+      "item_bio_dev_mt0kfuc3": {
+        "sceneId": "office",
+        "x": 12,
+        "y": 10,
+        "exists": true
+      },
+      "solvay_pauli": {
+        "x": 25.968973747016705,
+        "y": 26.774463007159902
+      },
+      "solvay_heisenberg": {
+        "x": 31.31742243436754,
+        "y": 29.223150357995227,
+        "spriteVariant": "side"
+      },
+      "solvay_schrodinger": {
+        "x": 30.608591885441527,
+        "y": 29.60978520286396,
+        "spriteVariant": "side"
+      },
+      "solvay_curie": {
+        "x": 24.68019093078759,
+        "y": 29.352028639618137,
+        "spriteVariant": "back"
+      },
+      "solvay_einstein": {
+        "x": 27.257756563245824,
+        "y": 26.903341288782816,
+        "spriteVariant": "back"
+      },
+      "solvay_bohr": {
+        "x": 34.088305489260144,
+        "y": 26.83890214797136
+      },
+      "solvay_born": {
+        "x": 32.5417661097852,
+        "y": 29.094272076372313
+      }
+    },
+    "3": {
+      "lin_xiao": {
+        "x": 3.818867924528302,
+        "y": 7.350943396226415
+      },
+      "solvay_curie": {
+        "x": 29.062052505966587,
+        "y": 24.454653937947494
+      },
+      "solvay_bohr": {
+        "x": 34.99045346062052,
+        "y": 7.700477326968974,
+        "spriteVariant": "back"
+      },
+      "solvay_lorentz": {
+        "x": 30.157517899761334,
+        "y": 24.390214797136036,
+        "spriteVariant": "side"
+      },
+      "solvay_pauli": {
+        "x": 32.79952267303103,
+        "y": 7.700477326968974
+      },
+      "solvay_einstein": {
+        "x": 35.05489260143198,
+        "y": 6.798329355608591,
+        "spriteVariant": "front"
+      },
+      "solvay_schrodinger": {
+        "x": 36.536992840095465,
+        "y": 4.607398568019093,
+        "spriteVariant": "front"
+      },
+      "solvay_heisenberg": {
+        "x": 30.99522673031026,
+        "y": 6.218377088305489
+      },
+      "solvay_born": {
+        "x": 36.665871121718375,
+        "y": 6.927207637231503
+      }
+    }
+  },
+  "transitions": {
+    "office": [
+      {
+        "x": 11.69811320754717,
+        "y": 19.12452830188679,
+        "targetScene": "astro",
+        "targetX": 10,
+        "targetY": 1
+      },
+      {
+        "x": 11.577358490566038,
+        "y": 0.5861634452387972,
+        "targetScene": "arpes",
+        "targetX": 16,
+        "targetY": 8
+      },
+      {
+        "x": 15.984905660377358,
+        "y": 9.705660377358491,
+        "targetScene": "solvay",
+        "targetX": 16,
+        "targetY": 12
+      }
+    ],
+    "arpes": [
+      {
+        "x": 11.637698599583079,
+        "y": 18.609547123623013,
+        "targetScene": "office",
+        "targetX": 12,
+        "targetY": 10
+      }
+    ],
+    "astro": [
+      {
+        "x": 12.956636005256243,
+        "y": 7.542706964520368,
+        "targetScene": "office",
+        "targetX": 10,
+        "targetY": 1
+      },
+      {
+        "x": 13.035333665090198,
+        "y": 25.261813537675607,
+        "targetScene": "vr",
+        "targetX": 16,
+        "targetY": 8
+      }
+    ],
+    "vr": [
+      {
+        "x": 12.565217391304348,
+        "y": 2.032608695652174,
+        "targetScene": "astro",
+        "targetX": 10,
+        "targetY": 1
+      },
+      {
+        "x": 20.302780635488578,
+        "y": 15.681551116333724,
+        "targetScene": "solvay",
+        "targetX": 16,
+        "targetY": 16
+      }
+    ],
+    "solvay": [
+      {
+        "x": 0.9814378778231946,
+        "y": 12.622969837587007,
+        "targetScene": "vr",
+        "targetX": 10,
+        "targetY": 17
+      },
+      {
+        "x": 16,
+        "y": 12,
+        "targetScene": "office",
+        "targetX": 12,
+        "targetY": 10
+      }
+    ]
+  }
+}
