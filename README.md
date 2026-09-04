@@ -132,8 +132,8 @@ QUILLFORGE_LLM_BASE_URL=https://quillforge-provider.example/v1
 按任务为各模块指定模型名（须与所选服务商的模型 ID 一致）：
 
 ```env
-ECHO_CHAT_MODEL=deepseek-chat        # Echo 游戏内对话
-ECHO_QUEST_MODEL=deepseek-chat       # Echo 任务生成
+ECHO_CHAT_MODEL=deepseek-v4-flash       # Echo 游戏内对话
+ECHO_QUEST_MODEL=deepseek-v4-flash      # Echo 任务生成
 QUILLFORGE_RUNTIME_MODEL=...         # QuillForge 运行时
 QUILLFORGE_SCRIPT_MODEL=...          # 剧本生成
 QUILLFORGE_DEBATE_MODEL=...          # 辩论/审议
