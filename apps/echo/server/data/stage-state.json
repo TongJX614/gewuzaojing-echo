@@ -718,13 +718,6 @@
         "targetScene": "arpes",
         "targetX": 16,
         "targetY": 8
-      },
-      {
-        "x": 15.984905660377358,
-        "y": 9.705660377358491,
-        "targetScene": "solvay",
-        "targetX": 16,
-        "targetY": 12
       }
     ],
     "arpes": [
@@ -759,13 +752,6 @@
         "targetScene": "astro",
         "targetX": 10,
         "targetY": 1
-      },
-      {
-        "x": 20.302780635488578,
-        "y": 15.681551116333724,
-        "targetScene": "solvay",
-        "targetX": 16,
-        "targetY": 16
       }
     ],
     "solvay": [
