@@ -73,9 +73,15 @@ function normalizeBaseUrl(rawValue: string, key: string): string {
   }
 }
 
-function validateApiKey(value: string, key: string): string {
+function optionalApiKey(values: PortableEnv, key: string): string {
+  const value = values[key];
+  if (value === undefined || value.length === 0) {
+    console.warn(`[gewuzaojing] ${key} is not configured; LLM features are disabled.`);
+    return '';
+  }
   if (/(?:placeholder|replace-|change-?me|example-secret)/iu.test(value)) {
-    throw new GewuzaojingConfigError('PLACEHOLDER_SECRET', [key]);
+    console.warn(`[gewuzaojing] ${key} uses a placeholder; LLM features are disabled.`);
+    return '';
   }
   return value;
 }
@@ -130,7 +136,7 @@ export function loadEchoLlmConfig(
     source,
     connection: Object.freeze({
       provider,
-      apiKey: validateApiKey(requireValue(values, apiKeyName), apiKeyName),
+      apiKey: optionalApiKey(values, apiKeyName),
       baseUrl: normalizeBaseUrl(requireValue(values, baseUrlKey), baseUrlKey),
     }),
     chatModel: scalarValue(values, processEnv, 'ECHO_CHAT_MODEL'),

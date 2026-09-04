@@ -38,7 +38,8 @@ const minigame = readFileSync(
   'utf8',
 );
 assert.match(minigame, /get isOpen\(/u);
-assert.match(minigame, /echo:pause-request/u);
+assert.match(minigame, /isQuillForgeMessage/u);
+assert.match(minigame, /EMBED_MESSAGE\.pauseRequest/u);
 
 const intro = readFileSync(
   new URL('../src/ui/solvay-intro.ts', import.meta.url),

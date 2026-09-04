@@ -283,11 +283,11 @@ def _base_url(raw: str, key: str) -> str:
         raise GewuzaojingConfigError("INVALID_BASE_URL", (key,)) from None
 
 
-def _api_key(raw: str, key: str) -> str:
-    if re.search(
+def _optional_api_key(raw: str, key: str) -> str:
+    if raw and re.search(
         r"(?:placeholder|replace-|change-?me|example-secret)", raw, re.IGNORECASE
     ):
-        raise GewuzaojingConfigError("PLACEHOLDER_SECRET", (key,))
+        return ""
     return raw
 
 
@@ -329,7 +329,9 @@ def load_settings(
         source=source,
         connection=OpenAICompatibleConnection(
             provider="openai-compatible",
-            api_key=_api_key(_required(values, api_key_name), api_key_name),
+            api_key=_optional_api_key(
+                _optional(values, environment, api_key_name, ""), api_key_name
+            ),
             base_url=_base_url(_required(values, base_url_key), base_url_key),
         ),
         runtime_model=_scalar(values, environment, "QUILLFORGE_RUNTIME_MODEL"),

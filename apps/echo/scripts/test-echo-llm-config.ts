@@ -276,10 +276,20 @@ try {
     validSharedEnv.replace('unit-secret', 'replace-with-real-secret'),
     'utf8',
   );
-  expectConfigError(
-    () => loadEchoLlmConfig({ envFile: placeholderPath, processEnv: {} }),
-    'PLACEHOLDER_SECRET',
-    'replace-with-real-secret',
+  assert.equal(
+    loadEchoLlmConfig({ envFile: placeholderPath, processEnv: {} }).connection.apiKey,
+    '',
+  );
+
+  const missingKeyPath = join(repoRoot, 'missing-key.env');
+  writeFileSync(
+    missingKeyPath,
+    validSharedEnv.replace('SHARED_LLM_API_KEY=unit-secret\n', ''),
+    'utf8',
+  );
+  assert.equal(
+    loadEchoLlmConfig({ envFile: missingKeyPath, processEnv: {} }).connection.apiKey,
+    '',
   );
 
   const badBasePath = join(repoRoot, 'bad-base.env');

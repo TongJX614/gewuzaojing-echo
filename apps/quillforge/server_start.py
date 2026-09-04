@@ -3,7 +3,9 @@
 QuillForge Server - Launcher
 """
 import io
+import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import threading
@@ -33,9 +35,22 @@ def main() -> None:
     print(f"      API:  http://{host}:{port}/docs")
     print()
 
+    def browser_open_enabled() -> bool:
+        raw = os.environ.get("QUILLFORGE_OPEN_BROWSER")
+        if raw is None:
+            root_env = SCRIPT_DIR.parent.parent / ".env"
+            if root_env.exists():
+                for line in root_env.read_text(encoding="utf-8-sig").splitlines():
+                    match = re.match(r"QUILLFORGE_OPEN_BROWSER=(.*)", line.strip())
+                    if match:
+                        raw = match.group(1).strip()
+                        break
+        return (raw or "true").strip().lower() != "false"
+
     def open_browser():
         time.sleep(2)
-        webbrowser.open(f"http://{host}:{port}")
+        if browser_open_enabled():
+            webbrowser.open(f"http://{host}:{port}")
 
     threading.Thread(target=open_browser, daemon=True).start()
 

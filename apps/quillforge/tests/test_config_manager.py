@@ -219,11 +219,8 @@ def test_dedicated_selection_scalar_override_validation_and_cache(
         VALID_SHARED_ENV.replace("unit-secret", "replace-with-real-secret"),
         encoding="utf-8",
     )
-    assert_config_error(
-        lambda: load_settings(environ={}, env_path=placeholder),
-        "PLACEHOLDER_SECRET",
-        "replace-with-real-secret",
-    )
+    placeholder_settings = load_settings(environ={}, env_path=placeholder)
+    assert placeholder_settings.connection.api_key == ""
     bad_base = tmp_path / "bad-base.env"
     bad_base.write_text(
         VALID_SHARED_ENV.replace(

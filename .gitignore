@@ -1,4 +1,8 @@
 .env
+.env.*
+!.env.example
+output/
+**/output/
 .venv/
 node_modules/
 **/node_modules/
