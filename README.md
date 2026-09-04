@@ -1,6 +1,11 @@
 # 格物造境 · 回响（gewuzaojing-echo）
+<img width=95% alt="image" src="https://github.com/user-attachments/assets/bc50ff2d-43d3-43e9-83b5-c12aa4e799e8" />
+
 
 > **让科学不再只是被讲述，而是被亲自推理。**
+
+🌐 **在线体验**：<https://gewuzaojing-echo.1quillforge.online/>
+
 
 「格物造境 · 回响」是一个面向科学传播的 AI 叙事游戏工作台。它不把科普做成一块独立的展板，而是把科学知识写进任务链、道具与论证玩法里——玩家在探索、追问与辩驳中自己得出结论。
 
